@@ -1,0 +1,5 @@
+# Ignore all .txt files in the project
+*.txt
+
+# Ignore the .vscode folder
+.vscode/
