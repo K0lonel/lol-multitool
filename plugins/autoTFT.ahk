@@ -2,13 +2,12 @@
 #Include <../lib/utilities>
 #Include <../lib/LCU>
 #Include <../lib/API>
-plugins.Push("autoTFT")
+plugins.Push(autoTFT)
 
 autoTFT(){
     static ff_Time := 600
     try {
-        switch APICall("GET", "/lol-gameflow/v1/gameflow-phase") {
-            case "ReadyCheck": APICall("POST", "/lol-matchmaking/v1/ready-check/accept")
+        switch gameflow {
             case "EndOfGame": APICall("POST", "/lol-lobby/v2/play-again")
             case "Lobby": APICall("POST", "/lol-lobby/v2/lobby/matchmaking/search")
             case "InProgress":
@@ -16,7 +15,7 @@ autoTFT(){
                 MyWindow.ExecuteScript("document.querySelector('#tft_time').innerText = 'Game Time: " SecondsToTime(time) " / " SecondsToTime(ff_Time) "'")
                 if(time > ff_Time) {
                     surrender()
-                }
+                }  
         }
     }
 }

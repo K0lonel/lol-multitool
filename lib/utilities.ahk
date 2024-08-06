@@ -12,3 +12,12 @@ SecondsToTime(seconds)
     seconds := Mod(seconds, 60)
     return Format("{:02}:{:02}", minutes, seconds)
 }
+
+HasVal(haystack, needle) {
+    for index, value in haystack
+        if (value = needle)
+            return index
+    if !(IsObject(haystack))
+        throw Exception("Bad haystack!", -1, haystack)
+    return 0
+}

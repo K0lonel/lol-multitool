@@ -1,4 +1,4 @@
-﻿#Requires AutoHotkey v2.0
+﻿#Requires AutoHotkey v2.0+
 #SingleInstance Force
 
 ; ordered includes
@@ -18,8 +18,15 @@ MyWindow.OnEvent("Close", (*) => ExitApp())
 MyWindow.Load("lib/WebViewToo/Pages/index.html")
 MyWindow.Show("w1200 h800 Center", "LoL-App")
 
-SetTimer(autoTFT, 1000)
+
+for plugin in plugins
+    SetTimer(plugin, 1000)
+
+loop {
+    sleep 1000
+    global gameflow := APICall("GET", "/lol-gameflow/v1/gameflow-phase")
+}
 return
 
 $^x::ExitApp
-$^r::Reload
+^r::Reload
