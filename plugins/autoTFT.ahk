@@ -1,7 +1,7 @@
 ﻿#Requires AutoHotkey v2.0
-#Include <../lib/utilities>
-#Include <../lib/LCU>
-#Include <../lib/API>
+#Include ../lib/utilities.ahk
+#Include ../lib/LCU.ahk
+#Include ../lib/API.ahk
 plugins.Push(autoTFT)
 
 autoTFT(){

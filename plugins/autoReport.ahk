@@ -1,7 +1,8 @@
 ﻿#Requires AutoHotkey v2.0
-#Include <../lib/utilities>
-#Include <../lib/LCU>
-#Include <../lib/API>
+#Include ../lib/utilities.ahk
+#Include ../lib/LCU.ahk
+#Include ../lib/API.ahk
+#Include ../lib/globals.ahk
 plugins.Push(autoReport)
 
 autoReport(){
@@ -26,23 +27,22 @@ report() {
     if(eogStats["gameId"] == s_gameId)
         return
 
-    friend_puuid := Array()
-    for index, friend in APICall("GET", "/lol-chat/v1/friends")
+    friend_puuid := Array(), reportedPlayers := Array()
+    for index, friend in friends
         friend_puuid.Push(friend["puuid"])
 
     s_gameId := eogStats["gameId"]
-    localPlayerPuuid := eogStats["localPlayer"]["puuid"]
     for i, team in eogStats["teams"] {
         for ii, player in team["players"] {
-            if(player["puuid"] != localPlayerPuuid) {
+            if(player["puuid"] != me["lol"]["puuid"]) {
                 if(!HasVal(friend_puuid, player["puuid"])) {
                     obj := {categories: categories, gameId: eogStats["gameId"], offenderPuuid: player["puuid"], offenderSummonerId: player["summonerId"]}
-                    APICall("POST", "/lol-player-report-sender/v1/in-game-reports", JSON.Dump(obj))
+                    if(APICall("POST", "/lol-player-report-sender/v1/end-of-game-reports", JSON.Dump(obj)))
+                        reportedPlayers.Push([player["summonerName"], player["puuid"]])
                 }
-                ; test friend report ignoring
             }
         }
     }
-
+    OutputDebug(objView(reportedPlayers))
     return
 }

@@ -18,6 +18,6 @@ HasVal(haystack, needle) {
         if (value = needle)
             return index
     if !(IsObject(haystack))
-        throw Exception("Bad haystack!", -1, haystack)
+        throw "Bad haystack!"
     return 0
 }

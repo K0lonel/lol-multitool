@@ -1,13 +1,10 @@
 ﻿#Requires AutoHotkey v2.0+
 #SingleInstance Force
 
-; ordered includes
 #Include <utilities>
 #Include <JSON>
-; #Include <LCU>
 #Include <API>
 #Include <plugins>
-; #Include WebViewToo/AHK Resources/WebView2.ahk
 #Include <WebViewToo/AHK Resources/WebViewToo>
 
 ScriptPID := DllCall("GetCurrentProcessId")

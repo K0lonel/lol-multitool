@@ -9,7 +9,7 @@ APICall(method, endpoint, post_data := "") {
     return request(method, endpoint, post_data, headersIn)
 }
 
-request(method, endpoint, post_data, headersIn := Map()) {
+request(method, endpoint, post_data?, headersIn := Map()) {
     static headers := Map("Content-Type", "application/json", "Accept", "application/json")
 
     req.Open(method, endpoint, False)
@@ -18,7 +18,7 @@ request(method, endpoint, post_data, headersIn := Map()) {
     for k, v in headers
         req.SetRequestHeader(k, v)
     req.Option[4] := 0x3300
-    req.Send(post_data)
+    req.Send(post_data?)
 
     pSafeArray := req.ResponseBody
     if(IsObject(pSafeArray)){
