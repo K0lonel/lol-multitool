@@ -11,15 +11,18 @@ class LCU {
     static Query := "SELECT CommandLine FROM Win32_Process WHERE Name = 'LeagueClientUx.exe'"
 
     static __New() {
-        LCU.Initialize()
+        WMI := ComObjGet("winmgmts:\\.\root\cimv2")
+        LCU.Initialize(WMI)
     }
     
-    static Initialize() {
-        WMI := ComObjGet("winmgmts:\\.\root\cimv2")
-        Processes := WMI.ExecQuery(LCU.Query)
-        for Process in Processes
-            cmd := Process.CommandLine
-
+    static Initialize(WMI) {
+        while(!IsSet(cmd))
+        {
+            Processes := WMI.ExecQuery(LCU.Query)
+            for Process in Processes
+                cmd := Process.CommandLine
+        }
+        
         LCU.App_Port := LCU.RegExFind(cmd, "--app-port=(\d+)")
         LCU.App_URL := LCU.Host LCU.App_Port
         LCU.Web_URL := LCU.Host LCU.Web_Port

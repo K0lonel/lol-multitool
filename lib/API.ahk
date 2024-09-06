@@ -18,13 +18,21 @@ request(method, endpoint, post_data?, headersIn := Map()) {
     for k, v in headers
         req.SetRequestHeader(k, v)
     req.Option[4] := 0x3300
-    req.Send(post_data?)
 
-    pSafeArray := req.ResponseBody
-    if(IsObject(pSafeArray)){
-	    pvData := NumGet(ComObjValue(pSafeArray) + 8 + A_PtrSize, "ptr")
-	    cbElements := pSafeArray.MaxIndex() + 1
-	    return JSON.Load(StrGet(pvData, cbElements, "UTF-8"))
+    try {
+        req.Send(post_data?) 
+        pSafeArray := req.ResponseBody
+        if(IsObject(pSafeArray)){
+	        pvData := NumGet(ComObjValue(pSafeArray) + 8 + A_PtrSize, "ptr")
+	        cbElements := pSafeArray.MaxIndex() + 1
+	        return JSON.Load(StrGet(pvData, cbElements, "UTF-8"))
+        }
+    } catch Error as e {
+        if(InStr(e.Message, "not be established") || !IsSet(pSafeArray)) {
+            sleep 200
+            Reload
+        }
     }
+
     return pSafeArray
 }

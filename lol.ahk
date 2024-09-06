@@ -18,12 +18,16 @@ MyWindow.Show("w1200 h800 Center", "LoL-App")
 
 for plugin in plugins
     SetTimer(plugin, 1000)
+; msgbox plugin.name
 
 loop {
     sleep 1000
+    global me := APICall("GET", "/lol-chat/v1/me")
+    global friends := APICall("GET", "/lol-chat/v1/friends")
     global gameflow := APICall("GET", "/lol-gameflow/v1/gameflow-phase")
+    MyWindow.ExecuteScript("document.querySelector('#client_state').innerText = 'Client State: " gameflow "'")
 }
 return
 
-$^x::ExitApp
+$^t::ExitApp
 ^r::Reload
