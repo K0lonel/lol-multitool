@@ -51,6 +51,5 @@ report() {
             }
         }
         match_history_dic[game["gameId"]] := reportedPlayers
-        MsgBox(objView(match_history_dic))
     }
 }
