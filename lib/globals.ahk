@@ -6,3 +6,4 @@
 global me := APICall("GET", "/lol-chat/v1/me")
 global friends := APICall("GET", "/lol-chat/v1/friends")
 global gameflow := APICall("GET", "/lol-gameflow/v1/gameflow-phase")
+global match_history := APICall("GET", "/lol-match-history/v1/products/lol/current-summoner/matches")

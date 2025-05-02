@@ -15,7 +15,7 @@ SecondsToTime(seconds)
 
 HasVal(haystack, needle) {
     for index, value in haystack
-        if (value = needle)
+        if (value == needle)
             return index
     if !(IsObject(haystack))
         throw "Bad haystack!"

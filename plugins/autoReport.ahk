@@ -43,6 +43,7 @@ report() {
             }
         }
     }
+    APICall("POST", "/lol-chat/v1/conversations/eog-chat-toggle", "true")
     s_gameId := eogStats["gameId"]
     ; MsgBox(objView(reportedPlayers))
     OutputDebug(objView(reportedPlayers))
