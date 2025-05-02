@@ -39,17 +39,16 @@ report() {
         for ii, participant in detailed_history["participantIdentities"] {
             if(participant["player"]["puuid"] != me["lol"]["puuid"]) {
                 if(!HasVal(friend_puuid, participant["player"]["puuid"])) {
-                    ; MsgBox(JSON.Dump(participant, 1))
-
                     obj := {categories: categories, gameId: game["gameId"], offenderPuuid: participant["player"]["puuid"], offenderSummonerId: participant["player"]["summonerId"]}
                     try APICall("POST", "/lol-player-report-sender/v1/match-history-reports", JSON.Dump(obj))
                     catch Error as e
-                        msgbox(e)
+                        msgbox(e.Message)
                     reportedPlayers.Push(participant["player"]["gameName"])
                 }
 
             }
         }
-        match_history_dic[game["gameId"]] := reportedPlayers
+        match_history_dic[game["gameId"]] := Map("HistoryLink", "https://www.leagueofgraphs.com/match/eune/" game["gameId"]
+                                                ,"ReportedPlayers", reportedPlayers)
     }
 }

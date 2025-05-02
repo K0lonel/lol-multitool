@@ -7,6 +7,8 @@
 #Include <plugins>
 #Include <WebViewToo/AHK Resources/WebViewToo>
 
+if(!FileExist("history.json"))
+    FileAppend("{}", "history.json")
 global match_history_dic := JSON.Load(FileRead("history.json"))
 
 ScriptPID := DllCall("GetCurrentProcessId")
