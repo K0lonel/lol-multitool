@@ -27,7 +27,7 @@ report() {
 
 
     for i, game in match_history["games"]["games"] {
-        if(match_history_dic.Has(game["gameId"]) || game["gameType"] == "CUSTOM_GAME")
+        if(match_history_dic.Has(String(game["gameId"])) || (game["gameType"] == "CUSTOM_GAME"))
             continue
 
         friend_puuid := Array(), reportedPlayers := Array()
@@ -51,6 +51,6 @@ report() {
             }
         }
         match_history_dic[game["gameId"]] := reportedPlayers
-        ; MsgBox(objView(reportedPlayers))
+        MsgBox(objView(match_history_dic))
     }
 }
