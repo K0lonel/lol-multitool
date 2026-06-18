@@ -1,4 +1,4 @@
-﻿#Requires AutoHotkey v2.0
+#Requires AutoHotkey v2.0
 #Include ../lib/utilities.ahk
 #Include ../lib/LCU.ahk
 #Include ../lib/API.ahk
@@ -8,20 +8,17 @@ plugins.Push(autoReport)
 
 
 autoReport(){
+    global config
+    if (!config.Has("autoReport") || !config["autoReport"])
+        return
     try {
         report()
     }
 }
 
 report() {
-    ; "NEGATIVE_ATTITUDE"
-    ; "VERBAL_ABUSE"
-    ; "LEAVING_AFK"
-    ; "ASSISTING_ENEMY_TEAM"
-    ; "HATE_SPEECH"
-    ; "THIRD_PARTY_TOOLS"
-    ; "INAPPROPRIATE_NAME"
-    static categories := ["NEGATIVE_ATTITUDE", "VERBAL_ABUSE", "HATE_SPEECH", "THIRD_PARTY_TOOLS"]
+    global config
+    categories := (config.Has("reportCategories") && config["reportCategories"].Length > 0) ? config["reportCategories"] : ["NEGATIVE_ATTITUDE", "VERBAL_ABUSE", "HATE_SPEECH", "THIRD_PARTY_TOOLS"]
     global reportList
 
     for i, game in match_history["games"]["games"] {

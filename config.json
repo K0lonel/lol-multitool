@@ -1,0 +1,13 @@
+﻿{
+	"acceptDelay": 0,
+	"autoAccept": 0,
+	"autoReport": 1,
+	"autoTFT": 0,
+	"reportCategories": [
+		"NEGATIVE_ATTITUDE",
+		"VERBAL_ABUSE",
+		"HATE_SPEECH",
+		"THIRD_PARTY_TOOLS"
+	],
+	"tftSurrenderTime": 600
+}

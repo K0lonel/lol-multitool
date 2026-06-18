@@ -1,18 +1,21 @@
-﻿#Requires AutoHotkey v2.0
+#Requires AutoHotkey v2.0
 #Include ../lib/utilities.ahk
 #Include ../lib/LCU.ahk
 #Include ../lib/API.ahk
 plugins.Push(autoTFT)
 
 autoTFT(){
-    static ff_Time := 600
+    global config, gameflow
+    if (!config.Has("autoTFT") || !config["autoTFT"])
+        return
+    ff_Time := config.Has("tftSurrenderTime") ? config["tftSurrenderTime"] : 600
     try {
         switch gameflow {
             case "EndOfGame": APICall("POST", "/lol-lobby/v2/play-again")
             case "Lobby": APICall("POST", "/lol-lobby/v2/lobby/matchmaking/search")
             case "InProgress":
                 time := floor(request("GET", LCU.Web_URL "/liveclientdata/gamestats")["gameTime"])
-                MyWindow.ExecuteScript("document.querySelector('#tft_time').innerText = 'Game Time: " SecondsToTime(time) " / " SecondsToTime(ff_Time) "'")
+                try MyWindow.ExecuteScript("document.querySelector('#tft_time').innerText = 'Game Time: " SecondsToTime(time) " / " SecondsToTime(ff_Time) "'")
                 if(time > ff_Time) {
                     surrender()
                 }  
