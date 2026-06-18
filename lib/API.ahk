@@ -1,16 +1,21 @@
-﻿#Requires AutoHotkey v2.0
+#Requires AutoHotkey v2.0
 #Include LCU.ahk
 global req := ComObject("WinHttp.WinHttpRequest.5.1")
 
 APICall(method, endpoint, post_data := "") {
-    static headersIn := Map("Authorization", "Basic " LCU.Token)
-    endpoint := LCU.App_URL endpoint
+    if (LCU.Token == "") {
+        if (!LCU.Initialize()) {
+            return Map("error", "Offline", "status", 0)
+        }
+    }
+    headersIn := Map("Authorization", "Basic " LCU.Token)
+    url := LCU.App_URL endpoint
 
-    return request(method, endpoint, post_data, headersIn)
+    return request(method, url, post_data, headersIn)
 }
 
 request(method, endpoint, post_data?, headersIn := Map()) {
-    static headers := Map("Content-Type", "application/json", "Accept", "application/json")
+    headers := Map("Content-Type", "application/json", "Accept", "application/json")
 
     req.Open(method, endpoint, False)
     for k, v in headersIn
@@ -21,18 +26,35 @@ request(method, endpoint, post_data?, headersIn := Map()) {
 
     try {
         req.Send(post_data?) 
+        status := req.Status
+        if (status == 429) {
+            LogToWeb("LCU API Rate Limit (429) on " method " " endpoint, "warning")
+            return Map("error", "RateLimit", "status", 429)
+        }
+        if (status >= 400) {
+            if (status != 404) {
+                LogToWeb("LCU API Error " status " on " method " " endpoint, "error")
+            }
+            return Map("error", "HTTPError", "status", status)
+        }
         pSafeArray := req.ResponseBody
         if(IsObject(pSafeArray)){
 	        pvData := NumGet(ComObjValue(pSafeArray) + 8 + A_PtrSize, "ptr")
 	        cbElements := pSafeArray.MaxIndex() + 1
-	        return JSON.Load(StrGet(pvData, cbElements, "UTF-8"))
+            bodyStr := StrGet(pvData, cbElements, "UTF-8")
+            if (bodyStr == "") {
+                return Map()
+            }
+	        return JSON.Load(bodyStr)
         }
     } catch Error as e {
-        if(InStr(e.Message, "not be established") || !IsSet(pSafeArray)) {
-            sleep 200
-            Reload
+        static lastErrTime := 0
+        if (A_TickCount - lastErrTime > 15000) {
+            LogToWeb("LCU API offline or refused connection: " e.Message, "warning")
+            lastErrTime := A_TickCount
         }
-        msgbox(e.Message)
+        LCU.Token := ""
+        return Map("error", "Offline", "status", 0)
     }
 
     return pSafeArray

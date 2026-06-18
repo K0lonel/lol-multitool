@@ -17,9 +17,6 @@ MyWindow.Show("w1200 h800 Center", "LoL-App")
 ; MyWindow.AddCallBackToScript("Tooltip", WebTooltipEvent)
 ; MyWindow.AddCallbackToScript("ahkFormSubmit", FormSubmitHandler)
 
-
-
-SetTimer(autoTFT, 1000)
 ; #HotIf WinActive("ahk_group ScriptGroup")
 return
 

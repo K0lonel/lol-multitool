@@ -85,13 +85,15 @@ main {
 /* Sidebar Layout styling */
 .sidebar-wrapper {
     width: 250px;
+    min-width: 250px;
+    max-width: 250px;
+    flex-shrink: 0;
     background: rgba(5, 8, 12, 0.85);
     border-right: 1px solid var(--panel-border);
     display: flex;
     flex-direction: column;
     height: 100%;
     backdrop-filter: blur(10px);
-    transition: width 0.3s ease;
 }
 
 .sidebar-logo {
@@ -114,13 +116,16 @@ main {
 .nav-pills .nav-link {
     color: var(--text-muted);
     border-radius: 0;
-    border-left: 3px solid transparent;
     padding: 0.85rem 1.5rem;
     font-weight: 500;
     letter-spacing: 0.5px;
     display: flex;
     align-items: center;
     gap: 12px;
+    background: transparent;
+    border: 0;
+    border-left: 3px solid transparent;
+    text-align: left;
     transition: all 0.25s ease;
 }
 
@@ -146,6 +151,7 @@ main {
 #page-content {
     flex-grow: 1;
     overflow-y: auto;
+    scrollbar-gutter: stable;
     padding: 2rem;
     background: transparent;
 }
@@ -341,4 +347,35 @@ main {
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
+}
+
+@keyframes pulseGlow {
+    0% { text-shadow: 0 0 4px rgba(200, 155, 60, 0.4); opacity: 0.8; }
+    50% { text-shadow: 0 0 16px rgba(200, 155, 60, 0.8); opacity: 1; }
+    100% { text-shadow: 0 0 4px rgba(200, 155, 60, 0.4); opacity: 0.8; }
+}
+
+.pulsing-glow {
+    animation: pulseGlow 2s infinite ease-in-out;
+}
+
+/* Custom Dropdown Styles */
+.dropdown-item-champ {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(200, 155, 60, 0.08);
+    transition: background 0.15s ease, color 0.15s ease;
+    color: var(--text-primary);
+}
+
+.dropdown-item-champ:hover {
+    background: rgba(200, 155, 60, 0.12);
+    color: var(--hextech-gold-hover);
+}
+
+.dropdown-item-champ:last-child {
+    border-bottom: none;
 }

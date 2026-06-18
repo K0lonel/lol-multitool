@@ -15,6 +15,7 @@ autoAccept(){
             if (!scheduledAccept) {
                 scheduledAccept := true
                 delay := config.Has("acceptDelay") ? config["acceptDelay"] : 0
+                LogToWeb("ReadyCheck detected. Auto-accept scheduled with a " delay "s delay.", "info")
                 if (delay > 0) {
                     SetTimer(DoAcceptQueue, -delay * 1000)
                 } else {
@@ -30,6 +31,16 @@ autoAccept(){
 DoAcceptQueue() {
     global gameflow
     if (gameflow == "ReadyCheck") {
-        try APICall("POST", "/lol-matchmaking/v1/ready-check/accept")
+        LogToWeb("Accepting matchmaking ready check...", "info")
+        try {
+            res := APICall("POST", "/lol-matchmaking/v1/ready-check/accept")
+            if (IsObject(res) && res.Has("error")) {
+                LogToWeb("Failed to accept ready check. Status: " res["status"], "error")
+            } else {
+                LogToWeb("Matchmaking ready check successfully accepted.", "success")
+            }
+        } catch Error as e {
+            LogToWeb("Error accepting ready check: " e.Message, "error")
+        }
     }
 }

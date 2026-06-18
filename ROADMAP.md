@@ -42,14 +42,13 @@ Instead of displaying raw JSON outputs in `#jsonBox`, the Home Tab (index.html) 
 ---
 
 ## ⚙️ Phase 2: Backend Control & Dynamic Configuration
-Currently, settings like surrendering in TFT, enabling plugins, and reports are hardcoded. We want to expose these to the frontend using WebViewToo bindings.
+Currently, settings like enabling plugins and reports are hardcoded. We want to expose these to the frontend using WebViewToo bindings.
 
 ### 🔌 1. Dynamic Plugin Management
 *   **Enable/Disable Toggles**: Move away from editing plugins.ahk to toggle plugins. Introduce checkboxes/switches in the UI to dynamically toggle variables inside lol.ahk (e.g., `autoAcceptEnabled := true`).
-*   **Adjustable TFT Delay & Threshold**: Add slider inputs in the settings panel to change the TFT farm surrender threshold (currently hardcoded as `600s` in autoTFT.ahk) and write changes directly to a configuration file.
 
 ### ⏱️ 2. Auto-Accept Queue Humanizer
-*   **Queue Accept Delay**: Add an adjustable slider (0–5 seconds) to wait before accepting a queue matchmaking search. Instantly accepting every queue check increases account flagging risk.
+*   **Queue Accept Delay**: Add an adjustable slider (0–5 seconds) to wait before accepting a queue matchmaking ready check. Instantly accepting every queue check increases account flagging risk.
 
 ### 🔍 3. Refined Auto-Reporting Filters
 Currently, autoReportNew.ahk mass-reports all players who are not on your friends list.
@@ -78,8 +77,7 @@ These new features can be integrated via LCU API endpoints and screen automation
     *   Expose dynamic toggles for autoAccept.ahk and autoReportNew.ahk.
     *   Show recent match report history as styled cards instead of raw JSON dumps.
 2.  **Medium Priority (Configuration & Controls)**:
-    *   Implement variable timer controls for the autoTFT.ahk farm plugin.
-    *   Create settings section for report categories and queue accept delays.
+    *   Create settings section for report categories, ARAM Bench Sniper targets, and queue accept delays.
 3.  **Low Priority (Feature Expansion)**:
     *   Build the Lobby Multi-Search scraper for champ select.
     *   Develop Champ Select instalock/ban automation rules.

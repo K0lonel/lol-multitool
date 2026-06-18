@@ -14,6 +14,15 @@
 		<link href="Bootstrap/sidebars.css" rel="stylesheet">
 		<link href="Bootstrap/bootstrap.min.css" rel="stylesheet">
 		<link href="Bootstrap/custom.css" rel="stylesheet">
+		<style>
+			.log-line {
+				animation: logFadeIn 0.25s ease-out;
+			}
+			@keyframes logFadeIn {
+				from { opacity: 0; transform: translateY(4px); }
+				to { opacity: 1; transform: translateY(0); }
+			}
+		</style>
 	</head>
 	<body>
 		<!-- Web-based TitleBar -->
@@ -36,36 +45,31 @@
 				<div class="sidebar-logo">
 					<img src="logo.svg" alt="LoL Logo" width="80" height="80">
 				</div>
-				<ul class="nav nav-pills flex-column mb-auto mt-3" role="tablist">
-					<li class="nav-item">
-						<a class="nav-link active" data-bs-toggle="pill" role="tab" href="#v-pills-home" id="v-pills-home-tab">
+				<ul class="nav nav-pills flex-column mb-auto mt-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+					<li class="nav-item" role="presentation">
+						<button class="nav-link active w-100 border-0" id="v-pills-home-tab" data-bs-toggle="pill" data-bs-target="#v-pills-home" type="button" role="tab" aria-controls="v-pills-home" aria-selected="true">
 							<i class="fas fa-chart-line"></i>
 							<span class="nav-text">Dashboard</span>
-						</a>
+						</button>
 					</li>
-					<li class="nav-item">
-						<a class="nav-link" data-bs-toggle="pill" role="tab" href="#v-pills-plugins" id="v-pills-plugins-tab">
+					<li class="nav-item" role="presentation">
+						<button class="nav-link w-100 border-0" id="v-pills-plugins-tab" data-bs-toggle="pill" data-bs-target="#v-pills-plugins" type="button" role="tab" aria-controls="v-pills-plugins" aria-selected="false">
 							<i class="fas fa-cubes"></i>
 							<span class="nav-text">Automation</span>
-						</a>
+						</button>
 					</li>
-					<li class="nav-item">
-						<a class="nav-link" data-bs-toggle="pill" role="tab" href="#v-pills-lolalytics" id="v-pills-lolalytics-tab">
-							<i class="fas fa-magnifying-glass-chart"></i>
-							<span class="nav-text">LoLalytics</span>
-						</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link" data-bs-toggle="pill" role="tab" href="#v-pills-settings" id="v-pills-settings-tab">
+
+					<li class="nav-item" role="presentation">
+						<button class="nav-link w-100 border-0" id="v-pills-settings-tab" data-bs-toggle="pill" data-bs-target="#v-pills-settings" type="button" role="tab" aria-controls="v-pills-settings" aria-selected="false">
 							<i class="fas fa-sliders-h"></i>
 							<span class="nav-text">Settings</span>
-						</a>
+						</button>
 					</li>
 				</ul>
 				
 				<!-- Summoner Profile Card -->
 				<div class="profile-card m-3" id="summoner-card">
-					<img id="summoner-icon" src="https://ddragon.leagueoflegends.com/cdn/14.3.1/img/profileicon/29.png" alt="Avatar" class="profile-avatar">
+					<img id="summoner-icon" src="https://ddragon.leagueoflegends.com/cdn/16.12.1/img/profileicon/29.png" alt="Avatar" class="profile-avatar">
 					<div class="profile-info overflow-hidden">
 						<div class="profile-name text-truncate" id="summoner-name">Summoner</div>
 						<div class="profile-level" id="summoner-level">Level --</div>
@@ -87,52 +91,187 @@
 							</div>
 						</div>
 
-						<div class="row">
+						<div class="row g-3 align-items-stretch mb-4">
 							<!-- Quick Stats Card -->
-							<div class="col-md-6 col-lg-4">
-								<div class="hextech-card">
-									<div class="card-title-gold"><i class="fa-solid fa-gamepad"></i> Game Stats</div>
-									<div class="mb-2"><strong>Phase:</strong> <span id="gameflow-phase" class="text-info">None</span></div>
-									<div id="tft_time_container" style="display:none;">
-										<strong>TFT Match Time:</strong> <span id="tft_time" class="text-warning">00:00</span>
+							<div class="col-md-6 col-lg-5 d-flex">
+								<div class="hextech-card w-100 mb-0 d-flex flex-column justify-content-between">
+									<div class="card-title-gold mb-3"><i class="fa-solid fa-gamepad"></i> Game Stats</div>
+									<div class="row align-items-center mt-auto mb-auto">
+										<div class="col-4 border-end" style="border-color: rgba(200, 155, 60, 0.15) !important;">
+											<div class="small text-muted mb-1 text-center" style="font-size: 0.65rem; letter-spacing: 0.5px; line-height: 1.3; min-height: 2.6em;">CLIENT<br>PHASE</div>
+											<div class="text-center">
+												<span id="gameflow-phase" class="badge bg-dark border text-info" style="border-color: rgba(10, 200, 185, 0.3) !important; font-size: 0.85rem;">None</span>
+											</div>
+										</div>
+										<div class="col-4 border-end" style="border-color: rgba(200, 155, 60, 0.15) !important;">
+											<div class="small text-muted mb-1 text-center" style="font-size: 0.65rem; letter-spacing: 0.5px; line-height: 1.3; min-height: 2.6em;">CACHED<br>MATCHES</div>
+											<div class="text-center">
+												<span id="game-stats-reports" class="badge bg-dark border text-warning" style="border-color: rgba(200, 155, 60, 0.3) !important; font-size: 0.85rem;">0</span>
+											</div>
+										</div>
+										<div class="col-4">
+											<div class="small text-muted mb-1 text-center" style="font-size: 0.65rem; letter-spacing: 0.5px; line-height: 1.3; min-height: 2.6em;">PLAYERS<br>LOGGED</div>
+											<div class="text-center">
+												<span id="game-stats-players" class="badge bg-dark border text-success" style="border-color: rgba(40, 167, 69, 0.3) !important; font-size: 0.85rem;">0</span>
+											</div>
+										</div>
 									</div>
 								</div>
 							</div>
 							
 							<!-- Active Features Summary -->
-							<div class="col-md-6 col-lg-8">
-								<div class="hextech-card">
-									<div class="card-title-gold"><i class="fa-solid fa-bolt"></i> Running Tasks</div>
-									<div class="row text-center mt-2">
+							<div class="col-md-6 col-lg-7 d-flex">
+								<div class="hextech-card w-100 mb-0 d-flex flex-column justify-content-between">
+									<div class="card-title-gold mb-3"><i class="fa-solid fa-bolt"></i> Running Tasks</div>
+									<div class="row text-center mt-auto mb-auto">
 										<div class="col-4">
-											<div class="small text-muted mb-1">AUTO-ACCEPT</div>
+											<div class="small text-muted mb-1" style="font-size: 0.75rem; letter-spacing: 0.5px;">AUTO-ACCEPT</div>
 											<span class="badge" id="badge-accept" style="font-size: 0.9rem;">Disabled</span>
 										</div>
-										<div class="col-4">
-											<div class="small text-muted mb-1">AUTO-REPORT</div>
+										<div class="col-4 border-start border-end" style="border-color: rgba(200, 155, 60, 0.15) !important;">
+											<div class="small text-muted mb-1" style="font-size: 0.75rem; letter-spacing: 0.5px;">AUTO-REPORT</div>
 											<span class="badge" id="badge-report" style="font-size: 0.9rem;">Disabled</span>
 										</div>
 										<div class="col-4">
-											<div class="small text-muted mb-1">TFT BOT</div>
-											<span class="badge" id="badge-tft" style="font-size: 0.9rem;">Disabled</span>
+											<div class="small text-muted mb-1" style="font-size: 0.75rem; letter-spacing: 0.5px;">BENCH SNIPER</div>
+											<span class="badge" id="badge-sniper" style="font-size: 0.9rem;">Disabled</span>
 										</div>
 									</div>
 								</div>
 							</div>
 						</div>
 
-						<!-- Recent Action Log -->
-						<div class="hextech-card">
-							<div class="card-title-gold"><i class="fa-solid fa-clock-rotate-left"></i> Reported Matches Log</div>
-							<div id="report-timeline" style="max-height: 400px; overflow-y: auto;">
-								<div class="text-center py-4 text-muted">No reports sent in this session yet.</div>
+						<!-- Active Lobby Scraper Card -->
+						<div class="hextech-card" id="lobby-helper-card" style="display:none; border-color: var(--hextech-gold);">
+							<div class="card-title-gold"><i class="fa-solid fa-users-viewfinder"></i> Active Champion Draft Companion</div>
+							<div class="row align-items-center">
+								<div class="col-md-8">
+									<div class="small text-muted mb-2">Teammates found in lobby:</div>
+									<div id="lobby-players-list" class="d-flex flex-wrap gap-2 mb-2">
+									</div>
+								</div>
+								<div class="col-md-4 text-end">
+									<button class="btn btn-outline-danger btn-sm w-100" onclick="ahk.dodgeLobby()"><i class="fa-solid fa-right-from-bracket"></i> Instadodge Lobby</button>
+								</div>
+							</div>
+						</div>
+
+						<!-- Queue Progress Card -->
+						<div class="hextech-card" id="queue-card" style="display:none; border-color: #ffc107;">
+							<div class="card-title-gold"><i class="fa-solid fa-spinner fa-spin"></i> Active Reporting Process</div>
+							<div class="d-flex justify-content-between align-items-center mb-2">
+								<span id="queue-status-text" class="text-warning font-weight-bold">Reporting...</span>
+								<span class="badge bg-danger" id="queue-count-badge">0 reports queued</span>
+							</div>
+							<div class="progress" style="height: 6px; background-color: rgba(5, 8, 12, 0.6); border-radius: 3px; overflow: hidden;">
+								<div id="queue-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" style="width: 100%;"></div>
+							</div>
+						</div>
+
+						<!-- Split Log Console Layout -->
+						<div class="row g-3">
+							<!-- Left Column: Reported Matches Log -->
+							<div class="col-md-6 d-flex">
+								<div class="hextech-card w-100 mb-0 d-flex flex-column">
+									<div class="card-title-gold"><i class="fa-solid fa-clock-rotate-left"></i> Reported Matches Log</div>
+									<div id="report-timeline" class="flex-grow-1" style="max-height: 400px; overflow-y: auto;">
+										<div class="text-center py-4 text-muted">No reports sent in this session yet.</div>
+									</div>
+								</div>
+							</div>
+
+							<!-- Right Column: System Event Logs -->
+							<div class="col-md-6 d-flex">
+								<div class="hextech-card w-100 mb-0 d-flex flex-column">
+									<div class="d-flex justify-content-between align-items-center mb-3">
+										<div class="card-title-gold m-0"><i class="fa-solid fa-terminal"></i> System Event Logs</div>
+										<button class="btn btn-outline-warning btn-sm" onclick="clearSystemLogs()" style="font-size: 0.75rem; padding: 2px 8px;"><i class="fa-solid fa-trash-can"></i> Clear</button>
+									</div>
+									<div id="system-logs-console" class="flex-grow-1 p-2 rounded" style="max-height: 400px; min-height: 250px; overflow-y: auto; background: rgba(5, 8, 12, 0.6); border: 1px solid rgba(200, 155, 60, 0.15); font-family: 'Courier New', Courier, monospace; font-size: 0.8rem; line-height: 1.4;">
+										<div class="text-center py-4 text-muted">Console initialized. Ready for logs...</div>
+									</div>
+								</div>
 							</div>
 						</div>
 					</div>
 
-					<!-- Automation/Plugins Tab -->
+			<!-- Automation/Plugins Tab -->
 					<div class="tab-pane fade" id="v-pills-plugins" role="tabpanel" aria-labelledby="v-pills-plugins-tab">
 						<h2 class="mb-4" style="font-weight: 700; letter-spacing: 0.5px;">Automation Center</h2>
+
+						<!-- ARAM Bench Sniper Configuration -->
+						<div class="hextech-card">
+							<div class="d-flex justify-content-between align-items-center mb-3">
+								<div class="card-title-gold m-0">
+									<i class="fa-solid fa-crosshairs" id="sniper-status-icon" style="margin-right: 6px;"></i> ARAM Bench Sniper Companion
+								</div>
+								<div class="form-check form-switch">
+									<input class="form-check-input" type="checkbox" id="toggle-autoPickBenchEnabled" onchange="toggleSniper(this.checked)">
+								</div>
+							</div>
+							
+							<div class="row g-4 align-items-stretch">
+								<div class="col-md-7">
+									<p class="text-muted small">Instantly swap to any of these preferred champions the millisecond they are rerolled to the team bench.</p>
+									<div class="mb-3">
+										<label for="input-pickBench" class="form-label small text-warning font-weight-bold">Target Champions List (Comma separated)</label>
+										<div class="input-group">
+											<span class="input-group-text bg-dark border-secondary text-muted"><i class="fa-solid fa-tags"></i></span>
+											<input class="form-control" id="input-pickBench" placeholder="E.g., Ashe, Lux, Jinx, Veigar..." oninput="onBenchInputChanged('input-pickBench')">
+										</div>
+									</div>
+									
+									<!-- Active Targets Visualizer -->
+									<div class="mb-3">
+										<label class="form-label small text-muted d-block">Active Targets Visualizer:</label>
+										<div id="sniper-active-badges" class="d-flex flex-wrap gap-2 py-2 px-3 rounded" style="background: rgba(5, 8, 12, 0.4); border: 1px dashed var(--panel-border); min-height: 48px;">
+											<span class="text-muted small my-auto">Type champion names above to load targets...</span>
+										</div>
+									</div>
+								</div>
+								
+								<div class="col-md-5 d-flex">
+									<!-- Status, Favorites & Presets Panel -->
+									<div class="border p-3 rounded w-100 d-flex flex-column justify-content-between" style="background: rgba(10, 14, 20, 0.4); border-color: var(--panel-border) !important;">
+										<div>
+											<div class="small text-muted mb-2" style="font-size: 0.8rem; letter-spacing: 0.5px;">SNIPER COMPANION STATE:</div>
+											<h4 id="sniper-status-text" class="text-secondary font-weight-bold uppercase mb-3" style="font-size: 1.15rem; letter-spacing: 1px;">STANDBY</h4>
+											
+											<div class="small text-muted mb-2" style="font-size: 0.8rem; letter-spacing: 0.5px;">QUICK PRESETS LOAD (CHOOSE TYPES):</div>
+											<div class="d-flex flex-wrap gap-2 mb-3">
+												<span class="badge border cursor-pointer role-preset-tag text-muted" data-role="favorites" onclick="toggleRolePreset(this)" style="font-size: 0.75rem; padding: 6px 10px; background: rgba(5,8,12,0.4); border-color: rgba(255,255,255,0.1) !important; user-select: none; cursor: pointer;"><i class="fa-solid fa-star" style="margin-right: 3px;"></i>Favorites</span>
+												<span class="badge border cursor-pointer role-preset-tag text-muted" data-role="mage" onclick="toggleRolePreset(this)" style="font-size: 0.75rem; padding: 6px 10px; background: rgba(5,8,12,0.4); border-color: rgba(255,255,255,0.1) !important; user-select: none; cursor: pointer;">Mage</span>
+												<span class="badge border cursor-pointer role-preset-tag text-muted" data-role="marksman" onclick="toggleRolePreset(this)" style="font-size: 0.75rem; padding: 6px 10px; background: rgba(5,8,12,0.4); border-color: rgba(255,255,255,0.1) !important; user-select: none; cursor: pointer;">Marksman / ADC</span>
+												<span class="badge border cursor-pointer role-preset-tag text-muted" data-role="support" onclick="toggleRolePreset(this)" style="font-size: 0.75rem; padding: 6px 10px; background: rgba(5,8,12,0.4); border-color: rgba(255,255,255,0.1) !important; user-select: none; cursor: pointer;">Support</span>
+												<span class="badge border cursor-pointer role-preset-tag text-muted" data-role="tank" onclick="toggleRolePreset(this)" style="font-size: 0.75rem; padding: 6px 10px; background: rgba(5,8,12,0.4); border-color: rgba(255,255,255,0.1) !important; user-select: none; cursor: pointer;">Tank</span>
+												<span class="badge border cursor-pointer role-preset-tag text-muted" data-role="fighter" onclick="toggleRolePreset(this)" style="font-size: 0.75rem; padding: 6px 10px; background: rgba(5,8,12,0.4); border-color: rgba(255,255,255,0.1) !important; user-select: none; cursor: pointer;">Fighter</span>
+												<span class="badge border cursor-pointer role-preset-tag text-muted" data-role="assassin" onclick="toggleRolePreset(this)" style="font-size: 0.75rem; padding: 6px 10px; background: rgba(5,8,12,0.4); border-color: rgba(255,255,255,0.1) !important; user-select: none; cursor: pointer;">Assassin</span>
+											</div>
+
+											<div class="small text-muted mb-2" style="font-size: 0.8rem; letter-spacing: 0.5px;">MANAGE FAVORITE CHAMPIONS:</div>
+											<div id="favorites-container" class="d-flex flex-wrap gap-2 mb-2" style="min-height: 32px; background: rgba(5, 8, 12, 0.2); padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05); align-items: center;">
+												<span class="text-muted small my-auto" style="font-size: 0.75rem;">No favorites added yet.</span>
+											</div>
+											<div class="position-relative mt-2">
+												<div class="input-group input-group-sm">
+													<span class="input-group-text bg-dark border-secondary text-muted" style="padding: 2px 8px;"><i class="fa-solid fa-star"></i></span>
+													<input class="form-control" id="search-fav-champ" placeholder="Search champion to add..." style="font-size: 0.8rem;" autocomplete="off" onfocus="showChampDropdown()" oninput="filterChampDropdown()" onblur="hideChampDropdownDelayed()">
+													<button class="btn btn-outline-warning btn-sm" onclick="addCurrentSearchToFav()"><i class="fa-solid fa-plus"></i> Add</button>
+												</div>
+												<!-- Custom Dropdown Menu -->
+												<div id="custom-champ-dropdown" class="position-absolute w-100 mb-1 d-none rounded border" style="bottom: 100%; left: 0; background: rgba(10, 14, 20, 0.95); border-color: var(--hextech-gold) !important; max-height: 200px; overflow-y: auto; z-index: 1050; box-shadow: 0 -10px 25px rgba(0,0,0,0.5); backdrop-filter: blur(8px);">
+													<!-- JS populated options -->
+												</div>
+											</div>
+										</div>
+										
+										<div class="small text-muted mt-3" style="font-size: 0.7rem; border-top: 1px solid rgba(200, 155, 60, 0.1); padding-top: 8px;">
+											* Timer polling grabs rerolls instantly.
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
 
 						<!-- Auto Accept Configuration -->
 						<div class="hextech-card">
@@ -192,38 +331,9 @@
 								</div>
 							</div>
 						</div>
-
-						<!-- Auto TFT Configuration -->
-						<div class="hextech-card">
-							<div class="d-flex justify-content-between align-items-center mb-3">
-								<div class="card-title-gold m-0"><i class="fa-solid fa-robot"></i> TFT Farm Bot</div>
-								<div class="form-check form-switch">
-									<input class="form-check-input" type="checkbox" id="toggle-autoTFT" onchange="updateConfig('autoTFT', this.checked)">
-								</div>
-							</div>
-							<p class="text-muted small">Queue up automatically for TFT games, and surrender to farm tokens once game timer exceeds the threshold.</p>
-							<div class="mt-3">
-								<label for="range-tftSurrender" class="form-label d-flex justify-content-between">
-									<span>Surrender Timer Threshold</span>
-									<span class="text-warning"><strong id="val-tftSurrender">10</strong> minutes</span>
-								</label>
-								<input type="range" class="form-range" min="300" max="900" step="30" id="range-tftSurrender" oninput="document.getElementById('val-tftSurrender').innerText=Math.floor(this.value/60)" onchange="updateConfig('tftSurrenderTime', parseInt(this.value))">
-							</div>
-						</div>
 					</div>
 
-					<!-- LoLalytics Tab -->
-					<div class="tab-pane fade" id="v-pills-lolalytics" role="tabpanel" aria-labelledby="v-pills-lolalytics-tab">
-						<h2 class="mb-4" style="font-weight: 700; letter-spacing: 0.5px;">LoLalytics Intel</h2>
-						<div class="hextech-card">
-							<div class="card-title-gold"><i class="fa-solid fa-chart-simple"></i> Champ Build Lookup</div>
-							<p class="text-muted small">Quickly search for current itemization, counter statistics, and draft priority.</p>
-							<div class="input-group mb-3">
-								<input type="text" class="form-control" placeholder="Search Champion Name..." id="lookup-champion">
-								<button class="btn btn-hextech" type="button" onclick="openLoLalytics()">Search Stats</button>
-							</div>
-						</div>
-					</div>
+
 
 					<!-- Settings Tab -->
 					<div class="tab-pane fade" id="v-pills-settings" role="tabpanel" aria-labelledby="v-pills-settings-tab">
@@ -260,6 +370,8 @@
 		// Initial config payload load from AHK
 		function initConfig(config) {
 			console.log("Initializing configs: ", config);
+			window.loadedConfig = config;
+
 			if (config.autoAccept !== undefined) {
 				document.getElementById('toggle-autoAccept').checked = config.autoAccept;
 				updateBadge('badge-accept', config.autoAccept);
@@ -277,13 +389,20 @@
 					cb.checked = config.reportCategories.includes(cb.value);
 				});
 			}
-			if (config.autoTFT !== undefined) {
-				document.getElementById('toggle-autoTFT').checked = config.autoTFT;
-				updateBadge('badge-tft', config.autoTFT);
+			if (config.autoPickBenchEnabled !== undefined) {
+				updateBadge('badge-sniper', config.autoPickBenchEnabled);
 			}
-			if (config.tftSurrenderTime !== undefined) {
-				document.getElementById('range-tftSurrender').value = config.tftSurrenderTime;
-				document.getElementById('val-tftSurrender').innerText = Math.floor(config.tftSurrenderTime / 60);
+			
+			// ARAM Bench Sniper init
+			if (config.autoPickBenchEnabled !== undefined) {
+				document.getElementById('toggle-autoPickBenchEnabled').checked = config.autoPickBenchEnabled;
+				updateSniperUI(config.autoPickBenchEnabled);
+			}
+			if (config.favoriteChampIds !== undefined) {
+				renderFavoriteChampions(config.favoriteChampIds);
+			}
+			if (Object.keys(championList).length > 0) {
+				reflectBenchChampNames('input-pickBench', config.autoPickBenchIds);
 			}
 		}
 
@@ -307,7 +426,7 @@
 			// Reflect in active badge summaries immediately
 			if (key === 'autoAccept') updateBadge('badge-accept', value);
 			if (key === 'autoReport') updateBadge('badge-report', value);
-			if (key === 'autoTFT') updateBadge('badge-tft', value);
+			if (key === 'autoPickBenchEnabled') updateBadge('badge-sniper', value);
 		}
 
 		function onCategoryToggle() {
@@ -318,17 +437,69 @@
 			updateConfig('reportCategories', JSON.stringify(categories));
 		}
 
-		function openLoLalytics() {
-			let champion = document.getElementById('lookup-champion').value.trim();
-			if (champion) {
-				// Format name to match LoLalytics URLs (e.g. jarvaniv, aurelionsol)
-				let formatted = champion.toLowerCase().replace(/[^a-z0-9]/g, '');
-				window.open(`https://lolalytics.com/lol/${formatted}/build/`, '_blank');
+		function escapeHTML(str) {
+			return str.replace(/[&<>'"]/g, 
+				tag => ({
+					'&': '&amp;',
+					'<': '&lt;',
+					'>': '&gt;',
+					"'": '&#39;',
+					'"': '&quot;'
+				}[tag] || tag)
+			);
+		}
+
+		function logSystemMessage(msg, type = 'info') {
+			const consoleEl = document.getElementById('system-logs-console');
+			if (!consoleEl) return;
+			
+			// Remove the initial placeholder if it exists
+			const placeholder = consoleEl.querySelector('.text-muted.text-center');
+			if (placeholder && placeholder.innerText.includes('Console initialized')) {
+				consoleEl.innerHTML = '';
+			}
+			
+			const timeStr = new Date().toLocaleTimeString();
+			let color = '#a0a8b6'; // Default var(--text-muted) color
+			let icon = 'info';
+			if (type === 'error') {
+				color = '#ff4d4d'; // Red
+				icon = 'triangle-exclamation';
+			} else if (type === 'warning') {
+				color = '#ffc107'; // Yellow/Gold
+				icon = 'triangle-exclamation';
+			} else if (type === 'success') {
+				color = '#28a745'; // Green
+				icon = 'circle-check';
+			} else if (type === 'debug') {
+				color = '#0ac8b9'; // Hextech Blue
+				icon = 'bug';
+			}
+			
+			const logLine = document.createElement('div');
+			logLine.className = 'log-line';
+			logLine.style.color = color;
+			logLine.style.marginBottom = '6px';
+			logLine.style.borderBottom = '1px solid rgba(255,255,255,0.03)';
+			logLine.style.paddingBottom = '4px';
+			logLine.style.wordBreak = 'break-all';
+			
+			logLine.innerHTML = `<span class="text-muted" style="font-size: 0.75rem; font-family: 'Courier New', Courier, monospace; display: inline-block; min-width: 95px;">[${timeStr}]</span> <i class="fa-solid fa-${icon} me-1" style="font-size: 0.75rem;"></i> <span>${escapeHTML(msg)}</span>`;
+			consoleEl.appendChild(logLine);
+			
+			// Auto scroll to bottom
+			consoleEl.scrollTop = consoleEl.scrollHeight;
+		}
+
+		function clearSystemLogs() {
+			const consoleEl = document.getElementById('system-logs-console');
+			if (consoleEl) {
+				consoleEl.innerHTML = '<div class="text-center py-4 text-muted">Console cleared. Ready for logs...</div>';
 			}
 		}
 
 		// Main update dashboard loop callback
-		function updateDashboard(me, gameflow, history) {
+		function updateDashboard(me, gameflow, history, queueSize, currentStatus) {
 			// 1. Connection states
 			const stateEl = document.getElementById('connection-state');
 			const dotEl = document.getElementById('connection-dot');
@@ -349,12 +520,23 @@
 				gameflowEl.innerText = "None";
 			}
 
-			// Show/hide TFT time container based on phase/mode
-			const tftContainer = document.getElementById('tft_time_container');
-			if (gameflow === "InProgress" && document.getElementById('toggle-autoTFT').checked) {
-				tftContainer.style.display = "block";
-			} else {
-				tftContainer.style.display = "none";
+			// Update Cached Matches Count & Total Players Logged
+			const reportsEl = document.getElementById('game-stats-reports');
+			const playersEl = document.getElementById('game-stats-players');
+			if (reportsEl) {
+				reportsEl.innerText = (history && typeof history === 'object') ? Object.keys(history).length : 0;
+			}
+			if (playersEl) {
+				let totalPlayers = 0;
+				if (history && typeof history === 'object') {
+					Object.keys(history).forEach(gameId => {
+						let item = history[gameId];
+						if (item && item.ReportedPlayers && Array.isArray(item.ReportedPlayers)) {
+							totalPlayers += item.ReportedPlayers.length;
+						}
+					});
+				}
+				playersEl.innerText = totalPlayers;
 			}
 
 			// 2. Profile Details
@@ -362,36 +544,474 @@
 				document.getElementById('summoner-name').innerText = me.lol.gameName;
 				document.getElementById('summoner-level').innerText = "Level " + (me.lol.summonerLevel || "--");
 				if (me.lol.iconId) {
-					document.getElementById('summoner-icon').src = `https://ddragon.leagueoflegends.com/cdn/14.3.1/img/profileicon/${me.lol.iconId}.png`;
+					document.getElementById('summoner-icon').src = `https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/profileicon/${me.lol.iconId}.png`;
 				}
 			}
 
-			// 3. Render Match Report history list
+			// 3. Queue Status
+			const queueCard = document.getElementById('queue-card');
+			const queueText = document.getElementById('queue-status-text');
+			const queueBadge = document.getElementById('queue-count-badge');
+			
+			if (queueSize > 0) {
+				queueCard.style.display = 'block';
+				queueText.innerText = currentStatus || 'Processing reports...';
+				queueBadge.innerText = queueSize + ' reports pending';
+			} else if (currentStatus && currentStatus.includes('successfully')) {
+				queueCard.style.display = 'block';
+				queueText.innerText = currentStatus;
+				queueBadge.innerText = 'Completed';
+				// Hide after 5 seconds
+				setTimeout(() => {
+					if (document.getElementById('queue-count-badge').innerText === 'Completed') {
+						queueCard.style.display = 'none';
+					}
+				}, 5000);
+			} else {
+				queueCard.style.display = 'none';
+			}
+
+			// 4. Render Match Report history list
 			const timelineEl = document.getElementById('report-timeline');
 			if (history && Object.keys(history).length > 0) {
 				let html = '';
-				// Sort keys or iterate
-				Object.keys(history).reverse().slice(0, 15).forEach(gameId => {
+				
+				// Convert to array and filter out entries without a Timestamp
+				let entries = [];
+				Object.keys(history).forEach(gameId => {
 					let item = history[gameId];
-					let reportedList = item.ReportedPlayers ? item.ReportedPlayers.join(', ') : 'All Lobby';
-					let link = item.HistoryLink || `https://www.leagueofgraphs.com/match/eune/${gameId}`;
-					html += `
-						<div class="report-item">
-							<div class="report-info">
-								<span class="report-match-id">MATCH #${gameId}</span>
-								<span class="report-players" title="${reportedList}">${reportedList}</span>
-							</div>
-							<div class="d-flex align-items-center gap-2">
-								<span class="badge-reported">Reported</span>
-								<a href="${link}" target="_blank" class="btn btn-sm btn-hextech" style="padding: 2px 8px; font-size: 0.75rem;">Link</a>
-							</div>
-						</div>
-					`;
+					if (item && item.Timestamp) {
+						entries.push({
+							gameId: gameId,
+							HistoryLink: item.HistoryLink,
+							ReportedPlayers: item.ReportedPlayers,
+							Timestamp: item.Timestamp
+						});
+					}
 				});
-				timelineEl.innerHTML = html;
+				
+				// Sort by Timestamp descending (newest first)
+				entries.sort((a, b) => b.Timestamp - a.Timestamp);
+				
+				if (entries.length > 0) {
+					entries.slice(0, 15).forEach(item => {
+						let reportedList = item.ReportedPlayers ? item.ReportedPlayers.join(', ') : 'All Lobby';
+						let link = item.HistoryLink || `https://www.leagueofgraphs.com/match/eune/${item.gameId}`;
+						let dateStr = new Date(item.Timestamp).toLocaleString();
+						
+						html += `
+							<div class="report-item">
+								<div class="report-info">
+									<span class="report-match-id">MATCH #${item.gameId} &bull; ${dateStr}</span>
+									<span class="report-players" title="${reportedList}">${reportedList}</span>
+								</div>
+								<div class="d-flex align-items-center gap-2">
+									<span class="badge-reported">Reported</span>
+									<a href="${link}" target="_blank" class="btn btn-sm btn-hextech" style="padding: 2px 8px; font-size: 0.75rem;">Link</a>
+								</div>
+							</div>
+						`;
+					});
+					timelineEl.innerHTML = html;
+				} else {
+					timelineEl.innerHTML = '<div class="text-center py-4 text-muted">No reports sent in this session yet.</div>';
+				}
 			} else {
 				timelineEl.innerHTML = '<div class="text-center py-4 text-muted">No reports sent in this session yet.</div>';
 			}
 		}
+
+		// Draft/Champion database and scraper methods
+		let championList = {};
+		let championNameMap = {};
+		let championRoles = {}; // Maps champion ID to lowercase roles array
+		let lobbyPlayers = [];
+		let ddragonVersion = '16.12.1'; // Default modern fallback version
+
+		function cleanChampName(name) {
+			return name.toLowerCase().replace(/[^a-z0-9]/g, '');
+		}
+
+		// Fallback: Fetch latest version from DataDragon API and then load champion catalog
+		fetch('https://ddragon.leagueoflegends.com/api/versions.json')
+			.then(res => res.json())
+			.then(versions => {
+				ddragonVersion = versions[0] || '16.12.1';
+				console.log("Latest DataDragon version determined: " + ddragonVersion);
+				return fetch(`https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/data/en_US/champion.json`);
+			})
+			.then(res => res.json())
+			.then(data => {
+				// Only load if LCU hasn't loaded them yet
+				if (Object.keys(championList).length === 0) {
+					console.log("Loading champions from DataDragon fallback version: " + ddragonVersion);
+					for (let name in data.data) {
+						let info = data.data[name];
+						championList[info.key] = info.name;
+						championNameMap[cleanChampName(info.name)] = parseInt(info.key);
+						championRoles[info.key] = info.tags ? info.tags.map(t => t.toLowerCase()) : [];
+					}
+					populateChampDropdowns();
+				}
+			})
+			.catch(err => console.error("Failed to load DataDragon fallback", err));
+
+		function loadChampsFromLCU(champs) {
+			console.log("Loading " + champs.length + " champions from LCU.");
+			championList = {};
+			championNameMap = {};
+			championRoles = {};
+			
+			champs.forEach(c => {
+				if (c.id > 0) {
+					championList[c.id] = c.name;
+					championNameMap[cleanChampName(c.name)] = c.id;
+					championRoles[c.id] = c.roles ? c.roles.map(r => r.toLowerCase()) : [];
+				}
+			});
+			
+			populateChampDropdowns();
+		}
+
+		function populateChampDropdowns() {
+			if (window.loadedConfig) {
+				reflectBenchChampNames('input-pickBench', window.loadedConfig.autoPickBenchIds);
+				renderFavoriteChampions(window.loadedConfig.favoriteChampIds);
+			}
+		}
+
+		function reflectBenchChampNames(inputId, ids) {
+			const el = document.getElementById(inputId);
+			if (!el) return;
+			if (ids && ids.length > 0) {
+				let names = ids.map(id => championList[id]).filter(name => name !== undefined);
+				el.value = names.join(', ');
+			} else {
+				el.value = '';
+			}
+			renderActiveBadges(ids);
+			if (window.loadedConfig && window.loadedConfig.favoriteChampIds) {
+				renderFavoriteChampions(window.loadedConfig.favoriteChampIds);
+			}
+		}
+
+		function onBenchInputChanged(inputId) {
+			let val = document.getElementById(inputId).value;
+			let parts = val.split(',').map(p => p.trim().toLowerCase());
+			let ids = [];
+			parts.forEach(part => {
+				if (championNameMap[part] !== undefined) {
+					ids.push(championNameMap[part]);
+				}
+			});
+			renderActiveBadges(ids);
+			if (window.loadedConfig) {
+				window.loadedConfig.autoPickBenchIds = ids;
+			}
+			updateConfig('autoPickBenchIds', JSON.stringify(ids));
+			if (window.loadedConfig && window.loadedConfig.favoriteChampIds) {
+				renderFavoriteChampions(window.loadedConfig.favoriteChampIds);
+			}
+		}
+
+		function renderFavoriteChampions(favIds) {
+			const container = document.getElementById('favorites-container');
+			if (!container) return;
+			
+			if (favIds && favIds.length > 0) {
+				let html = '';
+				favIds.forEach(id => {
+					let name = championList[id];
+					if (name) {
+						html += `
+							<span class="badge border d-inline-flex align-items-center gap-1 border-warning text-warning" 
+								  style="background: rgba(200, 155, 60, 0.15); font-size: 0.8rem; padding: 4px 8px;">
+								<i class="fa-solid fa-star text-warning" style="font-size: 0.65rem;"></i>
+								${name}
+								<i class="fa-solid fa-xmark text-danger ms-1" style="cursor: pointer; font-size: 0.85rem;" 
+								   onclick="removeFavoriteChamp(event, ${id})"></i>
+							</span>
+						`;
+					}
+				});
+				container.innerHTML = html;
+			} else {
+				container.innerHTML = '<span class="text-muted small my-auto" style="font-size: 0.75rem;">No favorites added yet.</span>';
+			}
+			
+			// If the favorites preset is currently active, refresh the target list
+			const favPreset = document.querySelector('.role-preset-tag[data-role="favorites"]');
+			if (favPreset && favPreset.classList.contains('border-warning')) {
+				applyActiveRolePresets();
+			}
+		}
+
+		function toggleFavoriteTarget(id) {
+			// No longer used - favorites are applied as a preset
+		}
+
+		function removeFavoriteChamp(event, id) {
+			if (event) {
+				event.stopPropagation();
+				event.preventDefault();
+			}
+			id = parseInt(id);
+			if (!window.loadedConfig) return;
+			let favIds = window.loadedConfig.favoriteChampIds || [];
+			
+			let idx = favIds.indexOf(id);
+			if (idx === -1) {
+				idx = favIds.indexOf(String(id));
+			}
+			
+			if (idx > -1) {
+				favIds.splice(idx, 1);
+				window.loadedConfig.favoriteChampIds = favIds;
+				updateConfig('favoriteChampIds', JSON.stringify(favIds));
+				renderFavoriteChampions(favIds);
+			}
+		}
+
+		function addCurrentSearchToFav() {
+			const input = document.getElementById('search-fav-champ');
+			if (!input) return;
+			let name = input.value.trim();
+			if (!name) return;
+			
+			let id = championNameMap[cleanChampName(name)];
+			if (id !== undefined) {
+				if (!window.loadedConfig) window.loadedConfig = {};
+				let favIds = window.loadedConfig.favoriteChampIds || [];
+				
+				if (!favIds.includes(id) && !favIds.includes(String(id))) {
+					favIds.push(id);
+					window.loadedConfig.favoriteChampIds = favIds;
+					updateConfig('favoriteChampIds', JSON.stringify(favIds));
+					renderFavoriteChampions(favIds);
+				}
+				input.value = '';
+				const dropdown = document.getElementById('custom-champ-dropdown');
+				if (dropdown) dropdown.classList.add('d-none');
+			} else {
+				console.warn("Champion not found: " + name);
+				input.classList.add('border-danger');
+				setTimeout(() => input.classList.remove('border-danger'), 1000);
+			}
+		}
+
+		function showChampDropdown() {
+			const dropdown = document.getElementById('custom-champ-dropdown');
+			if (dropdown) {
+				dropdown.classList.remove('d-none');
+				filterChampDropdown();
+			}
+		}
+
+		function filterChampDropdown() {
+			const input = document.getElementById('search-fav-champ');
+			const dropdown = document.getElementById('custom-champ-dropdown');
+			if (!input || !dropdown) return;
+			
+			const query = input.value.trim();
+			const cleanQuery = cleanChampName(query);
+			
+			if (cleanQuery.length === 0) {
+				dropdown.innerHTML = '<div class="p-2 text-muted text-center" style="font-size: 0.75rem;">Type to search...</div>';
+				return;
+			}
+			
+			let sortedChamps = Object.values(championList).sort();
+			let filtered = sortedChamps.filter(name => cleanChampName(name).includes(cleanQuery));
+			
+			let html = '';
+			if (filtered.length > 0) {
+				filtered.slice(0, 8).forEach(name => {
+					html += `
+						<div class="dropdown-item-champ" onclick="selectChampFromDropdown('${name.replace(/'/g, "\\'")}')">
+							<img src="https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/champion/${getChampCleanFile(name)}.png" style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--hextech-gold);" onerror="this.style.display='none'">
+							<span style="font-size: 0.8rem; font-weight: 500;">${name}</span>
+						</div>
+					`;
+				});
+			} else {
+				html = '<div class="p-2 text-muted text-center" style="font-size: 0.75rem;">No matching champions</div>';
+			}
+			dropdown.innerHTML = html;
+		}
+
+		function hideChampDropdownDelayed() {
+			setTimeout(() => {
+				const dropdown = document.getElementById('custom-champ-dropdown');
+				if (dropdown) dropdown.classList.add('d-none');
+			}, 200);
+		}
+
+		// Sets value, adds to favorites instantly, and resets input
+		function selectChampFromDropdown(name) {
+			const input = document.getElementById('search-fav-champ');
+			if (input) {
+				input.value = name;
+				addCurrentSearchToFav();
+			}
+		}
+
+		function renderActiveBadges(ids) {
+			let badgeHtml = '';
+			if (ids && ids.length > 0) {
+				ids.forEach(id => {
+					let name = championList[id];
+					if (name) {
+						badgeHtml += `
+							<span class="badge bg-dark border text-warning d-inline-flex align-items-center gap-1" style="border-color: var(--hextech-gold) !important; font-size: 0.85rem; padding: 4px 10px; margin-bottom: 2px;">
+								<img src="https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/champion/${getChampCleanFile(name)}.png" style="width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--hextech-gold);" onerror="this.style.display='none'">
+								${name}
+								<i class="fa-solid fa-times text-muted" style="cursor:pointer; font-size:0.75rem;" onclick="removeTargetChamp('${name.replace(/'/g, "\\'")}')"></i>
+							</span>
+						`;
+					}
+				});
+			}
+			const container = document.getElementById('sniper-active-badges');
+			if (container) {
+				container.innerHTML = badgeHtml || '<span class="text-muted small my-auto">Type champion names above to load targets...</span>';
+			}
+		}
+
+		function removeTargetChamp(name) {
+			let input = document.getElementById('input-pickBench');
+			if (!input) return;
+			let parts = input.value.split(',').map(p => p.trim());
+			let filtered = parts.filter(p => p.toLowerCase() !== name.toLowerCase());
+			input.value = filtered.join(', ');
+			onBenchInputChanged('input-pickBench');
+		}
+
+		function toggleRolePreset(el) {
+			const isActive = el.classList.contains('border-warning');
+			if (isActive) {
+				el.classList.remove('border-warning', 'text-warning', 'fw-bold');
+				el.classList.add('text-muted');
+				el.style.background = 'rgba(5,8,12,0.4)';
+				el.style.borderColor = 'rgba(255,255,255,0.1)';
+			} else {
+				el.classList.add('border-warning', 'text-warning', 'fw-bold');
+				el.classList.remove('text-muted');
+				el.style.background = 'rgba(200, 155, 60, 0.15)';
+				el.style.borderColor = 'var(--hextech-gold)';
+			}
+			applyActiveRolePresets();
+		}
+
+		function applyActiveRolePresets() {
+			let activeRoles = [];
+			let favoritesActive = false;
+			document.querySelectorAll('.role-preset-tag.border-warning').forEach(el => {
+				let role = el.getAttribute('data-role');
+				if (role === 'favorites') {
+					favoritesActive = true;
+				} else {
+					activeRoles.push(role);
+				}
+			});
+			
+			if (activeRoles.length === 0 && !favoritesActive) {
+				if (window.loadedConfig) {
+					window.loadedConfig.autoPickBenchIds = [];
+				}
+				updateConfig('autoPickBenchIds', '[]');
+				reflectBenchChampNames('input-pickBench', []);
+				return;
+			}
+			
+			let matchingIds = [];
+			
+			// Add role-based champions
+			if (activeRoles.length > 0) {
+				for (let id in championRoles) {
+					let roles = championRoles[id] || [];
+					let hasRole = roles.some(r => activeRoles.includes(r));
+					if (hasRole) {
+						matchingIds.push(parseInt(id));
+					}
+				}
+			}
+			
+			// Merge favorite champions if that preset is active
+			if (favoritesActive && window.loadedConfig && window.loadedConfig.favoriteChampIds) {
+				window.loadedConfig.favoriteChampIds.forEach(id => {
+					let intId = parseInt(id);
+					if (!matchingIds.includes(intId)) {
+						matchingIds.push(intId);
+					}
+				});
+			}
+			
+			matchingIds.sort((a, b) => a - b);
+			
+			if (window.loadedConfig) {
+				window.loadedConfig.autoPickBenchIds = matchingIds;
+			}
+			updateConfig('autoPickBenchIds', JSON.stringify(matchingIds));
+			reflectBenchChampNames('input-pickBench', matchingIds);
+		}
+
+		function toggleSniper(isEnabled) {
+			updateConfig('autoPickBenchEnabled', isEnabled);
+			updateSniperUI(isEnabled);
+		}
+
+		function updateSniperUI(isEnabled) {
+			const icon = document.getElementById('sniper-status-icon');
+			const text = document.getElementById('sniper-status-text');
+			if (!icon || !text) return;
+			if (isEnabled) {
+				icon.className = "fa-solid fa-crosshairs fa-spin text-warning";
+				text.innerText = "ARMED & ENGAGED";
+				text.className = "text-warning font-weight-bold uppercase mb-0 pulsing-glow";
+			} else {
+				icon.className = "fa-solid fa-crosshairs text-secondary";
+				text.innerText = "STANDBY";
+				text.className = "text-secondary font-weight-bold uppercase mb-0";
+			}
+		}
+
+		function getChampCleanFile(name) {
+			if (name === "Nunu & Willump") return "Nunu";
+			if (name === "Renata Glasc") return "Renata";
+			if (name === "Wukong") return "MonkeyKing";
+			if (name === "LeBlanc") return "Leblanc";
+			if (name === "Cho'Gath") return "Chogath";
+			if (name === "Bel'Veth") return "Belveth";
+			if (name === "Vel'Koz") return "Velkoz";
+			if (name === "Kha'Zix") return "Khazix";
+			if (name === "Kai'Sa") return "Kaisa";
+			return name.replace(/[^a-zA-Z0-9]/g, '');
+		}
+
+		function onLobbyScraped(playerList) {
+			console.log("Lobby scraped:", playerList);
+			lobbyPlayers = playerList;
+			const card = document.getElementById('lobby-helper-card');
+			const list = document.getElementById('lobby-players-list');
+			
+			if (card && list) {
+				card.style.display = 'block';
+				let html = '';
+				playerList.forEach(name => {
+					html += `<span class="badge bg-dark border text-info" style="border-color: rgba(10, 200, 185, 0.3) !important; font-size: 0.85rem; padding: 6px 12px;">${name}</span>`;
+				});
+				list.innerHTML = html;
+			}
+		}
+
+		function onLobbyCleared() {
+			lobbyPlayers = [];
+			const card = document.getElementById('lobby-helper-card');
+			if (card) {
+				card.style.display = 'none';
+			}
+		}
+
+
 	</script>
 </html>

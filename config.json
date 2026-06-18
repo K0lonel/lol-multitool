@@ -1,13 +1,19 @@
 ﻿{
 	"acceptDelay": 0,
 	"autoAccept": 0,
+	"autoPickBenchEnabled": 1,
+	"autoPickBenchIds": [
+
+	],
 	"autoReport": 1,
-	"autoTFT": 0,
+	"favoriteChampIds": [
+		136,
+		63
+	],
 	"reportCategories": [
 		"NEGATIVE_ATTITUDE",
 		"VERBAL_ABUSE",
 		"HATE_SPEECH",
 		"THIRD_PARTY_TOOLS"
-	],
-	"tftSurrenderTime": 600
+	]
 }
