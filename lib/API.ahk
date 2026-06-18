@@ -32,6 +32,7 @@ request(method, endpoint, post_data?, headersIn := Map()) {
             sleep 200
             Reload
         }
+        msgbox(e.Message)
     }
 
     return pSafeArray
