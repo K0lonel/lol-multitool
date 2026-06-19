@@ -111,13 +111,15 @@ loop {
                 summonerLevel := tempMe.Has("summonerLevel") ? tempMe["summonerLevel"] : 0
                 iconId := tempMe.Has("profileIconId") ? tempMe["profileIconId"] : 29
                 puuid := tempMe.Has("puuid") ? tempMe["puuid"] : ""
+                summonerId := tempMe.Has("summonerId") ? tempMe["summonerId"] : 0
                 
                 global me := Map("lol", Map(
                     "gameName", gameName,
                     "tagLine", tagLine,
                     "summonerLevel", summonerLevel,
                     "iconId", iconId,
-                    "puuid", puuid
+                    "puuid", puuid,
+                    "summonerId", summonerId
                 ))
             } else {
                 global me := Map()
@@ -197,16 +199,17 @@ loop {
             }
         }
         
-        if (lcuConnected && !championsLoaded && IsObject(me) && me.Has("lol")) {
+        if (lcuConnected && !championsLoaded && IsObject(me) && me.Has("lol") && me["lol"].Has("summonerId") && me["lol"]["summonerId"] > 0) {
             champTimer++
             if (champTimer >= 10) {
                 champTimer := 0
-                champs := APICall("GET", "/lol-champions/v1/champions")
+                summonerId := me["lol"]["summonerId"]
+                champs := APICall("GET", "/lol-champions/v1/inventories/" summonerId "/champions-minimal")
                 if (Type(champs) == "Array" && champs.Length > 0) {
                     global championMap := Map()
                     for c in champs {
-                        if (c.Has("id") && c.Has("name")) {
-                            championMap[c["id"]] := c["name"]
+                        if (c.Has("id")) {
+                            championMap[c["id"]] := c
                         }
                     }
                     LogToWeb("Successfully loaded " champs.Length " champions into AHK cache.", "success")
@@ -341,8 +344,12 @@ LogToWeb(msg, type := "info") {
 
 GetChampionName(id) {
     global championMap
-    if (IsSet(championMap) && championMap.Has(id))
-        return championMap[id]
+    if (IsSet(championMap) && championMap.Has(id)) {
+        val := championMap[id]
+        if (IsObject(val) && val.Has("name"))
+            return val["name"]
+        return val
+    }
     return "ID " id
 }
 

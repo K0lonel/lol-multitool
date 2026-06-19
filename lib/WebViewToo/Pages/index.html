@@ -182,17 +182,6 @@
 							</div>
 						</div>
 
-						<!-- Visual Bench Card -->
-						<div class="hextech-card" id="bench-helper-card" style="display:none; border-color: var(--hextech-blue); margin-top: 15px;">
-							<div class="card-title-gold" style="color: var(--hextech-blue) !important; border-bottom: 1px solid rgba(10, 200, 185, 0.2);"><i class="fa-solid fa-gamepad"></i> ARAM Bench Sniper & Swap</div>
-							<div class="row align-items-center">
-								<div class="col-12">
-									<div class="small text-muted mb-2">Click on a champion below to swap manually (bypasses auto-picker selections):</div>
-									<div id="bench-champions-list" class="d-flex flex-wrap gap-3 py-1">
-									</div>
-								</div>
-							</div>
-						</div>
 
 						<!-- Queue Progress Card -->
 						<div class="hextech-card" id="queue-card" style="display:none; border-color: #ffc107;">
@@ -254,6 +243,13 @@
 							</div>
 							
 							<div class="card-collapse-body">
+								<!-- Visual ARAM Bench (moved from Dashboard) -->
+								<div id="bench-helper-card" style="display:none; border-bottom: 1px solid rgba(200, 155, 60, 0.15); padding-bottom: 15px; margin-bottom: 15px;">
+									<div class="small text-muted mb-2"><i class="fa-solid fa-gamepad text-info me-1"></i> Click on a champion below to swap manually (bypasses auto-picker selections):</div>
+									<div id="bench-champions-list" class="d-flex flex-wrap gap-3 py-1">
+									</div>
+								</div>
+
 								<div class="row g-4 align-items-stretch">
 								<div class="col-md-7 d-flex flex-column">
 									<p class="text-muted small">Instantly swap to any of these preferred champions the millisecond they are rerolled to the team bench.</p>
@@ -806,6 +802,7 @@
 		let championList = {};
 		let championNameMap = {};
 		let championRoles = {}; // Maps champion ID to lowercase roles array
+		let championAliases = {}; // Maps champion ID to alias string
 		let lobbyPlayers = [];
 		let ddragonVersion = '16.12.1'; // Default modern fallback version
 
@@ -831,6 +828,7 @@
 						championList[info.key] = info.name;
 						championNameMap[cleanChampName(info.name)] = parseInt(info.key);
 						championRoles[info.key] = info.tags ? info.tags.map(t => t.toLowerCase()) : [];
+						championAliases[info.key] = info.id;
 					}
 					populateChampDropdowns();
 				}
@@ -842,12 +840,14 @@
 			championList = {};
 			championNameMap = {};
 			championRoles = {};
+			championAliases = {};
 			
 			champs.forEach(c => {
 				if (c.id > 0) {
 					championList[c.id] = c.name;
 					championNameMap[cleanChampName(c.name)] = c.id;
 					championRoles[c.id] = c.roles ? c.roles.map(r => r.toLowerCase()) : [];
+					championAliases[c.id] = c.alias || c.name.replace(/[^a-zA-Z0-9]/g, '');
 				}
 			});
 			
@@ -1165,17 +1165,39 @@
 			}
 		}
 
+		const cleanFileCache = {};
 		function getChampCleanFile(name) {
-			if (name === "Nunu & Willump") return "Nunu";
-			if (name === "Renata Glasc") return "Renata";
-			if (name === "Wukong") return "MonkeyKing";
-			if (name === "LeBlanc") return "Leblanc";
-			if (name === "Cho'Gath") return "Chogath";
-			if (name === "Bel'Veth") return "Belveth";
-			if (name === "Vel'Koz") return "Velkoz";
-			if (name === "Kha'Zix") return "Khazix";
-			if (name === "Kai'Sa") return "Kaisa";
-			return name.replace(/[^a-zA-Z0-9]/g, '');
+			if (cleanFileCache[name]) {
+				return cleanFileCache[name];
+			}
+			const clean = cleanChampName(name);
+			const id = championNameMap[clean];
+			let result;
+			if (id !== undefined && championAliases[id]) {
+				result = championAliases[id];
+			} else if (name === "Nunu & Willump") {
+				result = "Nunu";
+			} else if (name === "Renata Glasc") {
+				result = "Renata";
+			} else if (name === "Wukong") {
+				result = "MonkeyKing";
+			} else if (name === "LeBlanc") {
+				result = "Leblanc";
+			} else if (name === "Cho'Gath") {
+				result = "Chogath";
+			} else if (name === "Bel'Veth") {
+				result = "Belveth";
+			} else if (name === "Vel'Koz") {
+				result = "Velkoz";
+			} else if (name === "Kha'Zix") {
+				result = "Khazix";
+			} else if (name === "Kai'Sa") {
+				result = "Kaisa";
+			} else {
+				result = name.replace(/[^a-zA-Z0-9]/g, '');
+			}
+			cleanFileCache[name] = result;
+			return result;
 		}
 
 		function onLobbyScraped(playerList) {
