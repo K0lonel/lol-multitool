@@ -10,7 +10,6 @@ global plugins := Array()
 #Include plugins/autoReport.ahk
 #Include plugins/champSelectHelper.ahk
 
-
 FileEncoding "UTF-8"
 JSON.EscapeUnicode := False
 
@@ -24,7 +23,6 @@ global reportStatus := "Idle"
 global championsLoaded := false
 global championMap := Map()
 global checkedGames := Map()
-; global plugins := Array()
 
 ; Load or create configuration
 if(!FileExist("config.json")) {
@@ -68,7 +66,19 @@ if (!config.Has("foldReport")) {
 ScriptPID := DllCall("GetCurrentProcessId")
 GroupAdd("ScriptGroup", "ahk_pid" ScriptPID)
 
+; Enable browser extensions globally for all WebViewControls in this script quick and dirty
+origNew := WebViewCtrl.Prototype.GetOwnPropDesc("__New").Call
+WebViewCtrl.Prototype.DefineProp("__New", {Call: (self, settings := {}) => (
+    settings.Options := { AreBrowserExtensionsEnabled: true },
+    origNew(self, settings)
+)})
+
 global MyWindow := WebViewGui("-Caption +Resize", "LoL-App")
+try {
+    MyWindow.Profile.AddBrowserExtensionAsync(A_ScriptDir "\Extensions\AdGuard-AdBlocker")
+} catch Error as e {
+    OutputDebug("Failed to load AdGuard extension: " e.Message "`n")
+}
 MyWindow.OnEvent("Close", (*) => ExitApp())
 OnExit(ExitSave)
 
@@ -238,7 +248,7 @@ loop {
 }
 return
 #HotIf IsSet(MyWindow) && WinActive("ahk_id " MyWindow.Hwnd)
-$^t::ExitApp
+$^q::ExitApp
 $^r::Reload
 $^d::MyWindow.OpenDevToolsWindow()
 #HotIf
@@ -255,7 +265,6 @@ ExitSave(ExitReason := "", ExitCode := ""){
         }
     }
     SaveConfig()
-    ; SaveHistory()
 }
 
 CloseWindow(WebView) {
@@ -263,7 +272,12 @@ CloseWindow(WebView) {
 }
 
 DragWindow(WebView) {
-    PostMessage(0x00A1, 2,, "ahk_id " WebView.Hwnd)
+    DllCall("ReleaseCapture")
+    try {
+        PostMessage(0x0112, 0xF012, 0,, "ahk_id " WebView.Gui.Hwnd)
+    } catch {
+        PostMessage(0x0112, 0xF012, 0,, "ahk_id " MyWindow.Hwnd)
+    }
 }
 
 MinimizeWindow(WebView) {
