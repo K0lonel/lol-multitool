@@ -2,9 +2,6 @@
 #SingleInstance Force
 SetWorkingDir(A_ScriptDir)
 
-if (FileExist("debug.log")) {
-    try FileDelete("debug.log")
-}
 
 #Include <utilities>
 #Include <JSON>
@@ -264,7 +261,15 @@ WebTooltipEvent(WebView, Msg) {
 }
 
 DodgeLobbyCallback(WebView) {
-    try APICall("POST", "/lol-login/v1/shutdown-and-disable")
+    LogToWeb("Dodge Lobby: User requested dodge", "warning")
+    res := APICall("POST", "/lol-lobby-team-builder/champ-select/v1/session/quit")
+    if (IsObject(res) && res.Has("error")) {
+        errStatus := res.Has("status") ? res["status"] : "?"
+        errMsg := res.Has("error") ? res["error"] : "Unknown"
+        LogToWeb("Dodge Lobby: FAILED — HTTP " errStatus " (" errMsg ")", "error")
+    } else {
+        LogToWeb("Dodge Lobby: Sent dodge request successfully!", "success")
+    }
 }
 
 BenchSwapCallback(WebView, champId) {

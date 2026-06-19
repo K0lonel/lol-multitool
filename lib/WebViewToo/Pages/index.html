@@ -38,13 +38,12 @@
 		<!-- Web-based TitleBar -->
 		<div class="ahk-titleBar">
 			<span style="font-weight: 600; color: #c89b3c; padding-left: 1rem; letter-spacing: 0.5px; font-size: 0.9rem;">
-				<i class="fa-solid fa-gamepad" style="margin-right: 6px;"></i> LEAGUE MULTITOOL v2.0
+				<i class="fa-solid fa-gamepad" style="margin-right: 6px;"></i> LEAGUE MULTITOOL
 			</span>
 			<span class="flex-grow-1 h-100" style="cursor: move;" onmousedown="ahk.DragWindow()"></span>
 			<div class="d-flex h-100">
 				<span class="ahk-title-btn" onclick="ahk.Minimize()">0</span>
 				<span class='ahk-title-btn ahk-title-btn-maximize' onclick="ahk.Maximize()">1</span>
-				<span class='ahk-title-btn ahk-title-btn-restore' onclick="ahk.Maximize()">2</span>
 				<span class="ahk-title-btn ahk-title-btn-close" onclick="ahk.Close()">r</span>
 			</div>
 		</div>
@@ -147,6 +146,18 @@
 											<span class="badge" id="badge-sniper" style="font-size: 0.9rem;">Disabled</span>
 										</div>
 									</div>
+								</div>
+							</div>
+						</div>
+						<!-- Active ChampSelect Dodge Lobby Card -->
+						<div class="hextech-card" id="dodge-lobby-card" style="display:none; border-color: var(--hextech-red); background: rgba(122, 29, 29, 0.15);">
+							<div class="card-title-gold" style="color: var(--hextech-red) !important; border-bottom: 1px solid rgba(224, 67, 67, 0.2); padding-bottom: 8px;"><i class="fa-solid fa-triangle-exclamation"></i> Champion Select Active</div>
+							<div class="row align-items-center">
+								<div class="col-md-9">
+									<div class="small text-muted mb-2 mb-md-0">You are currently in champion select. You can instantly dodge the lobby below. Warning: Dodging triggers standard League client penalties (LP loss / queue lockout).</div>
+								</div>
+								<div class="col-md-3 text-end">
+									<button class="btn btn-outline-danger w-100" onclick="ahk.dodgeLobby()"><i class="fa-solid fa-right-from-bracket"></i> Dodge Lobby</button>
 								</div>
 							</div>
 						</div>
@@ -546,6 +557,24 @@
 				stateEl.innerText = "DISCONNECTED";
 				dotEl.className = "status-dot offline";
 				gameflowEl.innerText = "None";
+			}
+
+			// Show/hide dodge lobby button card in ChampSelect phase
+			const dodgeCard = document.getElementById('dodge-lobby-card');
+			if (dodgeCard) {
+				if (gameflow === "ChampSelect") {
+					dodgeCard.style.display = 'block';
+				} else {
+					dodgeCard.style.display = 'none';
+				}
+			}
+
+			// Hide active lobby and bench helper cards if no longer in ChampSelect
+			if (gameflow !== "ChampSelect") {
+				const benchCard = document.getElementById('bench-helper-card');
+				if (benchCard) benchCard.style.display = 'none';
+				const lobbyCard = document.getElementById('lobby-helper-card');
+				if (lobbyCard) lobbyCard.style.display = 'none';
 			}
 
 			// Update Cached Matches Count & Total Players Logged

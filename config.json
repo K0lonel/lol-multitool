@@ -3,13 +3,15 @@
 	"autoAccept": 0,
 	"autoPickBenchEnabled": 1,
 	"autoPickBenchIds": [
-		136,
-		142
+		89,
+		799,
+		950
 	],
 	"autoReport": 1,
 	"favoriteChampIds": [
-		136,
-		142
+		89,
+		950,
+		799
 	],
 	"reportCategories": [
 		"NEGATIVE_ATTITUDE",

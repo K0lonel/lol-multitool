@@ -149,37 +149,21 @@ DumpSessionKeys(session) {
     return keys
 }
 
-; Helper: resolve the bench array from session, trying all known field names
+; Helper: resolve the bench array from session
 ; Returns the bench array or an empty string with reason
 GetBenchFromSession(session) {
-    ; Try all known LCU field names for the bench
-    benchKeys := Array("benchChampions", "bench", "benchChampionIds")
-    
-    for keyName in benchKeys {
-        if (session.Has(keyName)) {
-            val := session[keyName]
-            if (IsObject(val) && Type(val) == "Array" && val.Length > 0) {
-                return Map("data", val, "key", keyName, "error", "")
+    if (session.Has("benchChampions")) {
+        val := session["benchChampions"]
+        if (IsObject(val) && Type(val) == "Array") {
+            if (val.Length > 0) {
+                return Map("data", val, "key", "benchChampions", "error", "")
+            } else {
+                return Map("data", "", "key", "benchChampions", "error", "benchChampions is empty")
             }
         }
+        return Map("data", "", "key", "benchChampions", "error", "benchChampions is not an Array")
     }
-    
-    ; Check which keys exist but had wrong type/empty
-    found := ""
-    for keyName in benchKeys {
-        if (session.Has(keyName)) {
-            val := session[keyName]
-            found .= keyName "=(type:" Type(val)
-            if (IsObject(val) && Type(val) == "Array")
-                found .= ",len:" val.Length
-            found .= ") "
-        }
-    }
-    
-    if (found != "")
-        return Map("data", "", "key", "", "error", "Found keys but empty/wrong: " found)
-    
-    return Map("data", "", "key", "", "error", "No bench key found in session")
+    return Map("data", "", "key", "", "error", "No benchChampions key found in session")
 }
 
 ; Helper: normalize a bench entry to get the champion ID
@@ -221,7 +205,14 @@ ProcessBenchSwaps(session) {
     ; --- Dump session keys once so we know what fields exist ---
     if (!sessionKeysDumped) {
         sessionKeysDumped := true
-        LogToWeb("Bench Sniper: Session keys: " DumpSessionKeys(session), "debug")
+        ; LogToWeb("Bench Sniper: Session keys: " DumpSessionKeys(session), "debug")
+    }
+    
+    ; --- Gate: Is the bench actually enabled in this queue session? ---
+    benchEnabled := session.Has("benchEnabled") && (session["benchEnabled"] = true || session["benchEnabled"] = "true")
+    if (!benchEnabled) {
+        try MyWindow.ExecuteScript("clearBenchDisplay()")
+        return
     }
     
     ; --- Retrieve bench data and player info for the visual bench (independent of sniper toggle) ---
@@ -254,7 +245,7 @@ ProcessBenchSwaps(session) {
     if (benchResult["data"] == "") {
         if (!lastBenchEmpty) {
             lastBenchEmpty := true
-            LogToWeb("Bench Sniper: [SKIP] " benchResult["error"] ". Session keys: " DumpSessionKeys(session), "debug")
+            ; LogToWeb("Bench Sniper: [SKIP] " benchResult["error"] ". Session keys: " DumpSessionKeys(session), "debug")
         }
         return
     }
@@ -267,7 +258,7 @@ ProcessBenchSwaps(session) {
     static benchKeyLogged := false
     if (!benchKeyLogged) {
         benchKeyLogged := true
-        LogToWeb("Bench Sniper: Found bench data under key '" benchKeyName "' with " benchData.Length " entries.", "success")
+        ; LogToWeb("Bench Sniper: Found bench data under key '" benchKeyName "' with " benchData.Length " entries.", "success")
     }
     
     ; --- Gate 3: Do we have target champion IDs configured? ---
@@ -308,49 +299,9 @@ ProcessBenchSwaps(session) {
         benchStateStr .= GetBenchChampId(entry) ","
     }
     
-    ; Log on bench change
+    ; Track bench change
     if (benchStateStr != lastBenchState) {
         lastBenchState := benchStateStr
-        
-        LogToWeb("Bench Sniper: ──── SCAN ────", "info")
-        LogToWeb("Bench Sniper: You: " myInfo["championName"] " (ID:" myInfo["championId"] " " Type(myInfo["championId"]) ") | Cell:" myInfo["cellId"], "info")
-        
-        ; Log raw entry structure of first bench item for debugging
-        firstEntry := benchData[1]
-        if (IsObject(firstEntry)) {
-            entryKeys := ""
-            for k, v in firstEntry {
-                entryKeys .= (entryKeys == "" ? "" : ", ") k "=" (IsObject(v) ? Type(v) : v)
-            }
-            LogToWeb("Bench Sniper: Bench entry[1] structure: {" entryKeys "}", "debug")
-        } else {
-            LogToWeb("Bench Sniper: Bench entry[1] is raw value: " firstEntry " (" Type(firstEntry) ")", "debug")
-        }
-        
-        LogToWeb("Bench Sniper: Targets: " DumpPreferredRaw(), "info")
-        
-        ; Per-champ comparison
-        matchFound := false
-        for entry in benchData {
-            champId := GetBenchChampId(entry)
-            champName := GetChampionName(champId)
-            
-            intForm := Integer(champId)
-            strForm := String(champId)
-            matchedInt := HasVal(preferredIds, intForm)
-            matchedStr := HasVal(preferredIds, strForm)
-            matched := matchedInt || matchedStr
-            
-            if (matched) {
-                LogToWeb("Bench Sniper: >> " champName " (ID:" champId " " Type(champId) ") = MATCH", "warning")
-                matchFound := true
-            } else {
-                LogToWeb("Bench Sniper: -- " champName " (ID:" champId " " Type(champId) ") = skip", "debug")
-            }
-        }
-        
-        if (!matchFound)
-            LogToWeb("Bench Sniper: No targets on bench. Waiting...", "info")
     }
     
     ; --- Attempt swap for first match ---
@@ -362,18 +313,18 @@ ProcessBenchSwaps(session) {
         
         if (matched) {
             champName := GetChampionName(champId)
-            LogToWeb("Bench Sniper: >>> SWAP " champName " | POST /lol-champ-select/v1/session/bench/swap/" champId, "warning")
+            ; LogToWeb("Bench Sniper: >>> SWAP " champName " | POST /lol-champ-select/v1/session/bench/swap/" champId, "warning")
             
             res := APICall("POST", "/lol-champ-select/v1/session/bench/swap/" champId)
             
-            LogToWeb("Bench Sniper: Swap response: type=" Type(res) " isObj=" IsObject(res), "debug")
+            ; LogToWeb("Bench Sniper: Swap response: type=" Type(res) " isObj=" IsObject(res), "debug")
             
             if (IsObject(res) && res.Has("error")) {
                 errStatus := res.Has("status") ? res["status"] : "?"
                 errMsg := res.Has("error") ? res["error"] : "Unknown"
                 LogToWeb("Bench Sniper: SWAP FAILED — " champName " — HTTP " errStatus " (" errMsg ")", "error")
             } else {
-                LogToWeb("Bench Sniper: SWAP SENT for " champName " — no error in response.", "success")
+                ; LogToWeb("Bench Sniper: SWAP SENT for " champName " — no error in response.", "success")
                 ; Confirm swap
                 try {
                     Sleep(300)
