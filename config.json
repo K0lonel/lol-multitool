@@ -22,6 +22,12 @@
 		910
 	],
 	"reportCategories": [
+		"LEAVING_AFK",
+		"ASSISTING_ENEMY_TEAM",
+		"THIRD_PARTY_TOOLS",
 		"VERBAL_ABUSE"
-	]
+	],
+	"reportComment": "tried to lose",
+	"windowHeight": 836,
+	"windowWidth": 1249
 }

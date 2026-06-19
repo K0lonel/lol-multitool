@@ -29,6 +29,7 @@ if(!FileExist("config.json")) {
         "autoReport", True,
         "acceptDelay", 0,
         "reportCategories", ["LEAVING_AFK", "ASSISTING_ENEMY_TEAM", "THIRD_PARTY_TOOLS", "RANK_MANIPULATION", "BOTTING", "VERBAL_ABUSE", "INAPPROPRIATE_NAME"],
+        "reportComment", "tried to lose",
         "autoPickBenchEnabled", False,
         "autoPickBenchIds", Array(),
         "favoriteChampIds", Array()
@@ -38,6 +39,10 @@ if(!FileExist("config.json")) {
 global config := JSON.Load(FileRead("config.json"))
 if (!config.Has("favoriteChampIds")) {
     config["favoriteChampIds"] := Array()
+    SaveConfig()
+}
+if (!config.Has("reportComment")) {
+    config["reportComment"] := "tried to lose"
     SaveConfig()
 }
 
@@ -54,7 +59,10 @@ MyWindow.AddCallBackToScript("dodgeLobby", DodgeLobbyCallback)
 MyWindow.AddCallBackToScript("benchSwap", BenchSwapCallback)
 
 MyWindow.Load("lib/WebViewToo/Pages/index.html")
-MyWindow.Show("w1200 h800 Center", "LoL-App")
+
+windowWidth := config.Has("windowWidth") ? config["windowWidth"] : 1200
+windowHeight := config.Has("windowHeight") ? config["windowHeight"] : 800
+MyWindow.Show("w" windowWidth " h" windowHeight " Center", "LoL-App")
 
 for plugin in plugins
     SetTimer(plugin, 1000)
@@ -205,6 +213,18 @@ $^t::ExitApp
 ^r::Reload
 
 ExitSave(){
+    global MyWindow, config
+    if (IsSet(MyWindow) && MyWindow.Gui) {
+        try {
+            minMaxState := WinGetMinMax("ahk_id " MyWindow.Gui.Hwnd)
+            if (minMaxState == 0) {
+                MyWindow.Gui.GetPos(,, &wW, &wH)
+                config["windowWidth"] := wW
+                config["windowHeight"] := wH
+                SaveConfig()
+            }
+        }
+    }
     SaveHistory()
     ExitApp()
 }
@@ -317,7 +337,6 @@ SaveHistory() {
         fileObj := FileOpen("historyView.json", "w", "UTF-8")
         fileObj.Write(JSON.Dump(match_history_dic, True))
         fileObj.Close()
-        LogToWeb("Successfully saved match history to disk.", "debug")
     } catch Error as e {
         LogToWeb("Failed to save historyView.json to disk: " e.Message, "error")
     }
@@ -344,4 +363,5 @@ SetHistoryGame(gameId, value) {
     } else {
         match_history_dic[String(gameId)] := value
     }
+    SaveHistory()
 }
