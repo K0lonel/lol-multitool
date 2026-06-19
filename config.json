@@ -21,6 +21,9 @@
 		902,
 		910
 	],
+	"foldAccept": 1,
+	"foldReport": 1,
+	"foldSniper": 0,
 	"reportCategories": [
 		"LEAVING_AFK",
 		"ASSISTING_ENEMY_TEAM",
@@ -29,5 +32,5 @@
 	],
 	"reportComment": "tried to lose",
 	"windowHeight": 836,
-	"windowWidth": 1249
+	"windowWidth": 1491
 }

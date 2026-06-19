@@ -68,6 +68,7 @@
 						</button>
 					</li>
 
+
 					<li class="nav-item" role="presentation">
 						<button class="nav-link w-100 border-0" id="v-pills-settings-tab" data-bs-toggle="pill" data-bs-target="#v-pills-settings" type="button" role="tab" aria-controls="v-pills-settings" aria-selected="false">
 							<i class="fas fa-sliders-h"></i>
@@ -76,8 +77,16 @@
 					</li>
 				</ul>
 				
+				<!-- Connection Status Widget -->
+				<div class="d-flex justify-content-center mx-3 mb-1">
+					<div class="status-pill w-100 justify-content-center" style="border-radius: 6px; padding: 6px 12px;">
+						<span class="status-dot offline" id="connection-dot"></span>
+						<span id="connection-state">DISCONNECTED</span>
+					</div>
+				</div>
+				
 				<!-- Summoner Profile Card -->
-				<div class="profile-card m-3" id="summoner-card" onclick="openSummonerProfile()" style="cursor: pointer;">
+				<div class="profile-card m-3 mt-2" id="summoner-card" onclick="openSummonerProfile()" style="cursor: pointer;">
 					<img id="summoner-icon" src="https://ddragon.leagueoflegends.com/cdn/16.12.1/img/profileicon/29.png" alt="Avatar" class="profile-avatar">
 					<div class="profile-info overflow-hidden">
 						<div class="profile-name text-truncate" id="summoner-name">Summoner</div>
@@ -94,10 +103,6 @@
 					<div class="tab-pane fade show active" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab">
 						<div class="d-flex justify-content-between align-items-center mb-4">
 							<h2 class="m-0" style="font-weight: 700; letter-spacing: 0.5px;">Live Status</h2>
-							<div class="status-pill">
-								<span class="status-dot offline" id="connection-dot"></span>
-								<span id="connection-state">DISCONNECTED</span>
-							</div>
 						</div>
 
 						<div class="row g-3 align-items-stretch mb-4">
@@ -233,7 +238,7 @@
 						<h2 class="mb-4" style="font-weight: 700; letter-spacing: 0.5px;">Automation Center</h2>
 
 						<!-- ARAM Bench Sniper Configuration -->
-						<div class="hextech-card" style="position: relative; z-index: 10;">
+						<div class="hextech-card" id="card-sniper" style="position: relative; z-index: 10;">
 							<div class="d-flex justify-content-between align-items-center mb-3">
 								<div class="card-title-gold m-0">
 									<i class="fa-solid fa-crosshairs" id="sniper-status-icon" style="margin-right: 6px;"></i> ARAM Bench Sniper Companion
@@ -242,7 +247,7 @@
 									<div class="form-check form-switch m-0">
 										<input class="form-check-input" type="checkbox" id="toggle-autoPickBenchEnabled" onchange="toggleSniper(this.checked)">
 									</div>
-									<button class="btn btn-link text-warning p-0 border-0" onclick="toggleCardCollapse(this)" style="font-size: 1.1rem; line-height: 1; cursor: pointer; text-decoration: none;">
+									<button class="btn btn-link text-warning p-0 border-0" onclick="toggleCardCollapse(this)" data-fold-key="foldSniper" style="font-size: 1.1rem; line-height: 1; cursor: pointer; text-decoration: none;">
 										<i class="fa-solid fa-chevron-up collapse-icon"></i>
 									</button>
 								</div>
@@ -250,7 +255,7 @@
 							
 							<div class="card-collapse-body">
 								<div class="row g-4 align-items-stretch">
-								<div class="col-md-7">
+								<div class="col-md-7 d-flex flex-column">
 									<p class="text-muted small">Instantly swap to any of these preferred champions the millisecond they are rerolled to the team bench.</p>
 									<div class="mb-3">
 										<label for="input-pickBench" class="form-label small text-warning font-weight-bold">Target Champions List (Comma separated)</label>
@@ -261,11 +266,9 @@
 									</div>
 									
 									<!-- Active Targets Visualizer -->
-									<div class="mb-3">
-										<label class="form-label small text-muted d-block">Active Targets Visualizer:</label>
-										<div id="sniper-active-badges" class="d-flex flex-wrap gap-2 py-2 px-3 rounded" style="background: rgba(5, 8, 12, 0.4); border: 1px dashed var(--panel-border); min-height: 48px;">
-											<span class="text-muted small my-auto">Type champion names above to load targets...</span>
-										</div>
+									<label class="form-label small text-muted d-block">Active Targets Visualizer:</label>
+									<div id="sniper-active-badges" class="d-flex flex-wrap gap-2 py-2 px-3 rounded flex-grow-1 align-items-start align-content-start" style="background: rgba(5, 8, 12, 0.4); border: 1px dashed var(--panel-border); min-height: 48px;">
+										<span class="text-muted small my-auto">Type champion names above to load targets...</span>
 									</div>
 								</div>
 								
@@ -314,14 +317,14 @@
 						</div>
 
 						<!-- Auto Accept Configuration -->
-						<div class="hextech-card">
+						<div class="hextech-card" id="card-accept">
 							<div class="d-flex justify-content-between align-items-center mb-3">
 								<div class="card-title-gold m-0"><i class="fa-regular fa-square-check"></i> Auto Accept Queue</div>
 								<div class="d-flex align-items-center gap-3">
 									<div class="form-check form-switch m-0">
 										<input class="form-check-input" type="checkbox" id="toggle-autoAccept" onchange="updateConfig('autoAccept', this.checked)">
 									</div>
-									<button class="btn btn-link text-warning p-0 border-0" onclick="toggleCardCollapse(this)" style="font-size: 1.1rem; line-height: 1; cursor: pointer; text-decoration: none;">
+									<button class="btn btn-link text-warning p-0 border-0" onclick="toggleCardCollapse(this)" data-fold-key="foldAccept" style="font-size: 1.1rem; line-height: 1; cursor: pointer; text-decoration: none;">
 										<i class="fa-solid fa-chevron-up collapse-icon"></i>
 									</button>
 								</div>
@@ -339,14 +342,14 @@
 						</div>
 
 						<!-- Auto Report Configuration -->
-						<div class="hextech-card">
+						<div class="hextech-card" id="card-report">
 							<div class="d-flex justify-content-between align-items-center mb-3">
 								<div class="card-title-gold m-0"><i class="fa-solid fa-triangle-exclamation"></i> Automated Lobby Report</div>
 								<div class="d-flex align-items-center gap-3">
 									<div class="form-check form-switch m-0">
 										<input class="form-check-input" type="checkbox" id="toggle-autoReport" onchange="updateConfig('autoReport', this.checked)">
 									</div>
-									<button class="btn btn-link text-warning p-0 border-0" onclick="toggleCardCollapse(this)" style="font-size: 1.1rem; line-height: 1; cursor: pointer; text-decoration: none;">
+									<button class="btn btn-link text-warning p-0 border-0" onclick="toggleCardCollapse(this)" data-fold-key="foldReport" style="font-size: 1.1rem; line-height: 1; cursor: pointer; text-decoration: none;">
 										<i class="fa-solid fa-chevron-up collapse-icon"></i>
 									</button>
 								</div>
@@ -412,7 +415,6 @@
 					</div>
 
 
-
 					<!-- Settings Tab -->
 					<div class="tab-pane fade" id="v-pills-settings" role="tabpanel" aria-labelledby="v-pills-settings-tab">
 						<h2 class="mb-4" style="font-weight: 700; letter-spacing: 0.5px;">System Settings</h2>
@@ -446,12 +448,15 @@
 		}
 
 		function toggleCardCollapse(btn) {
+			const foldKey = btn.getAttribute('data-fold-key');
 			const card = btn.closest('.hextech-card');
 			const body = card.querySelector('.card-collapse-body');
 			const icon = btn.querySelector('.collapse-icon');
 			const header = btn.closest('.d-flex.justify-content-between');
 
-			if (body.classList.contains('d-none')) {
+			const makeCollapsed = !body.classList.contains('d-none');
+
+			if (!makeCollapsed) {
 				body.classList.remove('d-none');
 				icon.classList.remove('fa-chevron-down');
 				icon.classList.add('fa-chevron-up');
@@ -463,6 +468,33 @@
 				icon.classList.add('fa-chevron-down');
 				header.classList.remove('mb-3');
 				header.classList.add('mb-0');
+			}
+
+			if (foldKey) {
+				updateConfig(foldKey, makeCollapsed);
+			}
+		}
+
+		function setCardCollapseState(selector, isCollapsed) {
+			const card = document.querySelector(selector);
+			if (!card) return;
+			const body = card.querySelector('.card-collapse-body');
+			const icon = card.querySelector('.collapse-icon');
+			const header = card.querySelector('.d-flex.justify-content-between');
+			if (!body || !icon || !header) return;
+
+			if (isCollapsed) {
+				body.classList.add('d-none');
+				icon.classList.remove('fa-chevron-up');
+				icon.classList.add('fa-chevron-down');
+				header.classList.remove('mb-3');
+				header.classList.add('mb-0');
+			} else {
+				body.classList.remove('d-none');
+				icon.classList.remove('fa-chevron-down');
+				icon.classList.add('fa-chevron-up');
+				header.classList.add('mb-3');
+				header.classList.remove('mb-0');
 			}
 		}
 
@@ -505,6 +537,17 @@
 			}
 			if (Object.keys(championList).length > 0) {
 				reflectBenchChampNames('input-pickBench', config.autoPickBenchIds);
+			}
+
+			// Restore folded states
+			if (config.foldSniper !== undefined) {
+				setCardCollapseState('#card-sniper', config.foldSniper);
+			}
+			if (config.foldAccept !== undefined) {
+				setCardCollapseState('#card-accept', config.foldAccept);
+			}
+			if (config.foldReport !== undefined) {
+				setCardCollapseState('#card-report', config.foldReport);
 			}
 		}
 
@@ -614,7 +657,7 @@
 					const cleanName = gameName.replace(/\s+/g, '');
 					const cleanTag = tagLine ? tagLine.replace(/\s+/g, '') : '';
 					const formatted = cleanName + (cleanTag ? `-${cleanTag}` : '');
-					window.open("https://xdx.gg/" + formatted, '_blank');
+					window.open("https://xdx.gg/" + formatted, '_self');
 				}
 			}
 		}
@@ -744,7 +787,7 @@
 							<div class="report-item d-flex flex-column align-items-stretch">
 								<div class="d-flex justify-content-between align-items-center w-100 mb-1">
 									<span class="report-match-id">MATCH #${item.gameId} &bull; ${dateStr}</span>
-									<a href="${link}" target="_blank" class="btn btn-sm btn-hextech" style="padding: 2px 8px; font-size: 0.75rem;">Link</a>
+									<a href="${link}" target="_self" class="btn btn-sm btn-hextech" style="padding: 2px 8px; font-size: 0.75rem;">Link</a>
 								</div>
 								<span class="report-players" title="${reportedList}">${reportedList}</span>
 							</div>

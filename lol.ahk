@@ -11,9 +11,9 @@ SetWorkingDir(A_ScriptDir)
 FileEncoding "UTF-8"
 JSON.EscapeUnicode := False
 
-if(!FileExist("historyView.json"))
-    FileAppend("{}", "historyView.json")
-global match_history_dic := JSON.Load(FileRead("historyView.json"))
+if(!FileExist("history.json"))
+    FileAppend("{}", "history.json")
+global match_history_dic := JSON.Load(FileRead("history.json"))
 global friend_puuid := Array()
 global reportList := ""
 global reportQueue := Array()
@@ -32,7 +32,10 @@ if(!FileExist("config.json")) {
         "reportComment", "tried to lose",
         "autoPickBenchEnabled", False,
         "autoPickBenchIds", Array(),
-        "favoriteChampIds", Array()
+        "favoriteChampIds", Array(),
+        "foldSniper", False,
+        "foldAccept", False,
+        "foldReport", False
     )
     FileAppend(JSON.Dump(defaultConfig, True), "config.json")
 }
@@ -45,12 +48,25 @@ if (!config.Has("reportComment")) {
     config["reportComment"] := "tried to lose"
     SaveConfig()
 }
+if (!config.Has("foldSniper")) {
+    config["foldSniper"] := False
+    SaveConfig()
+}
+if (!config.Has("foldAccept")) {
+    config["foldAccept"] := False
+    SaveConfig()
+}
+if (!config.Has("foldReport")) {
+    config["foldReport"] := False
+    SaveConfig()
+}
 
 ScriptPID := DllCall("GetCurrentProcessId")
 GroupAdd("ScriptGroup", "ahk_pid" ScriptPID)
 
 global MyWindow := WebViewToo(,,, True)
-MyWindow.OnEvent("Close", (*) => ExitSave())
+MyWindow.OnEvent("Close", (*) => ExitApp())
+OnExit(ExitSave)
 
 ; Register callbacks
 MyWindow.AddCallBackToScript("updateConfig", UpdateConfigCallback)
@@ -208,11 +224,11 @@ loop {
     sleep 1000
 }
 return
-
+#HotIf IsSet(MyWindow) && MyWindow.Gui && WinActive("ahk_id " MyWindow.Gui.Hwnd)
 $^t::ExitApp
-^r::Reload
-
-ExitSave(){
+$^r::Reload
+#HotIf
+ExitSave(ExitReason := "", ExitCode := ""){
     global MyWindow, config
     if (IsSet(MyWindow) && MyWindow.Gui) {
         try {
@@ -221,12 +237,11 @@ ExitSave(){
                 MyWindow.Gui.GetPos(,, &wW, &wH)
                 config["windowWidth"] := wW
                 config["windowHeight"] := wH
-                SaveConfig()
             }
         }
     }
-    SaveHistory()
-    ExitApp()
+    SaveConfig()
+    ; SaveHistory()
 }
 
 UpdateConfigCallback(WebView, key, value) {
@@ -334,11 +349,11 @@ GetChampionName(id) {
 SaveHistory() {
     global match_history_dic
     try {
-        fileObj := FileOpen("historyView.json", "w", "UTF-8")
+        fileObj := FileOpen("history.json", "w", "UTF-8")
         fileObj.Write(JSON.Dump(match_history_dic, True))
         fileObj.Close()
     } catch Error as e {
-        LogToWeb("Failed to save historyView.json to disk: " e.Message, "error")
+        LogToWeb("Failed to save history.json to disk: " e.Message, "error")
     }
 }
 

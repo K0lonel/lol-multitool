@@ -3,4 +3,7 @@
 
 # Ignore the .vscode folder
 .vscode/
+
+# Ignore configs
 history.json
+config.json
