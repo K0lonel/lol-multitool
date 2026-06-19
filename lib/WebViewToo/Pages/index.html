@@ -40,7 +40,7 @@
 			<span style="font-weight: 600; color: #c89b3c; padding-left: 1rem; letter-spacing: 0.5px; font-size: 0.9rem;">
 				<i class="fa-solid fa-gamepad" style="margin-right: 6px;"></i> LEAGUE MULTITOOL
 			</span>
-			<span class="flex-grow-1 h-100" style="cursor: move;" onmousedown="ahk.DragWindow()"></span>
+			<span class="flex-grow-1 h-100" style="cursor: grab;" onmousedown="this.style.cursor='grabbing'; ahk.DragWindow();"></span>
 			<div class="d-flex h-100">
 				<span class="ahk-title-btn" onclick="ahk.Minimize()">0</span>
 				<span class='ahk-title-btn ahk-title-btn-maximize' onclick="ahk.Maximize()">1</span>
@@ -567,14 +567,6 @@
 				} else {
 					dodgeCard.style.display = 'none';
 				}
-			}
-
-			// Hide active lobby and bench helper cards if no longer in ChampSelect
-			if (gameflow !== "ChampSelect") {
-				const benchCard = document.getElementById('bench-helper-card');
-				if (benchCard) benchCard.style.display = 'none';
-				const lobbyCard = document.getElementById('lobby-helper-card');
-				if (lobbyCard) lobbyCard.style.display = 'none';
 			}
 
 			// Update Cached Matches Count & Total Players Logged

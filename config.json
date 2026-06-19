@@ -4,6 +4,7 @@
 	"autoPickBenchEnabled": 1,
 	"autoPickBenchIds": [
 		89,
+		233,
 		799,
 		950
 	],
@@ -11,12 +12,10 @@
 	"favoriteChampIds": [
 		89,
 		950,
-		799
+		799,
+		233
 	],
 	"reportCategories": [
-		"NEGATIVE_ATTITUDE",
-		"VERBAL_ABUSE",
-		"HATE_SPEECH",
-		"THIRD_PARTY_TOOLS"
+		"VERBAL_ABUSE"
 	]
 }

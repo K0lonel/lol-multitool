@@ -28,7 +28,7 @@ if(!FileExist("config.json")) {
         "autoAccept", True,
         "autoReport", True,
         "acceptDelay", 0,
-        "reportCategories", ["NEGATIVE_ATTITUDE", "VERBAL_ABUSE", "HATE_SPEECH", "THIRD_PARTY_TOOLS"],
+        "reportCategories", ["LEAVING_AFK", "ASSISTING_ENEMY_TEAM", "THIRD_PARTY_TOOLS", "RANK_MANIPULATION", "BOTTING", "VERBAL_ABUSE", "INAPPROPRIATE_NAME"],
         "autoPickBenchEnabled", False,
         "autoPickBenchIds", Array(),
         "favoriteChampIds", Array()
@@ -147,7 +147,7 @@ loop {
         historyTimer := 0
         if (lcuConnected) {
             try {
-                tempHistory := APICall("GET", "/lol-match-history/v1/products/lol/current-summoner/matches?begIndex=0&endIndex=3")
+                tempHistory := APICall("GET", "/lol-match-history/v1/products/lol/current-summoner/matches?begIndex=0&endIndex=49")
                 if (IsObject(tempHistory) && tempHistory.Has("games")) {
                     global match_history := tempHistory
                     ; Removed LCU match history update log to prevent console spam

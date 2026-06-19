@@ -39,46 +39,61 @@ autoReport(){
 ScanNewMatches() {
     global match_history, match_history_dic, friend_puuid, me, config, reportQueue, reportStatus, checkedGames
     
-    categories := (config.Has("reportCategories") && config["reportCategories"].Length > 0) ? config["reportCategories"] : ["NEGATIVE_ATTITUDE", "VERBAL_ABUSE", "HATE_SPEECH", "THIRD_PARTY_TOOLS"]
+    categories := (config.Has("reportCategories") && config["reportCategories"].Length > 0) ? config["reportCategories"] : ["LEAVING_AFK", "ASSISTING_ENEMY_TEAM", "THIRD_PARTY_TOOLS", "RANK_MANIPULATION", "BOTTING", "VERBAL_ABUSE", "INAPPROPRIATE_NAME"]
     
     if (!IsSet(match_history) || !match_history.Has("games") || !match_history["games"].Has("games"))
         return
 
     newMatchesFound := false
     for index, game in match_history["games"]["games"] {
-        gameIdStr := String(game["gameId"])
+        gameId := game["gameId"]
+        gameIdStr := String(gameId)
         
-        ; If already processed/custom, skip
-        if (HasVal(checkedGames, game["gameId"]) || HasVal(checkedGames, gameIdStr) || HasHistoryGame(game["gameId"]) || (game.Has("gameType") && game["gameType"] == "CUSTOM_GAME"))
+        ; If already processed, skip
+        if (HasVal(checkedGames, gameId) || HasVal(checkedGames, gameIdStr) || HasHistoryGame(gameId))
+            continue
+            
+        ; Skip aborted, practice tool, or custom games
+        if (game.Has("endOfGameResult") && game["endOfGameResult"] != "GameComplete")
+            continue
+        if (game.Has("gameMode") && game["gameMode"] == "PRACTICETOOL")
+            continue
+        if (game.Has("gameType") && game["gameType"] == "CUSTOM_GAME")
             continue
             
         reportStatus := "Scanning Match #" gameIdStr "..."
         LogToWeb("Auto-Report: New match #" gameIdStr " found. Scanning lobby participants...", "info")
-        detailed_history := APICall("GET", "/lol-match-history/v1/games/" game["gameId"])
-        
-        if (!IsSet(detailed_history) || !detailed_history.Has("participantIdentities")) {
-            if (IsObject(detailed_history) && detailed_history.Has("error") && detailed_history["error"] == "Offline") {
-                continue
+            
+        identities := ""
+        if (game.Has("participantIdentities") && IsObject(game["participantIdentities"]) && game["participantIdentities"].Length > 0) {
+            identities := game["participantIdentities"]
+        } else {
+            detailed_history := APICall("GET", "/lol-match-history/v1/games/" gameId)
+            if (IsObject(detailed_history) && detailed_history.Has("participantIdentities")) {
+                identities := detailed_history["participantIdentities"]
             }
+        }
+        
+        if (identities == "" || !IsObject(identities) || identities.Length == 0) {
             LogToWeb("Auto-Report: Failed to fetch participant identities for match #" gameIdStr ". Will retry later.", "warning")
             continue
         }
             
-        ; Mark as checked only after successful LCU API call
-        checkedGames.Push(game["gameId"])
+        ; Mark as checked only after successful retrieval
+        checkedGames.Push(gameId)
         checkedGames.Push(gameIdStr)
             
         ; Initialize history map entry with Timestamp linking to LoLalytics
         gameCreation := game.Has("gameCreation") ? game["gameCreation"] : 0
         
-        SetHistoryGame(game["gameId"], Map(
+        SetHistoryGame(gameId, Map(
             "HistoryLink", GetLolalyticsLink(),
             "ReportedPlayers", Array(),
             "Timestamp", gameCreation
         ))
         newMatchesFound := true
 
-        for pIndex, participant in detailed_history["participantIdentities"] {
+        for pIndex, participant in identities {
             if (!IsObject(participant) || !participant.Has("player"))
                 continue
             player := participant["player"]
@@ -98,7 +113,7 @@ ScanNewMatches() {
             ; Check if already in reportQueue to avoid duplicates
             alreadyQueued := false
             for queuedReport in reportQueue {
-                if (queuedReport["gameId"] == game["gameId"] && queuedReport["offenderPuuid"] == puuid) {
+                if (queuedReport["gameId"] == gameId && queuedReport["offenderPuuid"] == puuid) {
                     alreadyQueued := true
                     break
                 }
@@ -108,7 +123,7 @@ ScanNewMatches() {
                 
             ; Queue report payload
             reportQueue.Push(Map(
-                "gameId", game["gameId"],
+                "gameId", gameId,
                 "offenderPuuid", puuid,
                 "offenderSummonerId", player["summonerId"],
                 "playerName", playerName,
@@ -143,6 +158,7 @@ ProcessReportQueue() {
     
     obj := {
         categories: payload["categories"],
+        comment: "tried to lose",
         gameId: payload["gameId"],
         offenderPuuid: payload["offenderPuuid"],
         offenderSummonerId: payload["offenderSummonerId"]
