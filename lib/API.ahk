@@ -1,7 +1,5 @@
 #Requires AutoHotkey v2.0
 #Include LCU.ahk
-global req := ComObject("WinHttp.WinHttpRequest.5.1")
-
 APICall(method, endpoint, post_data := "") {
     if (LCU.Token == "") {
         if (!LCU.Initialize()) {
@@ -15,6 +13,7 @@ APICall(method, endpoint, post_data := "") {
 }
 
 request(method, endpoint, post_data?, headersIn := Map()) {
+    req := ComObject("WinHttp.WinHttpRequest.5.1")
     headers := Map("Content-Type", "application/json", "Accept", "application/json")
 
     req.Open(method, endpoint, False)

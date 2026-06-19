@@ -41,7 +41,7 @@ An advanced, feature-rich companion dashboard for **League of Legends**, built u
 
 *   **Core Logic**: [AutoHotkey v2.0+](https://www.autohotkey.com/) (main loop, hotkeys, LCU connectivity, JSON file serialization).
 *   **Frontend UI**: Modern HTML5, Vanilla CSS, and **Bootstrap 5** styled with Hextech themes.
-*   **Render Engine**: **Microsoft WebView2** wrapped via the [WebViewToo](https://github.com/The-Codingman/WebViewToo) library to support Chromium rendering inside AHK GUIs.
+*   **Render Engine**: **Microsoft WebView2** wrapped via the newer [WebViewToo](https://github.com/The-CoDingman/WebViewToo) library integration to support Chromium rendering inside custom AHK GUIs.
 *   **League Connection**: LCU API handler reading port/credentials dynamically from local processes (utilizes WMI querying for `LeagueClientUx.exe` command-line parameters).
 
 ---
@@ -65,12 +65,17 @@ league - WebView/
     ├── globals.ahk          # Globals definitions
     ├── plugins.ahk          # Plugin registry/loader loader
     ├── utilities.ahk        # Utility functions (logging, list checks, time formatting)
-    └── WebViewToo/          # WebView2 wrapper library
-        ├── AHK Resources/   # Core binaries & WebView2Loader dlls
-        └── Pages/           # Web frontend pages
-            ├── index.html   # Main Dashboard HTML layout & controller
-            ├── logo.svg     # Sidebar app logo
-            └── Bootstrap/   # Custom Bootstrap styling, JS & fonts
+    └── WebView2/            # WebView2 wrapper library (updated version)
+        ├── WebViewToo.ahk   # High-level WebViewGui/WebViewCtrl classes
+        ├── WebView2.ahk     # Core Edge WebView2 COM wrapper
+        ├── Promise.ahk      # Promise helper class
+        ├── ComVar.ahk       # Helper for COM variables
+        ├── 32bit/           # 32-bit WebView2Loader binaries
+        └── 64bit/           # 64-bit WebView2Loader binaries
+└── Pages/                   # Web frontend pages mapped to ahk.localhost
+    ├── index.html           # Main Dashboard HTML layout & controller
+    ├── logo.svg             # Sidebar app logo
+    └── Bootstrap/           # Custom Bootstrap styling, JS & fonts
 ```
 
 ---

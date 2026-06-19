@@ -7,7 +7,7 @@ SetWorkingDir(A_ScriptDir)
 #Include <JSON>
 #Include <API>
 #Include <plugins>
-#Include <WebViewToo/AHK Resources/WebViewToo>
+#Include <WebView2/WebViewToo>
 FileEncoding "UTF-8"
 JSON.EscapeUnicode := False
 
@@ -64,7 +64,7 @@ if (!config.Has("foldReport")) {
 ScriptPID := DllCall("GetCurrentProcessId")
 GroupAdd("ScriptGroup", "ahk_pid" ScriptPID)
 
-global MyWindow := WebViewToo(,,, True)
+global MyWindow := WebViewGui("-Caption +Resize", "LoL-App")
 MyWindow.OnEvent("Close", (*) => ExitApp())
 OnExit(ExitSave)
 
@@ -73,12 +73,18 @@ MyWindow.AddCallBackToScript("updateConfig", UpdateConfigCallback)
 MyWindow.AddCallBackToScript("Tooltip", WebTooltipEvent)
 MyWindow.AddCallBackToScript("dodgeLobby", DodgeLobbyCallback)
 MyWindow.AddCallBackToScript("benchSwap", BenchSwapCallback)
+MyWindow.AddCallBackToScript("Close", CloseWindow)
+MyWindow.AddCallBackToScript("DragWindow", DragWindow)
+MyWindow.AddCallBackToScript("Minimize", MinimizeWindow)
+MyWindow.AddCallBackToScript("Maximize", MaximizeWindow)
 
-MyWindow.Load("lib/WebViewToo/Pages/index.html")
+; Map local Pages folder and navigate to index.html
+MyWindow.BrowseFolder("Pages")
+MyWindow.Navigate("index.html")
 
 windowWidth := config.Has("windowWidth") ? config["windowWidth"] : 1200
 windowHeight := config.Has("windowHeight") ? config["windowHeight"] : 800
-MyWindow.Show("w" windowWidth " h" windowHeight " Center", "LoL-App")
+MyWindow.Show("w" windowWidth " h" windowHeight " Center")
 
 for plugin in plugins
     SetTimer(plugin, 1000)
@@ -189,7 +195,7 @@ loop {
     ; 3. Execute Frontend Scripts & Champion Loading
     try {
         if (!initConfigSent) {
-            MyWindow.ExecuteScript("initConfig(" JSON.Dump(config) ")")
+            MyWindow.ExecuteScriptAsync("initConfig(" JSON.Dump(config) ")")
             initConfigSent := true
             LogToWeb("App dashboard UI initialized.", "info")
             if (gameflow != "") {
@@ -213,13 +219,13 @@ loop {
                         }
                     }
                     LogToWeb("Successfully loaded " champs.Length " champions into AHK cache.", "success")
-                    MyWindow.ExecuteScript("loadChampsFromLCU(" JSON.Dump(champs) ")")
+                    MyWindow.ExecuteScriptAsync("loadChampsFromLCU(" JSON.Dump(champs) ")")
                     championsLoaded := true
                 }
             }
         }
         
-        MyWindow.ExecuteScript("updateDashboard(" JSON.Dump(me) ", '" gameflow "', " JSON.Dump(match_history_dic) ", " reportQueue.Length ", '" reportStatus "')")
+        MyWindow.ExecuteScriptAsync("updateDashboard(" JSON.Dump(me) ", '" gameflow "', " JSON.Dump(match_history_dic) ", " reportQueue.Length ", '" reportStatus "')")
     } catch Error as e {
         LogToWeb("Error in main loop script execution: " e.Message, "error")
     }
@@ -227,17 +233,18 @@ loop {
     sleep 1000
 }
 return
-#HotIf IsSet(MyWindow) && MyWindow.Gui && WinActive("ahk_id " MyWindow.Gui.Hwnd)
+#HotIf IsSet(MyWindow) && WinActive("ahk_id " MyWindow.Hwnd)
 $^t::ExitApp
 $^r::Reload
+$^d::MyWindow.OpenDevToolsWindow()
 #HotIf
 ExitSave(ExitReason := "", ExitCode := ""){
     global MyWindow, config
-    if (IsSet(MyWindow) && MyWindow.Gui) {
+    if (IsSet(MyWindow)) {
         try {
-            minMaxState := WinGetMinMax("ahk_id " MyWindow.Gui.Hwnd)
+            minMaxState := WinGetMinMax("ahk_id " MyWindow.Hwnd)
             if (minMaxState == 0) {
-                MyWindow.Gui.GetPos(,, &wW, &wH)
+                MyWindow.GetPos(,, &wW, &wH)
                 config["windowWidth"] := wW
                 config["windowHeight"] := wH
             }
@@ -245,6 +252,26 @@ ExitSave(ExitReason := "", ExitCode := ""){
     }
     SaveConfig()
     ; SaveHistory()
+}
+
+CloseWindow(WebView) {
+    ExitApp()
+}
+
+DragWindow(WebView) {
+    PostMessage(0x00A1, 2,, "ahk_id " WebView.Hwnd)
+}
+
+MinimizeWindow(WebView) {
+    WebView.Minimize()
+}
+
+MaximizeWindow(WebView) {
+    if (DllCall("IsZoomed", "UPtr", WebView.Hwnd)) {
+        WebView.Restore()
+    } else {
+        WebView.Maximize()
+    }
 }
 
 UpdateConfigCallback(WebView, key, value) {
@@ -335,7 +362,7 @@ LogToWeb(msg, type := "info") {
             cleanMsg := StrReplace(cleanMsg, "'", "\'")
             cleanMsg := StrReplace(cleanMsg, "`n", " ")
             cleanMsg := StrReplace(cleanMsg, "`r", "")
-            MyWindow.ExecuteScript("logSystemMessage('" cleanMsg "', '" type "')")
+            MyWindow.ExecuteScriptAsync("logSystemMessage('" cleanMsg "', '" type "')")
         } catch {
             ; Ignore frontend log call failures
         }

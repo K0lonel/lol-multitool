@@ -92,7 +92,7 @@ ScanChampSelectLobby(session) {
     
     if (champLobbyNames.Length > 0) {
         LogToWeb("Draft Companion: Successfully scraped lobby players: " JSON.Dump(champLobbyNames), "success")
-        MyWindow.ExecuteScript("onLobbyScraped(" JSON.Dump(champLobbyNames) ")")
+        MyWindow.ExecuteScriptAsync("onLobbyScraped(" JSON.Dump(champLobbyNames) ")")
     }
 }
 
@@ -205,13 +205,16 @@ ProcessBenchSwaps(session) {
     ; --- Dump session keys once so we know what fields exist ---
     if (!sessionKeysDumped) {
         sessionKeysDumped := true
-        ; LogToWeb("Bench Sniper: Session keys: " DumpSessionKeys(session), "debug")
+        LogToWeb("Bench Sniper: Session keys: " DumpSessionKeys(session), "debug")
     }
     
     ; --- Gate: Is the bench actually enabled in this queue session? ---
     benchEnabled := session.Has("benchEnabled") && (session["benchEnabled"] = true || session["benchEnabled"] = "true")
     if (!benchEnabled) {
-        try MyWindow.ExecuteScript("clearBenchDisplay()")
+        try MyWindow.ExecuteScriptAsync("clearBenchDisplay()")
+        if (Mod(tickCount, 10) == 1) {
+            LogToWeb("Bench Sniper: [SKIP] Bench is not enabled in this session.", "debug")
+        }
         return
     }
     
@@ -222,12 +225,15 @@ ProcessBenchSwaps(session) {
     if (benchResult["data"] != "") {
         SendBenchToFrontend(benchResult["data"], benchResult["key"], myInfo)
     } else {
-        try MyWindow.ExecuteScript("clearBenchDisplay()")
+        try MyWindow.ExecuteScriptAsync("clearBenchDisplay()")
     }
     
     ; --- Gate 0: Has the user manually bypassed the auto-picker? ---
     global bypassAutoPick
     if (bypassAutoPick) {
+        if (Mod(tickCount, 10) == 1) {
+            LogToWeb("Bench Sniper: [SKIP] bypassAutoPick is True (manual override active).", "debug")
+        }
         return
     }
     
@@ -236,29 +242,27 @@ ProcessBenchSwaps(session) {
     sniperValue := sniperHasKey ? config["autoPickBenchEnabled"] : "N/A"
     
     if (!sniperHasKey || !config["autoPickBenchEnabled"]) {
-        if (Mod(tickCount, 30) == 1)
+        if (Mod(tickCount, 10) == 1) {
             LogToWeb("Bench Sniper: [SKIP] Sniper is OFF (autoPickBenchEnabled=" sniperValue "). Enable it to activate.", "debug")
+        }
         return
     }
     
     ; --- Gate 2: Check if bench data was missing ---
     if (benchResult["data"] == "") {
-        if (!lastBenchEmpty) {
-            lastBenchEmpty := true
-            ; LogToWeb("Bench Sniper: [SKIP] " benchResult["error"] ". Session keys: " DumpSessionKeys(session), "debug")
+        if (Mod(tickCount, 10) == 1) {
+            LogToWeb("Bench Sniper: [SKIP] No bench champions found. Error: " benchResult["error"], "debug")
         }
         return
     }
-    lastBenchEmpty := false
     
     benchData := benchResult["data"]
     benchKeyName := benchResult["key"]
     
-    ; Log which key we found bench under (once)
-    static benchKeyLogged := false
-    if (!benchKeyLogged) {
-        benchKeyLogged := true
-        ; LogToWeb("Bench Sniper: Found bench data under key '" benchKeyName "' with " benchData.Length " entries.", "success")
+    ; Log target configuration info periodically
+    if (Mod(tickCount, 10) == 1) {
+        targetsList := config.Has("autoPickBenchIds") ? DumpPreferredRaw() : "N/A"
+        LogToWeb("Bench Sniper Check: tickCount=" tickCount ", benchCount=" benchData.Length ", targets=" targetsList, "debug")
     }
     
     ; --- Gate 3: Do we have target champion IDs configured? ---
@@ -307,24 +311,27 @@ ProcessBenchSwaps(session) {
     ; --- Attempt swap for first match ---
     for entry in benchData {
         champId := GetBenchChampId(entry)
+        champName := GetChampionName(champId)
         matchedInt := HasVal(preferredIds, Integer(champId))
         matchedStr := HasVal(preferredIds, String(champId))
         matched := matchedInt || matchedStr
         
+        if (Mod(tickCount, 5) == 1) {
+            LogToWeb("Bench Sniper: Checking bench champ " champName " (ID:" champId ") against targets. Match result=" (matched ? "TRUE" : "FALSE") " (asInt=" (matchedInt ? "yes" : "no") ", asStr=" (matchedStr ? "yes" : "no") ")", "debug")
+        }
+        
         if (matched) {
-            champName := GetChampionName(champId)
-            ; LogToWeb("Bench Sniper: >>> SWAP " champName " | POST /lol-champ-select/v1/session/bench/swap/" champId, "warning")
-            
+            LogToWeb("Bench Sniper: Target MATCHED! Attempting swap for " champName " (ID:" champId ")...", "warning")
             res := APICall("POST", "/lol-champ-select/v1/session/bench/swap/" champId)
             
-            ; LogToWeb("Bench Sniper: Swap response: type=" Type(res) " isObj=" IsObject(res), "debug")
+            LogToWeb("Bench Sniper: Swap API response received. Type=" Type(res) " isObject=" IsObject(res), "debug")
             
             if (IsObject(res) && res.Has("error")) {
                 errStatus := res.Has("status") ? res["status"] : "?"
                 errMsg := res.Has("error") ? res["error"] : "Unknown"
                 LogToWeb("Bench Sniper: SWAP FAILED — " champName " — HTTP " errStatus " (" errMsg ")", "error")
             } else {
-                ; LogToWeb("Bench Sniper: SWAP SENT for " champName " — no error in response.", "success")
+                LogToWeb("Bench Sniper: SWAP SENT for " champName " successfully. Verifying...", "success")
                 ; Confirm swap
                 try {
                     Sleep(300)
@@ -383,7 +390,7 @@ SendBenchToFrontend(benchData, benchKeyName, myInfo) {
     )
     
     try {
-        MyWindow.ExecuteScript("updateBenchDisplay(" JSON.Dump(payload) ")")
+        MyWindow.ExecuteScriptAsync("updateBenchDisplay(" JSON.Dump(payload) ")")
     }
 }
 
@@ -394,6 +401,6 @@ ResetChampSelectHelper() {
     warnedNoIds := false
     warnedEmpty := false
     bypassAutoPick := false
-    try MyWindow.ExecuteScript("onLobbyCleared()")
-    try MyWindow.ExecuteScript("clearBenchDisplay()")
+    try MyWindow.ExecuteScriptAsync("onLobbyCleared()")
+    try MyWindow.ExecuteScriptAsync("clearBenchDisplay()")
 }
