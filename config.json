@@ -3,17 +3,23 @@
 	"autoAccept": 0,
 	"autoPickBenchEnabled": 1,
 	"autoPickBenchIds": [
-		89,
+		16,
+		136,
 		233,
 		799,
+		902,
+		910,
 		950
 	],
 	"autoReport": 1,
 	"favoriteChampIds": [
-		89,
 		950,
 		799,
-		233
+		233,
+		136,
+		16,
+		902,
+		910
 	],
 	"reportCategories": [
 		"VERBAL_ABUSE"

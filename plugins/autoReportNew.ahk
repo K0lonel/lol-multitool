@@ -39,7 +39,7 @@ autoReport(){
 ScanNewMatches() {
     global match_history, match_history_dic, friend_puuid, me, config, reportQueue, reportStatus, checkedGames
     
-    categories := (config.Has("reportCategories") && config["reportCategories"].Length > 0) ? config["reportCategories"] : ["LEAVING_AFK", "ASSISTING_ENEMY_TEAM", "THIRD_PARTY_TOOLS", "RANK_MANIPULATION", "BOTTING", "VERBAL_ABUSE", "INAPPROPRIATE_NAME"]
+    categories := config["reportCategories"]
     
     if (!IsSet(match_history) || !match_history.Has("games") || !match_history["games"].Has("games"))
         return

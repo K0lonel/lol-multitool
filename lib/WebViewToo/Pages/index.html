@@ -287,9 +287,9 @@
 											</div>
 											<div class="position-relative mt-2">
 												<div class="input-group input-group-sm">
-													<span class="input-group-text bg-dark border-secondary text-muted" style="padding: 2px 8px;"><i class="fa-solid fa-star"></i></span>
+													<span class="input-group-text bg-dark border-secondary" style="padding: 2px 8px;"><i class="fa-solid fa-star text-warning"></i></span>
 													<input class="form-control" id="search-fav-champ" placeholder="Search champion to add..." style="font-size: 0.8rem;" autocomplete="off" onfocus="showChampDropdown()" oninput="filterChampDropdown()" onblur="hideChampDropdownDelayed()">
-													<button class="btn btn-outline-warning btn-sm" onclick="addCurrentSearchToFav()"><i class="fa-solid fa-plus"></i> Add</button>
+													<!-- <button class="btn btn-outline-warning btn-sm" onclick="addCurrentSearchToFav()"><i class="fa-solid fa-plus"></i> Add</button> -->
 												</div>
 												<!-- Custom Dropdown Menu -->
 												<div id="custom-champ-dropdown" class="position-absolute w-100 mt-1 d-none rounded border" style="top: 100%; left: 0; background: rgba(10, 14, 20, 0.95); border-color: var(--hextech-gold) !important; max-height: 200px; overflow-y: auto; z-index: 99999; box-shadow: 0 10px 25px rgba(0,0,0,0.5); backdrop-filter: blur(8px);">
@@ -779,7 +779,6 @@
 						html += `
 							<span class="badge border d-inline-flex align-items-center gap-1 border-warning text-warning" 
 								  style="background: rgba(200, 155, 60, 0.15); font-size: 0.8rem; padding: 4px 8px;">
-								<i class="fa-solid fa-star text-warning" style="font-size: 0.65rem;"></i>
 								${name}
 								<i class="fa-solid fa-xmark text-danger ms-1" style="cursor: pointer; font-size: 0.85rem;" 
 								   onclick="removeFavoriteChamp(event, ${id})"></i>
