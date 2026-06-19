@@ -1,14 +1,15 @@
 ﻿{
-	"acceptDelay": 0,
+	"acceptDelay": 1,
 	"autoAccept": 0,
 	"autoPickBenchEnabled": 1,
 	"autoPickBenchIds": [
-
+		136,
+		142
 	],
 	"autoReport": 1,
 	"favoriteChampIds": [
 		136,
-		63
+		142
 	],
 	"reportCategories": [
 		"NEGATIVE_ATTITUDE",

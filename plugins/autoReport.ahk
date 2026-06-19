@@ -43,9 +43,7 @@ report() {
             }
         }
     }
-    APICall("POST", "/lol-chat/v1/conversations/eog-chat-toggle", "true")
+    ; APICall("POST", "/lol-chat/v1/conversations/eog-chat-toggle", "true") ; not working
     s_gameId := eogStats["gameId"]
-    ; MsgBox(objView(reportedPlayers))
-    OutputDebug(objView(reportedPlayers))
     return
 }

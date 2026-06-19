@@ -54,6 +54,7 @@ MyWindow.OnEvent("Close", (*) => ExitSave())
 MyWindow.AddCallBackToScript("updateConfig", UpdateConfigCallback)
 MyWindow.AddCallBackToScript("Tooltip", WebTooltipEvent)
 MyWindow.AddCallBackToScript("dodgeLobby", DodgeLobbyCallback)
+MyWindow.AddCallBackToScript("benchSwap", BenchSwapCallback)
 
 MyWindow.Load("lib/WebViewToo/Pages/index.html")
 MyWindow.Show("w1200 h800 Center", "LoL-App")
@@ -264,6 +265,22 @@ WebTooltipEvent(WebView, Msg) {
 
 DodgeLobbyCallback(WebView) {
     try APICall("POST", "/lol-login/v1/shutdown-and-disable")
+}
+
+BenchSwapCallback(WebView, champId) {
+    global bypassAutoPick
+    champId := Integer(champId)
+    champName := GetChampionName(champId)
+    LogToWeb("Manual Swap: User requested swap to " champName " (ID:" champId ")", "warning")
+    res := APICall("POST", "/lol-champ-select/v1/session/bench/swap/" champId)
+    if (IsObject(res) && res.Has("error")) {
+        errStatus := res.Has("status") ? res["status"] : "?"
+        errMsg := res.Has("error") ? res["error"] : "Unknown"
+        LogToWeb("Manual Swap: FAILED for " champName " — HTTP " errStatus " (" errMsg ")", "error")
+    } else {
+        LogToWeb("Manual Swap: Swapped to " champName " successfully! Auto-picker paused for this lobby.", "success")
+        bypassAutoPick := true
+    }
 }
 
 LogToWeb(msg, type := "info") {

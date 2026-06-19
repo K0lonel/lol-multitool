@@ -22,6 +22,16 @@
 				from { opacity: 0; transform: translateY(4px); }
 				to { opacity: 1; transform: translateY(0); }
 			}
+			.bench-champion-item:hover {
+				transform: translateY(-3px) scale(1.05);
+				filter: brightness(1.2);
+			}
+			.bench-champion-item:active {
+				transform: translateY(0) scale(0.95);
+			}
+			.shadow-warning {
+				box-shadow: 0 0 10px rgba(255, 193, 7, 0.6);
+			}
 		</style>
 	</head>
 	<body>
@@ -156,6 +166,18 @@
 							</div>
 						</div>
 
+						<!-- Visual Bench Card -->
+						<div class="hextech-card" id="bench-helper-card" style="display:none; border-color: var(--hextech-blue); margin-top: 15px;">
+							<div class="card-title-gold" style="color: var(--hextech-blue) !important; border-bottom: 1px solid rgba(10, 200, 185, 0.2);"><i class="fa-solid fa-gamepad"></i> ARAM Bench Sniper & Swap</div>
+							<div class="row align-items-center">
+								<div class="col-12">
+									<div class="small text-muted mb-2">Click on a champion below to swap manually (bypasses auto-picker selections):</div>
+									<div id="bench-champions-list" class="d-flex flex-wrap gap-3 py-1">
+									</div>
+								</div>
+							</div>
+						</div>
+
 						<!-- Queue Progress Card -->
 						<div class="hextech-card" id="queue-card" style="display:none; border-color: #ffc107;">
 							<div class="card-title-gold"><i class="fa-solid fa-spinner fa-spin"></i> Active Reporting Process</div>
@@ -200,7 +222,7 @@
 						<h2 class="mb-4" style="font-weight: 700; letter-spacing: 0.5px;">Automation Center</h2>
 
 						<!-- ARAM Bench Sniper Configuration -->
-						<div class="hextech-card">
+						<div class="hextech-card" style="position: relative; z-index: 10;">
 							<div class="d-flex justify-content-between align-items-center mb-3">
 								<div class="card-title-gold m-0">
 									<i class="fa-solid fa-crosshairs" id="sniper-status-icon" style="margin-right: 6px;"></i> ARAM Bench Sniper Companion
@@ -259,7 +281,7 @@
 													<button class="btn btn-outline-warning btn-sm" onclick="addCurrentSearchToFav()"><i class="fa-solid fa-plus"></i> Add</button>
 												</div>
 												<!-- Custom Dropdown Menu -->
-												<div id="custom-champ-dropdown" class="position-absolute w-100 mb-1 d-none rounded border" style="bottom: 100%; left: 0; background: rgba(10, 14, 20, 0.95); border-color: var(--hextech-gold) !important; max-height: 200px; overflow-y: auto; z-index: 1050; box-shadow: 0 -10px 25px rgba(0,0,0,0.5); backdrop-filter: blur(8px);">
+												<div id="custom-champ-dropdown" class="position-absolute w-100 mt-1 d-none rounded border" style="top: 100%; left: 0; background: rgba(10, 14, 20, 0.95); border-color: var(--hextech-gold) !important; max-height: 200px; overflow-y: auto; z-index: 99999; box-shadow: 0 10px 25px rgba(0,0,0,0.5); backdrop-filter: blur(8px);">
 													<!-- JS populated options -->
 												</div>
 											</div>
@@ -486,6 +508,12 @@
 			
 			logLine.innerHTML = `<span class="text-muted" style="font-size: 0.75rem; font-family: 'Courier New', Courier, monospace; display: inline-block; min-width: 95px;">[${timeStr}]</span> <i class="fa-solid fa-${icon} me-1" style="font-size: 0.75rem;"></i> <span>${escapeHTML(msg)}</span>`;
 			consoleEl.appendChild(logLine);
+			
+			// Limit log to 100 entries, remove oldest when exceeded
+			const logLines = consoleEl.querySelectorAll('.log-line');
+			for (let i = logLines.length - 100; i > 0; i--) {
+				logLines[logLines.length - 100 - i].remove();
+			}
 			
 			// Auto scroll to bottom
 			consoleEl.scrollTop = consoleEl.scrollHeight;
@@ -714,9 +742,13 @@
 			}
 		}
 
+		let _renderingFavorites = false; // Re-entrancy guard to prevent recursive loop
 		function renderFavoriteChampions(favIds) {
+			if (_renderingFavorites) return; // Prevent recursive calls
+			_renderingFavorites = true;
+			
 			const container = document.getElementById('favorites-container');
-			if (!container) return;
+			if (!container) { _renderingFavorites = false; return; }
 			
 			if (favIds && favIds.length > 0) {
 				let html = '';
@@ -744,6 +776,8 @@
 			if (favPreset && favPreset.classList.contains('border-warning')) {
 				applyActiveRolePresets();
 			}
+			
+			_renderingFavorites = false;
 		}
 
 		function toggleFavoriteTarget(id) {
@@ -1009,6 +1043,53 @@
 			const card = document.getElementById('lobby-helper-card');
 			if (card) {
 				card.style.display = 'none';
+			}
+		}
+
+		function updateBenchDisplay(payload) {
+			const card = document.getElementById('bench-helper-card');
+			const list = document.getElementById('bench-champions-list');
+			if (!card || !list) return;
+
+			if (payload && payload.bench && payload.bench.length > 0) {
+				card.style.display = 'block';
+				let html = '';
+				payload.bench.forEach(champ => {
+					const name = championList[champ.id] || champ.name;
+					const cleanName = getChampCleanFile(name);
+					const imgUrl = `https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/champion/${cleanName}.png`;
+					const borderClass = champ.isTarget ? 'border-warning shadow-warning' : 'border-secondary';
+					const tooltipText = champ.isTarget ? 'Target Champion (Autopick)' : 'Bench Champion';
+					
+					html += `
+						<div class="bench-champion-item d-flex flex-column align-items-center" 
+							 onclick="ahk.benchSwap(${champ.id})"
+							 title="${tooltipText}"
+							 style="cursor: pointer; position: relative; transition: all 0.2s ease-in-out; width: 60px;">
+							<div style="position: relative;">
+								<img src="${imgUrl}" class="rounded border border-2 ${borderClass}" 
+									 style="width: 48px; height: 48px; object-fit: cover;" 
+									 onerror="this.src='https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/profileicon/29.png'">
+								${champ.isTarget ? '<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning" style="padding: 3px 6px; font-size: 0.6rem; color: #000; border: 1px solid #000;"><i class="fa-solid fa-crosshairs"></i></span>' : ''}
+							</div>
+							<span class="text-truncate text-center w-100 mt-1" style="font-size: 0.7rem; color: #fff;">${name}</span>
+						</div>
+					`;
+				});
+				list.innerHTML = html;
+			} else {
+				card.style.display = 'none';
+			}
+		}
+
+		function clearBenchDisplay() {
+			const card = document.getElementById('bench-helper-card');
+			if (card) {
+				card.style.display = 'none';
+			}
+			const list = document.getElementById('bench-champions-list');
+			if (list) {
+				list.innerHTML = '';
 			}
 		}
 
