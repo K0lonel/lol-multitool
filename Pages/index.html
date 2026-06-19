@@ -653,7 +653,7 @@
 					const cleanName = gameName.replace(/\s+/g, '');
 					const cleanTag = tagLine ? tagLine.replace(/\s+/g, '') : '';
 					const formatted = cleanName + (cleanTag ? `-${cleanTag}` : '');
-					window.open("https://xdx.gg/" + formatted, '_self');
+					window.open("https://xdx.gg/" + formatted, '_blank');
 				}
 			}
 		}
@@ -783,7 +783,7 @@
 							<div class="report-item d-flex flex-column align-items-stretch">
 								<div class="d-flex justify-content-between align-items-center w-100 mb-1">
 									<span class="report-match-id">MATCH #${item.gameId} &bull; ${dateStr}</span>
-									<a href="${link}" target="_self" class="btn btn-sm btn-hextech" style="padding: 2px 8px; font-size: 0.75rem;">Link</a>
+									<a href="${link}" target="_blank" class="btn btn-sm btn-hextech" style="padding: 2px 8px; font-size: 0.75rem;">Link</a>
 								</div>
 								<span class="report-players" title="${reportedList}">${reportedList}</span>
 							</div>

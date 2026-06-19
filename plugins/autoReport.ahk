@@ -1,7 +1,4 @@
 #Requires AutoHotkey v2.0
-#Include ../lib/utilities.ahk
-#Include ../lib/LCU.ahk
-#Include ../lib/API.ahk
 
 plugins.Push(autoReport)
 
@@ -46,11 +43,10 @@ ScanNewMatches() {
 
     newMatchesFound := false
     for index, game in match_history["games"]["games"] {
-        gameId := game["gameId"]
-        gameIdStr := String(gameId)
+        gameId := String(game["gameId"])
         
         ; If already processed, skip
-        if (HasVal(checkedGames, gameId) || HasVal(checkedGames, gameIdStr) || HasHistoryGame(gameId))
+        if (checkedGames.Has(gameId) || HasHistoryGame(gameId))
             continue
             
         ; Skip aborted, practice tool, or custom games
@@ -61,8 +57,8 @@ ScanNewMatches() {
         if (game.Has("gameType") && game["gameType"] == "CUSTOM_GAME")
             continue
             
-        reportStatus := "Scanning Match #" gameIdStr "..."
-        LogToWeb("Auto-Report: New match #" gameIdStr " found. Scanning lobby participants...", "info")
+        reportStatus := "Scanning Match #" gameId "..."
+        LogToWeb("Auto-Report: New match #" gameId " found. Scanning lobby participants...", "info")
             
         identities := ""
         if (game.Has("participantIdentities") && IsObject(game["participantIdentities"]) && game["participantIdentities"].Length > 1) {
@@ -75,13 +71,12 @@ ScanNewMatches() {
         }
         
         if (identities == "" || !IsObject(identities) || identities.Length == 0) {
-            LogToWeb("Auto-Report: Failed to fetch participant identities for match #" gameIdStr ". Will retry later.", "warning")
+            LogToWeb("Auto-Report: Failed to fetch participant identities for match #" gameId ". Will retry later.", "warning")
             continue
         }
             
         ; Mark as checked only after successful retrieval
-        checkedGames.Push(gameId)
-        checkedGames.Push(gameIdStr)
+        checkedGames[gameId] := true
             
         ; Initialize history map entry with Timestamp
         gameCreation := game.Has("gameCreation") ? game["gameCreation"] : 0
@@ -93,7 +88,7 @@ ScanNewMatches() {
         newMatchesFound := true
 
         identitiesCount := IsObject(identities) ? identities.Length : 0
-        LogToWeb("Auto-Report: Match #" gameIdStr " retrieved " identitiesCount " participant identities.", "debug")
+        LogToWeb("Auto-Report: Match #" gameId " retrieved " identitiesCount " participant identities.", "debug")
 
         queuedForMatch := 0
         for pIndex, participant in identities {
@@ -116,7 +111,7 @@ ScanNewMatches() {
             
             ; Check if self or friend
             isSelf := (puuid == myPuuid)
-            isFriend := HasVal(friend_puuid, puuid)
+            isFriend := friend_puuid.Has(puuid)
             playerName := (player.Has("gameName") && player.Has("tagLine")) ? (player["gameName"] "#" player["tagLine"]) : "Unknown Player"
             
             if (isSelf || isFriend) {
@@ -147,9 +142,9 @@ ScanNewMatches() {
                 "retries", 0
             ))
             queuedForMatch++
-            LogToWeb("Auto-Report: Queued player " playerName " (puuid: " puuid ") for Match #" gameIdStr, "debug")
+            LogToWeb("Auto-Report: Queued player " playerName " (puuid: " puuid ") for Match #" gameId, "debug")
         }
-        LogToWeb("Auto-Report: Finished scan for Match #" gameIdStr ". Queued " queuedForMatch " players.", "info")
+        LogToWeb("Auto-Report: Finished scan for Match #" gameId ". Queued " queuedForMatch " players.", "info")
     }
     
     if (newMatchesFound && reportQueue.Length > 0) {
@@ -170,9 +165,9 @@ ProcessReportQueue() {
     
     payload := reportQueue[1]
     playerName := payload["playerName"]
-    gameIdStr := String(payload["gameId"])
+    gameId := payload["gameId"]
     
-    reportStatus := "Reporting " playerName " (Match #" gameIdStr ")..."
+    reportStatus := "Reporting " playerName " (Match #" gameId ")..."
     
     commentStr := config.Has("reportComment") ? config["reportComment"] : "tried to lose"
     
@@ -207,32 +202,32 @@ ProcessReportQueue() {
         LogToWeb("Auto-Report: Skipped reporting " playerName " due to LCU error (HTTP " response["status"] ").", "error")
         
         ; Still append as skipped to history so it's recorded
-        if (!HasHistoryGame(gameIdStr)) {
-            SetHistoryGame(gameIdStr, Map(
+        if (!HasHistoryGame(gameId)) {
+            SetHistoryGame(gameId, Map(
                 "ReportedPlayers", Array(),
                 "Timestamp", GetEpochMS()
             ))
         }
-        gameItem := GetHistoryGame(gameIdStr)
+        gameItem := GetHistoryGame(gameId)
         reportedList := gameItem["ReportedPlayers"]
         reportedList.Push(playerName " (Skipped)")
         gameItem["ReportedPlayers"] := reportedList
-        SetHistoryGame(gameIdStr, gameItem)
+        SetHistoryGame(gameId, gameItem)
         return
     }
     
     ; Success -> Append player name to reported list in history
-    if (!HasHistoryGame(gameIdStr)) {
-        SetHistoryGame(gameIdStr, Map(
+    if (!HasHistoryGame(gameId)) {
+        SetHistoryGame(gameId, Map(
             "ReportedPlayers", Array(),
             "Timestamp", GetEpochMS()
         ))
     }
-    gameItem := GetHistoryGame(gameIdStr)
+    gameItem := GetHistoryGame(gameId)
     reportedList := gameItem["ReportedPlayers"]
     reportedList.Push(playerName)
     gameItem["ReportedPlayers"] := reportedList
-    SetHistoryGame(gameIdStr, gameItem)
+    SetHistoryGame(gameId, gameItem)
     
     reportQueue.RemoveAt(1)
     
@@ -241,7 +236,7 @@ ProcessReportQueue() {
         LogToWeb("Auto-Report: Reported player " playerName ". " reportQueue.Length " remaining in queue.", "success")
     } else {
         reportStatus := "All reports sent successfully!"
-        LogToWeb("Auto-Report: Successfully finished reporting all players for Match #" gameIdStr "!", "success")
+        LogToWeb("Auto-Report: Successfully finished reporting all players for Match #" gameId "!", "success")
     }
 }
 

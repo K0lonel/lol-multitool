@@ -14,13 +14,13 @@ JSON.EscapeUnicode := False
 if(!FileExist("history.json"))
     FileAppend("{}", "history.json")
 global match_history_dic := JSON.Load(FileRead("history.json"))
-global friend_puuid := Array()
+global friend_puuid := Map()
 global reportList := ""
 global reportQueue := Array()
 global reportStatus := "Idle"
 global championsLoaded := false
 global championMap := Map()
-global checkedGames := Array()
+global checkedGames := Map()
 
 ; Load or create configuration
 if(!FileExist("config.json")) {
@@ -138,10 +138,10 @@ loop {
             tempFriends := APICall("GET", "/lol-chat/v1/friends")
             if (Type(tempFriends) == "Array") {
                 global friends := tempFriends
-                if (friends.Length != friend_puuid.Length) {
-                    friend_puuid := Array()
+                if (friends.Length != friend_puuid.Count) {
+                    friend_puuid := Map()
                     for index, friend in friends
-                        friend_puuid.Push(friend["puuid"])
+                        friend_puuid[friend["puuid"]] := true
                 }
             }
         } catch {
@@ -339,7 +339,6 @@ DodgeLobbyCallback(WebView) {
 
 BenchSwapCallback(WebView, champId) {
     global bypassAutoPick
-    champId := Integer(champId)
     champName := GetChampionName(champId)
     LogToWeb("Manual Swap: User requested swap to " champName " (ID:" champId ")", "warning")
     res := APICall("POST", "/lol-champ-select/v1/session/bench/swap/" champId)
@@ -393,24 +392,18 @@ SaveHistory() {
 
 HasHistoryGame(gameId) {
     global match_history_dic
-    return match_history_dic.Has(String(gameId)) || match_history_dic.Has(Integer(gameId))
+    return match_history_dic.Has(gameId)
 }
 
 GetHistoryGame(gameId) {
     global match_history_dic
-    if (match_history_dic.Has(String(gameId)))
-        return match_history_dic[String(gameId)]
-    if (match_history_dic.Has(Integer(gameId)))
-        return match_history_dic[Integer(gameId)]
+    if (match_history_dic.Has(gameId))
+        return match_history_dic[gameId]
     return ""
 }
 
 SetHistoryGame(gameId, value) {
     global match_history_dic
-    if (match_history_dic.Has(Integer(gameId))) {
-        match_history_dic[Integer(gameId)] := value
-    } else {
-        match_history_dic[String(gameId)] := value
-    }
+    match_history_dic[gameId] := value
     SaveHistory()
 }

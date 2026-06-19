@@ -1,7 +1,4 @@
 #Requires AutoHotkey v2.0
-#Include ../lib/utilities.ahk
-#Include ../lib/LCU.ahk
-#Include ../lib/API.ahk
 
 plugins.Push(champSelectHelper)
 
@@ -274,8 +271,8 @@ ProcessBenchSwaps(session) {
         return
     }
         
-    preferredIds := config["autoPickBenchIds"]
-    if (preferredIds.Length == 0) {
+    preferredIdsArray := config["autoPickBenchIds"]
+    if (preferredIdsArray.Length == 0) {
         if (!warnedEmpty) {
             LogToWeb("Bench Sniper: [SKIP] Target list is empty. Add champions to snipe.", "warning")
             warnedEmpty := true
@@ -283,12 +280,17 @@ ProcessBenchSwaps(session) {
         return
     }
     
+    preferredIds := Map()
+    for id in preferredIdsArray {
+        preferredIds[id] := true
+    }
+    
     ; --- Gate 4: Don't swap if we already have a target champion ---
     myChampId := myInfo["championId"]
-    alreadyHaveTarget := HasVal(preferredIds, Integer(myChampId)) || HasVal(preferredIds, String(myChampId))
+    alreadyHaveTarget := preferredIds.Has(myChampId)
     if (alreadyHaveTarget) {
         static lastOwnedLog := ""
-        ownedKey := String(myChampId)
+        ownedKey := myChampId
         if (ownedKey != lastOwnedLog) {
             lastOwnedLog := ownedKey
             LogToWeb("Bench Sniper: Already holding target " myInfo["championName"] " (ID:" myChampId "). No swap needed.", "success")
@@ -312,12 +314,10 @@ ProcessBenchSwaps(session) {
     for entry in benchData {
         champId := GetBenchChampId(entry)
         champName := GetChampionName(champId)
-        matchedInt := HasVal(preferredIds, Integer(champId))
-        matchedStr := HasVal(preferredIds, String(champId))
-        matched := matchedInt || matchedStr
+        matched := preferredIds.Has(champId)
         
         if (Mod(tickCount, 5) == 1) {
-            LogToWeb("Bench Sniper: Checking bench champ " champName " (ID:" champId ") against targets. Match result=" (matched ? "TRUE" : "FALSE") " (asInt=" (matchedInt ? "yes" : "no") ", asStr=" (matchedStr ? "yes" : "no") ")", "debug")
+            LogToWeb("Bench Sniper: Checking bench champ " champName " (ID:" champId ") against targets. Match result=" (matched ? "TRUE" : "FALSE"), "debug")
         }
         
         if (matched) {
@@ -338,7 +338,7 @@ ProcessBenchSwaps(session) {
                     confirmSession := APICall("GET", "/lol-champ-select/v1/session")
                     if (IsObject(confirmSession) && !confirmSession.Has("error")) {
                         newInfo := GetMyChampInfo(confirmSession)
-                        if (newInfo["championId"] == Integer(champId)) {
+                        if (newInfo["championId"] == champId) {
                             LogToWeb("Bench Sniper: CONFIRMED — you now have " newInfo["championName"], "success")
                         } else {
                             LogToWeb("Bench Sniper: NOT CONFIRMED — expected " champName " but have " newInfo["championName"] " (ID:" newInfo["championId"] "). Server may have rejected swap.", "warning")
@@ -374,13 +374,17 @@ SendBenchToFrontend(benchData, benchKeyName, myInfo) {
     
     ; Build JSON array of bench champ objects
     benchArr := Array()
-    preferredIds := config.Has("autoPickBenchIds") ? config["autoPickBenchIds"] : Array()
+    preferredIdsArray := config.Has("autoPickBenchIds") ? config["autoPickBenchIds"] : Array()
+    preferredIds := Map()
+    for id in preferredIdsArray {
+        preferredIds[id] := true
+    }
     
     for entry in benchData {
         cid := GetBenchChampId(entry)
         cname := GetChampionName(cid)
-        isTarget := HasVal(preferredIds, Integer(cid)) || HasVal(preferredIds, String(cid))
-        benchArr.Push(Map("id", Integer(cid), "name", cname, "isTarget", isTarget ? true : false))
+        isTarget := preferredIds.Has(cid)
+        benchArr.Push(Map("id", cid, "name", cname, "isTarget", isTarget ? true : false))
     }
     
     payload := Map(
