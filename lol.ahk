@@ -1,13 +1,16 @@
 #Requires AutoHotkey v2.0+
 #SingleInstance Force
 SetWorkingDir(A_ScriptDir)
+global plugins := Array()
+
+#Include lib/JSON.ahk
+#Include lib/API.ahk
+#Include lib/WebView2/WebViewToo.ahk
+#Include plugins/autoAccept.ahk
+#Include plugins/autoReport.ahk
+#Include plugins/champSelectHelper.ahk
 
 
-#Include <utilities>
-#Include <JSON>
-#Include <API>
-#Include <plugins>
-#Include <WebView2/WebViewToo>
 FileEncoding "UTF-8"
 JSON.EscapeUnicode := False
 
@@ -21,6 +24,7 @@ global reportStatus := "Idle"
 global championsLoaded := false
 global championMap := Map()
 global checkedGames := Map()
+; global plugins := Array()
 
 ; Load or create configuration
 if(!FileExist("config.json")) {

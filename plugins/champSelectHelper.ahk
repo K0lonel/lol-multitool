@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2.0
-
+#Include ../lol.ahk
 plugins.Push(champSelectHelper)
 
 global champLobbyNames := Array()
