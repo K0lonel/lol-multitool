@@ -4,9 +4,14 @@
 	"autoPickBenchEnabled": 1,
 	"autoPickBenchIds": [
 		16,
+		29,
+		63,
 		136,
+		166,
 		233,
+		555,
 		799,
+		893,
 		902,
 		910,
 		950
@@ -19,7 +24,12 @@
 		136,
 		16,
 		902,
-		910
+		910,
+		166,
+		63,
+		893,
+		555,
+		29
 	],
 	"foldAccept": 1,
 	"foldReport": 1,
@@ -31,6 +41,6 @@
 		"VERBAL_ABUSE"
 	],
 	"reportComment": "tried to lose",
-	"windowHeight": 836,
-	"windowWidth": 1491
+	"windowHeight": 844,
+	"windowWidth": 1336
 }

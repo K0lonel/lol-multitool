@@ -1014,7 +1014,9 @@
 				filtered.slice(0, 8).forEach(name => {
 					html += `
 						<div class="dropdown-item-champ" onclick="selectChampFromDropdown('${name.replace(/'/g, "\\'")}')">
-							<img src="https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/champion/${getChampCleanFile(name)}.png" style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--hextech-gold);" onerror="this.style.display='none'">
+							<span style="width: 20px; height: 20px; border-radius: 50%; overflow: hidden; border: 1px solid var(--hextech-gold); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
+								<img src="https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/champion/${getChampCleanFile(name)}.png" style="width: 100%; height: 100%; object-fit: cover; transform: scale(1.15);" onerror="this.style.display='none'">
+							</span>
 							<span style="font-size: 0.8rem; font-weight: 500;">${name}</span>
 						</div>
 					`;
@@ -1048,10 +1050,12 @@
 					let name = championList[id];
 					if (name) {
 						badgeHtml += `
-							<span class="badge bg-dark border text-warning d-inline-flex align-items-center gap-1" style="border-color: var(--hextech-gold) !important; font-size: 0.85rem; padding: 4px 10px; margin-bottom: 2px;">
-								<img src="https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/champion/${getChampCleanFile(name)}.png" style="width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--hextech-gold);" onerror="this.style.display='none'">
-								${name}
-								<i class="fa-solid fa-times text-muted" style="cursor:pointer; font-size:0.75rem;" onclick="removeTargetChamp('${name.replace(/'/g, "\\'")}')"></i>
+							<span class="badge bg-dark border text-warning d-inline-flex align-items-center gap-2" style="border-color: var(--hextech-gold) !important; font-size: 0.9rem; padding: 4px 10px; margin-bottom: 2px; height: 38px; line-height: 1;">
+								<span style="width: 26px; height: 26px; border-radius: 50%; overflow: hidden; border: 1px solid var(--hextech-gold); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
+									<img src="https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/champion/${getChampCleanFile(name)}.png" style="width: 100%; height: 100%; object-fit: cover; transform: scale(1.15);" onerror="this.style.display='none'">
+								</span>
+								<span>${name}</span>
+								<i class="fa-solid fa-times text-muted ms-1" style="cursor: pointer; font-size: 0.85rem;" onclick="removeTargetChamp('${name.replace(/'/g, "\\'")}')"></i>
 							</span>
 						`;
 					}
@@ -1219,9 +1223,10 @@
 							 title="${tooltipText}"
 							 style="cursor: pointer; position: relative; transition: all 0.2s ease-in-out; width: 60px;">
 							<div style="position: relative;">
-								<img src="${imgUrl}" class="rounded border border-2 ${borderClass}" 
-									 style="width: 48px; height: 48px; object-fit: cover;" 
-									 onerror="this.src='https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/profileicon/29.png'">
+								<div class="border border-2 ${borderClass}" style="width: 48px; height: 48px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+									<img src="${imgUrl}" style="width: 100%; height: 100%; object-fit: cover; transform: scale(1.15);" 
+										 onerror="this.src='https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/profileicon/29.png'">
+								</div>
 								${champ.isTarget ? '<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning" style="padding: 3px 6px; font-size: 0.6rem; color: #000; border: 1px solid #000;"><i class="fa-solid fa-crosshairs"></i></span>' : ''}
 							</div>
 							<span class="text-truncate text-center w-100 mt-1" style="font-size: 0.7rem; color: #fff;">${name}</span>
