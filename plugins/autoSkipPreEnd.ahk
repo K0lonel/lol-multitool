@@ -3,8 +3,18 @@
 plugins.Push(autoSkipPreEnd)
 
 autoSkipPreEnd() {
-    global gameflow
+    global config, gameflow, autoHonorCompleted
     static lastState := ""
+    
+    if (!config.Has("autoSkipPreEndEnabled") || !config["autoSkipPreEndEnabled"]) {
+        lastState := ""
+        return
+    }
+    
+    ; If auto-honoring is enabled, do not skip pre-end-of-game until auto-honoring completes.
+    if (config.Has("autoHonorerEnabled") && config["autoHonorerEnabled"] && IsSet(autoHonorCompleted) && !autoHonorCompleted) {
+        return
+    }
     
     try {
         if (gameflow == "PreEndOfGame") {

@@ -11,6 +11,8 @@ global plugins := Array()
 #Include plugins/champSelectHelper.ahk
 #Include plugins/blacklist.ahk
 #Include plugins/autoSkipPreEnd.ahk
+#Include plugins/lootAssistant.ahk
+#Include plugins/smartAutoHonorer.ahk
 
 FileEncoding "UTF-8"
 JSON.EscapeUnicode := False
@@ -25,6 +27,12 @@ global reportStatus := "Idle"
 global championsLoaded := false
 global championMap := Map()
 global checkedGames := Map()
+global autoHonorCompleted := false
+global friendsCount := 0
+global friendsOnline := 0
+global recentWinRate := "--"
+global honorLevel := "--"
+global sessionStartTime := A_TickCount
 
 ; Load or create configuration
 if(!FileExist("config.json")) {
@@ -42,7 +50,14 @@ if(!FileExist("config.json")) {
         "foldReport", False,
         "blacklistEnabled", True,
         "blacklist", Array(),
-        "foldBlacklist", False
+        "foldBlacklist", False,
+        "autoDisenchantChampionsEnabled", False,
+        "autoDisenchantWardsEnabled", False,
+        "autoHonorerEnabled", False,
+        "autoSkipPreEndEnabled", False,
+        "foldDisenchant", False,
+        "foldHonorer", False,
+        "foldSkipPreEnd", False
     )
     FileAppend(JSON.Dump(defaultConfig, True), "config.json")
 }
@@ -79,6 +94,34 @@ if (!config.Has("foldBlacklist")) {
     config["foldBlacklist"] := False
     SaveConfig()
 }
+if (!config.Has("autoDisenchantChampionsEnabled")) {
+    config["autoDisenchantChampionsEnabled"] := False
+    SaveConfig()
+}
+if (!config.Has("autoDisenchantWardsEnabled")) {
+    config["autoDisenchantWardsEnabled"] := False
+    SaveConfig()
+}
+if (!config.Has("autoHonorerEnabled")) {
+    config["autoHonorerEnabled"] := False
+    SaveConfig()
+}
+if (!config.Has("autoSkipPreEndEnabled")) {
+    config["autoSkipPreEndEnabled"] := False
+    SaveConfig()
+}
+if (!config.Has("foldDisenchant")) {
+    config["foldDisenchant"] := False
+    SaveConfig()
+}
+if (!config.Has("foldHonorer")) {
+    config["foldHonorer"] := False
+    SaveConfig()
+}
+if (!config.Has("foldSkipPreEnd")) {
+    config["foldSkipPreEnd"] := False
+    SaveConfig()
+}
 
 ScriptPID := DllCall("GetCurrentProcessId")
 GroupAdd("ScriptGroup", "ahk_pid" ScriptPID)
@@ -103,6 +146,7 @@ OnExit(ExitSave)
 MyWindow.AddCallBackToScript("updateConfig", UpdateConfigCallback)
 MyWindow.AddCallBackToScript("Tooltip", WebTooltipEvent)
 MyWindow.AddCallBackToScript("dodgeLobby", DodgeLobbyCallback)
+MyWindow.AddCallBackToScript("triggerMassDisenchant", TriggerMassDisenchantCallback)
 MyWindow.AddCallBackToScript("benchSwap", BenchSwapCallback)
 MyWindow.AddCallBackToScript("getRecentPlayers", GetRecentPlayersCallback)
 MyWindow.AddCallBackToScript("Close", CloseWindow)
@@ -126,7 +170,7 @@ global friends := Array()
 global gameflow := "None"
 global match_history := Map()
 global initConfigSent := false
-global historyTimer := 9
+global historyTimer := 30
 global champTimer := 9
 global lastGameflow := "INIT"
 global wasLcuConnected := false
@@ -164,13 +208,21 @@ loop {
                 puuid := tempMe.Has("puuid") ? tempMe["puuid"] : ""
                 summonerId := tempMe.Has("summonerId") ? tempMe["summonerId"] : 0
                 
+                sessionSecs := (A_TickCount - sessionStartTime) // 1000
+                sessionTime := FormatSessionTime(sessionSecs)
+                
                 global me := Map("lol", Map(
                     "gameName", gameName,
                     "tagLine", tagLine,
                     "summonerLevel", summonerLevel,
                     "iconId", iconId,
                     "puuid", puuid,
-                    "summonerId", summonerId
+                    "summonerId", summonerId,
+                    "friendsCount", friendsCount,
+                    "friendsOnline", friendsOnline,
+                    "recentWinRate", recentWinRate,
+                    "sessionTime", sessionTime,
+                    "honorLevel", honorLevel
                 ))
             } else {
                 global me := Map()
@@ -183,6 +235,14 @@ loop {
             tempFriends := APICall("GET", "/lol-chat/v1/friends")
             if (Type(tempFriends) == "Array") {
                 global friends := tempFriends
+                global friendsCount := friends.Length
+                tempOnline := 0
+                for index, friend in friends {
+                    if (friend.Has("availability") && friend["availability"] != "offline") {
+                        tempOnline++
+                    }
+                }
+                global friendsOnline := tempOnline
                 if (friends.Length != friend_puuid.Count) {
                     friend_puuid := Map()
                     for index, friend in friends
@@ -219,20 +279,80 @@ loop {
         global lastGameflow := gameflow
     }
     
-    ; 2. Match History (every 30 seconds)
-    if (historyTimer >= 30) {
+    ; 2. Match History & Stats (every 30 seconds, or 5 seconds if not yet loaded)
+    forceStatsCheck := (lcuConnected && (recentWinRate == "--" || honorLevel == "--"))
+    if (historyTimer >= 30 || (forceStatsCheck && historyTimer >= 5)) {
         historyTimer := 0
         if (lcuConnected) {
             try {
                 tempHistory := APICall("GET", "/lol-match-history/v1/products/lol/current-summoner/matches?begIndex=0&endIndex=49")
                 if (IsObject(tempHistory) && tempHistory.Has("games")) {
                     global match_history := tempHistory
-                    ; Removed LCU match history update log to prevent console spam
+                    
+                    ; Calculate win rate of the last 10 games
+                    if (IsObject(tempHistory["games"]) && tempHistory["games"].Has("games")) {
+                        gamesArr := tempHistory["games"]["games"]
+                        winsCount := 0
+                        lossesCount := 0
+                        gamesToCheck := gamesArr.Length > 10 ? 10 : gamesArr.Length
+                        
+                        for index, game in gamesArr {
+                            if (index > gamesToCheck)
+                                break
+                                
+                            partId := 0
+                            if (game.Has("participantIdentities")) {
+                                for idx, identity in game["participantIdentities"] {
+                                    if (identity.Has("player") && identity["player"].Has("puuid") && identity["player"]["puuid"] == puuid) {
+                                        partId := identity.Has("participantId") ? identity["participantId"] : 0
+                                        break
+                                    }
+                                }
+                            }
+                            
+                            if (partId > 0 && game.Has("participants")) {
+                                for idx, participant in game["participants"] {
+                                    if (participant.Has("participantId") && participant["participantId"] == partId) {
+                                        if (participant.Has("stats") && participant["stats"].Has("win")) {
+                                            if (participant["stats"]["win"]) {
+                                                winsCount++
+                                            } else {
+                                                lossesCount++
+                                            }
+                                        }
+                                        break
+                                    }
+                                }
+                            }
+                        }
+                        
+                        totalRecentGames := winsCount + lossesCount
+                        if (totalRecentGames > 0) {
+                            wrPercent := Round((winsCount / totalRecentGames) * 100)
+                            global recentWinRate := String(wrPercent) "% (" String(winsCount) "W / " String(lossesCount) "L)"
+                        } else {
+                            global recentWinRate := "No Games"
+                        }
+                    } else {
+                        global recentWinRate := "No Games"
+                    }
                 } else if (IsObject(tempHistory) && tempHistory.Has("error") && tempHistory["error"] != "Offline") {
                     LogToWeb("Failed to fetch match history: LCU returned error status " tempHistory["status"], "warning")
                 }
             } catch Error as e {
                 LogToWeb("Failed to fetch match history: " e.Message, "error")
+            }
+            
+            try {
+                tempHonor := APICall("GET", "/lol-honor-v2/v1/profile")
+                if (IsObject(tempHonor) && tempHonor.Has("honorLevel")) {
+                    hl := tempHonor["honorLevel"]
+                    cp := tempHonor.Has("checkpoint") ? tempHonor["checkpoint"] : 0
+                    global honorLevel := "Lvl " String(hl) " (CP " String(cp) ")"
+                }
+            } catch Error as e {
+                global honorLevel := "--"
+                LogToWeb("Failed to query honor progress: " e.Message, "error")
             }
         }
     }
@@ -386,6 +506,11 @@ DodgeLobbyCallback(WebView) {
     }
 }
 
+TriggerMassDisenchantCallback(WebView) {
+    LogToWeb("Mass Disenchant: Manual trigger initiated by user...", "info")
+    RunMassDisenchant(false)
+}
+
 BenchSwapCallback(WebView, champId) {
     global bypassAutoPick
     champName := GetChampionName(champId)
@@ -455,4 +580,17 @@ SetHistoryGame(gameId, value) {
     global match_history_dic
     match_history_dic[gameId] := value
     SaveHistory()
+}
+
+FormatSessionTime(seconds) {
+    hh := seconds // 3600
+    mm := (seconds // 60) - (hh * 60)
+    ss := Mod(seconds, 60)
+    
+    timeStr := ""
+    if (hh > 0) {
+        timeStr .= Format("{:02d}", hh) ":"
+    }
+    timeStr .= Format("{:02d}", mm) ":" Format("{:02d}", ss)
+    return timeStr
 }

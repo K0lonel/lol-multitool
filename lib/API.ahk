@@ -1,6 +1,6 @@
 #Requires AutoHotkey v2.0
 #Include LCU.ahk
-APICall(method, endpoint, post_data := "") {
+APICall(method, endpoint, post_data := unset) {
     if (LCU.Token == "") {
         if (!LCU.Initialize()) {
             return Map("error", "Offline", "status", 0)
@@ -9,7 +9,7 @@ APICall(method, endpoint, post_data := "") {
     headersIn := Map("Authorization", "Basic " LCU.Token)
     url := LCU.App_URL endpoint
 
-    return request(method, url, post_data, headersIn)
+    return request(method, url, post_data?, headersIn)
 }
 
 request(method, endpoint, post_data?, headersIn := Map()) {
@@ -24,7 +24,10 @@ request(method, endpoint, post_data?, headersIn := Map()) {
     req.Option[4] := 0x3300
 
     try {
-        req.Send(post_data?) 
+        if IsSet(post_data)
+            req.Send(post_data)
+        else
+            req.Send()
         status := req.Status
         if (status == 429) {
             LogToWeb("LCU API Rate Limit (429) on " method " " endpoint, "warning")

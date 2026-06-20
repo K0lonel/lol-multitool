@@ -136,23 +136,55 @@
 							<div class="col-md-6 d-flex">
 								<div class="hextech-card w-100 mb-0 d-flex flex-column justify-content-between">
 									<div class="card-title-gold mb-3"><i class="fa-solid fa-gamepad"></i> Game Stats</div>
-									<div class="row align-items-center mt-auto mb-auto">
-										<div class="col-4 border-end" style="border-color: rgba(200, 155, 60, 0.15) !important;">
-											<div class="small text-muted mb-1 text-center" style="font-size: 0.65rem; letter-spacing: 0.5px; line-height: 1.3; min-height: 2.6em;">CLIENT<br>PHASE</div>
-											<div class="text-center">
-												<span id="gameflow-phase" class="badge bg-dark border text-info" style="border-color: rgba(10, 200, 185, 0.3) !important; font-size: 0.85rem;">None</span>
+									
+									<div class="d-flex flex-column justify-content-between flex-grow-1 w-100 mt-2">
+										<!-- Lobby & Client Section -->
+										<div>
+											<div class="small text-muted mb-2 text-uppercase" style="letter-spacing: 0.8px; font-size: 0.6rem; font-weight: 700; border-bottom: 1px solid rgba(200, 155, 60, 0.12); padding-bottom: 3px;">Lobby & Client</div>
+											<div class="d-flex flex-wrap justify-content-start align-items-center w-100 py-1" style="gap: 8px;">
+												<div class="p-2 rounded border d-flex flex-column justify-content-center align-items-center" title="Current League Client flow state" style="flex: 1 0 calc(33.333% - 10px); min-width: 100px; max-width: calc(33.333% - 10px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(200, 155, 60, 0.12) !important;">
+													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">CLIENT PHASE</div>
+													<span id="gameflow-phase" class="badge bg-dark border text-info" style="border-color: rgba(10, 200, 185, 0.3) !important; font-size: 0.7rem; padding: 3px 6px;">None</span>
+												</div>
+												<div class="p-2 rounded border d-flex flex-column justify-content-center align-items-center" title="Champions unlocked in your collection" style="flex: 1 0 calc(33.333% - 10px); min-width: 100px; max-width: calc(33.333% - 10px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(200, 155, 60, 0.12) !important;">
+													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">OWNED CHAMPS</div>
+													<span id="game-stats-champs" class="badge bg-dark border text-warning" style="border-color: rgba(200, 155, 60, 0.3) !important; font-size: 0.75rem; padding: 3px 6px;">--</span>
+												</div>
+												<div class="p-2 rounded border d-flex flex-column justify-content-center align-items-center" title="Friends online / total friends list" style="flex: 1 0 calc(33.333% - 10px); min-width: 100px; max-width: calc(33.333% - 10px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(200, 155, 60, 0.12) !important;">
+													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">ONLINE FRIENDS</div>
+													<span id="game-stats-friends" class="badge bg-dark border text-success" style="border-color: rgba(40, 167, 69, 0.3) !important; font-size: 0.75rem; padding: 3px 6px;">--</span>
+												</div>
+												<div class="p-2 rounded border d-flex flex-column justify-content-center align-items-center" title="Duration since multitool was launched" style="flex: 1 0 calc(33.333% - 10px); min-width: 100px; max-width: calc(33.333% - 10px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(200, 155, 60, 0.12) !important;">
+													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">SESSION TIME</div>
+													<span id="game-stats-session" class="badge bg-dark border text-primary" style="border-color: rgba(0, 123, 255, 0.3) !important; font-size: 0.7rem; padding: 3px 6px;">--:--</span>
+												</div>
+												<div class="p-2 rounded border d-flex flex-column justify-content-center align-items-center" title="Your win rate over the last 10 games" style="flex: 1 0 calc(33.333% - 10px); min-width: 100px; max-width: calc(33.333% - 10px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(200, 155, 60, 0.12) !important;">
+													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">RECENT WIN RATE</div>
+													<span id="game-stats-winrate" class="badge bg-dark border text-warning" style="border-color: rgba(200, 155, 60, 0.3) !important; font-size: 0.7rem; padding: 3px 6px;">--</span>
+												</div>
+												<div class="p-2 rounded border d-flex flex-column justify-content-center align-items-center" title="Honor Level progress checkpoint" style="flex: 1 0 calc(33.333% - 10px); min-width: 100px; max-width: calc(33.333% - 10px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(200, 155, 60, 0.12) !important;">
+													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">HONOR PROGRESS</div>
+													<span id="game-stats-honor" class="badge bg-dark border text-info" style="border-color: rgba(10, 200, 185, 0.3) !important; font-size: 0.7rem; padding: 3px 6px;">--</span>
+												</div>
 											</div>
 										</div>
-										<div class="col-4 border-end" style="border-color: rgba(200, 155, 60, 0.15) !important;">
-											<div class="small text-muted mb-1 text-center" style="font-size: 0.65rem; letter-spacing: 0.5px; line-height: 1.3; min-height: 2.6em;">CACHED<br>MATCHES</div>
-											<div class="text-center">
-												<span id="game-stats-reports" class="badge bg-dark border text-warning" style="border-color: rgba(200, 155, 60, 0.3) !important; font-size: 0.85rem;">0</span>
-											</div>
-										</div>
-										<div class="col-4">
-											<div class="small text-muted mb-1 text-center" style="font-size: 0.65rem; letter-spacing: 0.5px; line-height: 1.3; min-height: 2.6em;">PLAYERS<br>LOGGED</div>
-											<div class="text-center">
-												<span id="game-stats-players" class="badge bg-dark border text-success" style="border-color: rgba(40, 167, 69, 0.3) !important; font-size: 0.85rem;">0</span>
+
+										<!-- Local History Section -->
+										<div>
+											<div class="small text-muted mb-2 text-uppercase" style="letter-spacing: 0.8px; font-size: 0.6rem; font-weight: 700; border-bottom: 1px solid rgba(200, 155, 60, 0.12); padding-bottom: 3px;">Local Database & Logs</div>
+											<div class="d-flex flex-wrap justify-content-start align-items-center w-100 py-1" style="gap: 8px;">
+												<div class="p-2 rounded border d-flex flex-column justify-content-center align-items-center" title="Total matches saved in your local history database" style="flex: 1 0 calc(33.333% - 10px); min-width: 100px; max-width: calc(33.333% - 10px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(200, 155, 60, 0.12) !important;">
+													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">CACHED MATCHES</div>
+													<span id="game-stats-reports" class="badge bg-dark border text-warning" style="border-color: rgba(200, 155, 60, 0.3) !important; font-size: 0.75rem; padding: 3px 6px;">0</span>
+												</div>
+												<div class="p-2 rounded border d-flex flex-column justify-content-center align-items-center" title="Total players seen/logged by the tool" style="flex: 1 0 calc(33.333% - 10px); min-width: 100px; max-width: calc(33.333% - 10px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(200, 155, 60, 0.12) !important;">
+													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">PLAYERS LOGGED</div>
+													<span id="game-stats-players" class="badge bg-dark border text-success" style="border-color: rgba(40, 167, 69, 0.3) !important; font-size: 0.75rem; padding: 3px 6px;">0</span>
+												</div>
+												<div class="p-2 rounded border d-flex flex-column justify-content-center align-items-center" title="Total players currently on your blacklist" style="flex: 1 0 calc(33.333% - 10px); min-width: 100px; max-width: calc(33.333% - 10px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(200, 155, 60, 0.12) !important;">
+													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">BLACKLISTED</div>
+													<span id="game-stats-blacklist-count" class="badge bg-dark border text-danger" style="border-color: rgba(220, 53, 69, 0.3) !important; font-size: 0.75rem; padding: 3px 6px;">0</span>
+												</div>
 											</div>
 										</div>
 									</div>
@@ -163,22 +195,48 @@
 							<div class="col-md-6 d-flex">
 								<div class="hextech-card w-100 mb-0 d-flex flex-column justify-content-between">
 									<div class="card-title-gold mb-3"><i class="fa-solid fa-bolt"></i> Running Tasks</div>
-									<div class="row text-center mt-auto mb-auto">
-										<div class="col-3 running-task-col" onclick="toggleRunningTask('blacklistEnabled')" title="Toggle Blacklist">
-											<div class="small text-muted mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">BLACKLIST</div>
-											<span class="badge" id="badge-blacklist" style="font-size: 0.8rem;">Disabled</span>
+									
+									<div class="d-flex flex-column justify-content-between flex-grow-1 w-100 mt-2">
+										<!-- Automated Systems Section -->
+										<div>
+											<div class="small text-muted mb-2 text-uppercase" style="letter-spacing: 0.8px; font-size: 0.6rem; font-weight: 700; border-bottom: 1px solid rgba(200, 155, 60, 0.12); padding-bottom: 3px;">Automated Systems</div>
+											<div class="d-flex flex-wrap justify-content-start align-items-center w-100 py-1" style="gap: 8px;">
+												<div class="running-task-col p-2 rounded border d-flex flex-column justify-content-center align-items-center" onclick="toggleRunningTask('blacklistEnabled')" title="Toggle Blacklist Monitor" style="flex: 1 0 calc(33.333% - 10px); min-width: 100px; max-width: calc(33.333% - 10px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(200, 155, 60, 0.12) !important;">
+													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">BLACKLIST</div>
+													<span class="badge" id="badge-blacklist" style="font-size: 0.65rem;">Disabled</span>
+												</div>
+												<div class="running-task-col p-2 rounded border d-flex flex-column justify-content-center align-items-center" onclick="toggleRunningTask('autoReport')" title="Toggle Post-Game Reporter" style="flex: 1 0 calc(33.333% - 10px); min-width: 100px; max-width: calc(33.333% - 10px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(200, 155, 60, 0.12) !important;">
+													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">REPORT</div>
+													<span class="badge" id="badge-report" style="font-size: 0.65rem;">Disabled</span>
+												</div>
+												<div class="running-task-col p-2 rounded border d-flex flex-column justify-content-center align-items-center" onclick="toggleRunningTask('autoPickBenchEnabled')" title="Toggle Bench Auto-Sniper" style="flex: 1 0 calc(33.333% - 10px); min-width: 100px; max-width: calc(33.333% - 10px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(200, 155, 60, 0.12) !important;">
+													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">BENCH-SNIPER</div>
+													<span class="badge" id="badge-sniper" style="font-size: 0.65rem;">Disabled</span>
+												</div>
+												<div class="running-task-col p-2 rounded border d-flex flex-column justify-content-center align-items-center" onclick="toggleRunningTask('autoAccept')" title="Toggle Queue Auto-Acceptor" style="flex: 1 0 calc(33.333% - 10px); min-width: 100px; max-width: calc(33.333% - 10px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(200, 155, 60, 0.12) !important;">
+													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">ACCEPT</div>
+													<span class="badge" id="badge-accept" style="font-size: 0.65rem;">Disabled</span>
+												</div>
+												<div class="running-task-col p-2 rounded border d-flex flex-column justify-content-center align-items-center" onclick="toggleRunningTask('autoHonorerEnabled')" title="Toggle Smart Auto-Honorer" style="flex: 1 0 calc(33.333% - 10px); min-width: 100px; max-width: calc(33.333% - 10px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(200, 155, 60, 0.12) !important;">
+													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">HONOR</div>
+													<span class="badge" id="badge-honorer" style="font-size: 0.65rem;">Disabled</span>
+												</div>
+												<div class="running-task-col p-2 rounded border d-flex flex-column justify-content-center align-items-center" onclick="toggleRunningTask('autoSkipPreEndEnabled')" title="Toggle Pre-End Skipper" style="flex: 1 0 calc(33.333% - 10px); min-width: 100px; max-width: calc(33.333% - 10px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(200, 155, 60, 0.12) !important;">
+													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">SKIP-HONOR</div>
+													<span class="badge" id="badge-skipPreEnd" style="font-size: 0.65rem;">Disabled</span>
+												</div>
+											</div>
 										</div>
-										<div class="col-3 border-start running-task-col" onclick="toggleRunningTask('autoReport')" title="Toggle Auto-Report" style="border-color: rgba(200, 155, 60, 0.15) !important;">
-											<div class="small text-muted mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">AUTO-REPORT</div>
-											<span class="badge" id="badge-report" style="font-size: 0.8rem;">Disabled</span>
-										</div>
-										<div class="col-3 border-start border-end running-task-col" onclick="toggleRunningTask('autoPickBenchEnabled')" title="Toggle Bench Sniper" style="border-color: rgba(200, 155, 60, 0.15) !important;">
-											<div class="small text-muted mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">BENCH SNIPER</div>
-											<span class="badge" id="badge-sniper" style="font-size: 0.8rem;">Disabled</span>
-										</div>
-										<div class="col-3 running-task-col" onclick="toggleRunningTask('autoAccept')" title="Toggle Auto-Accept">
-											<div class="small text-muted mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">AUTO-ACCEPT</div>
-											<span class="badge" id="badge-accept" style="font-size: 0.8rem;">Disabled</span>
+
+										<!-- Instant Actions Section -->
+										<div>
+											<div class="small text-muted mb-2 text-uppercase" style="letter-spacing: 0.8px; font-size: 0.6rem; font-weight: 700; border-bottom: 1px solid rgba(200, 155, 60, 0.12); padding-bottom: 3px;">Instant Actions</div>
+											<div class="d-flex flex-wrap justify-content-start align-items-center w-100 py-1" style="gap: 8px;">
+												<div class="running-task-col p-2 rounded border d-flex flex-column justify-content-center align-items-center" onclick="ahk.triggerMassDisenchant()" title="Run Mass Loot Disenchanter Now" style="flex: 1 0 calc(33.333% - 10px); min-width: 100px; max-width: calc(33.333% - 10px); height: 56px; background: rgba(200, 155, 60, 0.05); border-color: rgba(200, 155, 60, 0.25) !important;">
+													<div class="small text-warning mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 700;">DISENCHANT</div>
+													<div class="text-muted" style="font-size: 0.65rem; font-weight: 600;"><i class="fa-solid fa-wand-magic-sparkles text-warning me-1"></i>Run Now</div>
+												</div>
+											</div>
 										</div>
 									</div>
 								</div>
@@ -262,7 +320,7 @@
 						<div class="hextech-card" id="card-sniper" style="position: relative; z-index: 10;">
 							<div class="d-flex justify-content-between align-items-center mb-3">
 								<div class="card-title-gold m-0">
-									<i class="fa-solid fa-crosshairs" id="sniper-status-icon" style="margin-right: 6px;"></i> ARAM Bench Sniper Companion
+									<i class="fa-solid fa-crosshairs" id="sniper-status-icon" style="margin-right: 6px;"></i> ARAM Bench Auto-Sniper
 								</div>
 								<div class="d-flex align-items-center gap-3">
 									<div class="form-check form-switch m-0">
@@ -343,7 +401,7 @@
 						<div class="hextech-card" id="card-blacklist">
 							<div class="d-flex justify-content-between align-items-center mb-3">
 								<div class="card-title-gold m-0">
-									<i class="fa-solid fa-user-slash"></i> Lobby Blacklist
+									<i class="fa-solid fa-user-slash"></i> Lobby Blacklist Monitor
 								</div>
 								<div class="d-flex align-items-center gap-3">
 									<div class="form-check form-switch m-0">
@@ -356,7 +414,7 @@
 							</div>
 							
 							<div class="card-collapse-body">
-								<p class="text-muted small">Alerts you immediately during Champion Select if any player on your blacklist is found in your lobby.</p>
+								<p class="text-muted small">Alerts you immediately during Champion Select if any blacklisted player is found in your lobby.</p>
 								
 								<div class="row g-3">
 									<div class="col-md-7">
@@ -395,7 +453,7 @@
 						<!-- Auto Report Configuration -->
 						<div class="hextech-card" id="card-report">
 							<div class="d-flex justify-content-between align-items-center mb-3">
-								<div class="card-title-gold m-0"><i class="fa-solid fa-triangle-exclamation"></i> Automated Lobby Report</div>
+								<div class="card-title-gold m-0"><i class="fa-solid fa-triangle-exclamation"></i> Post-Game Auto-Reporter</div>
 								<div class="d-flex align-items-center gap-3">
 									<div class="form-check form-switch m-0">
 										<input class="form-check-input" type="checkbox" id="toggle-autoReport" onchange="updateConfig('autoReport', this.checked)">
@@ -406,7 +464,7 @@
 								</div>
 							</div>
 							<div class="card-collapse-body">
-								<p class="text-muted small">Automatically reports all match participants (excluding friends) at the end of every game using selected categories.</p>
+								<p class="text-muted small">Automatically files post-match reports for all participants (excluding friends/teammates) using chosen categories.</p>
 								
 								<div class="mt-3">
 									<label class="form-label text-warning small uppercase mb-2">Report Categories</label>
@@ -467,7 +525,7 @@
 						<!-- Auto Accept Configuration -->
 						<div class="hextech-card" id="card-accept">
 							<div class="d-flex justify-content-between align-items-center mb-3">
-								<div class="card-title-gold m-0"><i class="fa-regular fa-square-check"></i> Auto Accept Queue</div>
+								<div class="card-title-gold m-0"><i class="fa-regular fa-square-check"></i> Match Finder Auto-Acceptor</div>
 								<div class="d-flex align-items-center gap-3">
 									<div class="form-check form-switch m-0">
 										<input class="form-check-input" type="checkbox" id="toggle-autoAccept" onchange="updateConfig('autoAccept', this.checked)">
@@ -478,7 +536,7 @@
 								</div>
 							</div>
 							<div class="card-collapse-body">
-								<p class="text-muted small">Automatically accepts matchmaking ready checks when they appear.</p>
+								<p class="text-muted small">Automatically accepts queue ready checks with customizable humanized delays.</p>
 								<div class="mt-3">
 									<label for="range-acceptDelay" class="form-label d-flex justify-content-between">
 										<span>Accept Delay (Humanizer)</span>
@@ -486,6 +544,70 @@
 									</label>
 									<input type="range" class="form-range" min="0" max="5" step="1" id="range-acceptDelay" oninput="document.getElementById('val-acceptDelay').innerText=this.value" onchange="updateConfig('acceptDelay', parseInt(this.value))">
 								</div>
+							</div>
+						</div>
+
+						<!-- Loot Assistant Configuration -->
+						<div class="hextech-card" id="card-disenchant">
+							<div class="d-flex justify-content-between align-items-center mb-3">
+								<div class="card-title-gold m-0"><i class="fa-solid fa-coins text-warning"></i> Loot Auto-Disenchanter</div>
+								<button class="btn btn-link text-warning p-0 border-0" onclick="toggleCardCollapse(this)" data-fold-key="foldDisenchant" style="font-size: 1.1rem; line-height: 1; cursor: pointer; text-decoration: none;">
+									<i class="fa-solid fa-chevron-up collapse-icon"></i>
+								</button>
+							</div>
+							<div class="card-collapse-body">
+								<p class="text-muted small">Select which loot items to automatically or manually disenchant into essence.</p>
+								
+								<div class="d-flex flex-column gap-2 mb-3">
+									<div class="form-check form-switch d-flex justify-content-between align-items-center p-0">
+										<label class="form-check-label text-muted small" for="toggle-autoDisenchantChampionsEnabled">Auto-Disenchant Champion Shards (Blue Essence)</label>
+										<input class="form-check-input ms-auto" type="checkbox" id="toggle-autoDisenchantChampionsEnabled" onchange="updateConfig('autoDisenchantChampionsEnabled', this.checked)">
+									</div>
+									<div class="form-check form-switch d-flex justify-content-between align-items-center p-0 mt-1">
+										<label class="form-check-label text-muted small" for="toggle-autoDisenchantWardsEnabled">Auto-Disenchant Ward Shards (Orange Essence)</label>
+										<input class="form-check-input ms-auto" type="checkbox" id="toggle-autoDisenchantWardsEnabled" onchange="updateConfig('autoDisenchantWardsEnabled', this.checked)">
+									</div>
+								</div>
+
+								<div class="mt-3 border-top pt-3" style="border-color: rgba(200, 155, 60, 0.15) !important;">
+									<button class="btn btn-outline-warning w-100 btn-sm" onclick="ahk.triggerMassDisenchant()"><i class="fa-solid fa-wand-magic-sparkles me-1"></i> Disenchant Selected Shards Now</button>
+								</div>
+							</div>
+						</div>
+
+						<!-- Smart Auto-Honorer Configuration -->
+						<div class="hextech-card" id="card-honorer">
+							<div class="d-flex justify-content-between align-items-center mb-3">
+								<div class="card-title-gold m-0"><i class="fa-solid fa-award text-warning"></i> Smart Auto-Honorer</div>
+								<div class="d-flex align-items-center gap-3">
+									<div class="form-check form-switch m-0">
+										<input class="form-check-input" type="checkbox" id="toggle-autoHonorerEnabled" onchange="updateConfig('autoHonorerEnabled', this.checked)">
+									</div>
+									<button class="btn btn-link text-warning p-0 border-0" onclick="toggleCardCollapse(this)" data-fold-key="foldHonorer" style="font-size: 1.1rem; line-height: 1; cursor: pointer; text-decoration: none;">
+										<i class="fa-solid fa-chevron-up collapse-icon"></i>
+									</button>
+								</div>
+							</div>
+							<div class="card-collapse-body">
+								<p class="text-muted small">Automatically honors a random eligible teammate at the end of the match. Respects your friends list and excludes lobby premades to focus honor progression on random players.</p>
+							</div>
+						</div>
+
+						<!-- Pre-End Game Skipper Configuration -->
+						<div class="hextech-card" id="card-skipPreEnd">
+							<div class="d-flex justify-content-between align-items-center mb-3">
+								<div class="card-title-gold m-0"><i class="fa-solid fa-forward-step text-warning"></i> Pre-End Game Skipper</div>
+								<div class="d-flex align-items-center gap-3">
+									<div class="form-check form-switch m-0">
+										<input class="form-check-input" type="checkbox" id="toggle-autoSkipPreEndEnabled" onchange="updateConfig('autoSkipPreEndEnabled', this.checked)">
+									</div>
+									<button class="btn btn-link text-warning p-0 border-0" onclick="toggleCardCollapse(this)" data-fold-key="foldSkipPreEnd" style="font-size: 1.1rem; line-height: 1; cursor: pointer; text-decoration: none;">
+										<i class="fa-solid fa-chevron-up collapse-icon"></i>
+									</button>
+								</div>
+							</div>
+							<div class="card-collapse-body">
+								<p class="text-muted small">Automatically skips the pre-end-of-game victory/defeat celebration screen to return to the lobby faster. Integrates with the Smart Auto-Honorer to wait until honor submission is complete.</p>
 							</div>
 						</div>
 					</div>
@@ -583,6 +705,20 @@
 				document.getElementById('toggle-autoAccept').checked = config.autoAccept;
 				updateBadge('badge-accept', config.autoAccept);
 			}
+			if (config.autoDisenchantChampionsEnabled !== undefined) {
+				document.getElementById('toggle-autoDisenchantChampionsEnabled').checked = config.autoDisenchantChampionsEnabled;
+			}
+			if (config.autoDisenchantWardsEnabled !== undefined) {
+				document.getElementById('toggle-autoDisenchantWardsEnabled').checked = config.autoDisenchantWardsEnabled;
+			}
+			if (config.autoHonorerEnabled !== undefined) {
+				document.getElementById('toggle-autoHonorerEnabled').checked = config.autoHonorerEnabled;
+				updateBadge('badge-honorer', config.autoHonorerEnabled);
+			}
+			if (config.autoSkipPreEndEnabled !== undefined) {
+				document.getElementById('toggle-autoSkipPreEndEnabled').checked = config.autoSkipPreEndEnabled;
+				updateBadge('badge-skipPreEnd', config.autoSkipPreEndEnabled);
+			}
 			if (config.acceptDelay !== undefined) {
 				document.getElementById('range-acceptDelay').value = config.acceptDelay;
 				document.getElementById('val-acceptDelay').innerText = config.acceptDelay;
@@ -628,6 +764,15 @@
 			if (config.foldBlacklist !== undefined) {
 				setCardCollapseState('#card-blacklist', config.foldBlacklist);
 			}
+			if (config.foldDisenchant !== undefined) {
+				setCardCollapseState('#card-disenchant', config.foldDisenchant);
+			}
+			if (config.foldHonorer !== undefined) {
+				setCardCollapseState('#card-honorer', config.foldHonorer);
+			}
+			if (config.foldSkipPreEnd !== undefined) {
+				setCardCollapseState('#card-skipPreEnd', config.foldSkipPreEnd);
+			}
 			
 			// Initialize blacklist state
 			initBlacklist(config);
@@ -658,9 +803,10 @@
 			if (key === 'autoAccept') updateBadge('badge-accept', value);
 			if (key === 'autoReport') updateBadge('badge-report', value);
 			if (key === 'autoPickBenchEnabled') updateBadge('badge-sniper', value);
-			if (key === 'blacklistEnabled') {
-				updateBadge('badge-blacklist', value);
-			}
+			if (key === 'blacklistEnabled') updateBadge('badge-blacklist', value);
+
+			if (key === 'autoHonorerEnabled') updateBadge('badge-honorer', value);
+			if (key === 'autoSkipPreEndEnabled') updateBadge('badge-skipPreEnd', value);
 		}
 
 		function onCategoryToggle() {
@@ -803,6 +949,12 @@
 				playersEl.innerText = totalPlayers;
 			}
 
+			// Blacklist stats update
+			const blacklistCountEl = document.getElementById('game-stats-blacklist-count');
+			if (blacklistCountEl) {
+				blacklistCountEl.innerText = window.blacklist ? window.blacklist.length : 0;
+			}
+
 			// 2. Profile Details
 			if (me && me.lol) {
 				document.getElementById('summoner-name').innerText = me.lol.gameName;
@@ -810,6 +962,35 @@
 				if (me.lol.iconId) {
 					document.getElementById('summoner-icon').src = `https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/profileicon/${me.lol.iconId}.png`;
 				}
+				
+				// Friends stats update
+				const friendsEl = document.getElementById('game-stats-friends');
+				if (friendsEl && me.lol.friendsCount !== undefined) {
+					friendsEl.innerText = `${me.lol.friendsOnline} / ${me.lol.friendsCount}`;
+				}
+
+				// Session time update
+				const sessionEl = document.getElementById('game-stats-session');
+				if (sessionEl) {
+					sessionEl.innerText = me.lol.sessionTime !== undefined ? me.lol.sessionTime : "--:--";
+				}
+
+				// Recent win rate update
+				const winrateEl = document.getElementById('game-stats-winrate');
+				if (winrateEl) {
+					winrateEl.innerText = me.lol.recentWinRate !== undefined ? me.lol.recentWinRate : "--";
+				}
+
+				// Honor level update
+				const honorEl = document.getElementById('game-stats-honor');
+				if (honorEl) {
+					honorEl.innerText = me.lol.honorLevel !== undefined ? me.lol.honorLevel : "--";
+				}
+			}
+
+			const champsCountEl = document.getElementById('game-stats-champs');
+			if (champsCountEl) {
+				champsCountEl.innerText = window.ownedChampsCount !== undefined ? window.ownedChampsCount : "--";
 			}
 
 			// 3. Queue Status
@@ -934,6 +1115,12 @@
 			championNameMap = {};
 			championRoles = {};
 			championAliases = {};
+			
+			window.ownedChampsCount = champs.length;
+			const champsCountEl = document.getElementById('game-stats-champs');
+			if (champsCountEl) {
+				champsCountEl.innerText = champs.length;
+			}
 			
 			champs.forEach(c => {
 				if (c.id > 0) {
@@ -1581,6 +1768,12 @@
 			const container = document.getElementById('blacklist-container');
 			if (!container) return;
 
+			// Update blacklist count stat badge
+			const blacklistCountEl = document.getElementById('game-stats-blacklist-count');
+			if (blacklistCountEl) {
+				blacklistCountEl.innerText = window.blacklist ? window.blacklist.length : 0;
+			}
+
 			// Clear container
 			container.innerHTML = '';
 
@@ -1818,6 +2011,16 @@
 				const el = document.getElementById('toggle-blacklistEnabled');
 				if (el) el.checked = val;
 				updateConfig('blacklistEnabled', val);
+			} else if (taskName === 'autoHonorerEnabled') {
+				const val = !window.loadedConfig.autoHonorerEnabled;
+				const el = document.getElementById('toggle-autoHonorerEnabled');
+				if (el) el.checked = val;
+				updateConfig('autoHonorerEnabled', val);
+			} else if (taskName === 'autoSkipPreEndEnabled') {
+				const val = !window.loadedConfig.autoSkipPreEndEnabled;
+				const el = document.getElementById('toggle-autoSkipPreEndEnabled');
+				if (el) el.checked = val;
+				updateConfig('autoSkipPreEndEnabled', val);
 			}
 		}
 	</script>
