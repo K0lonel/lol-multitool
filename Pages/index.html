@@ -164,9 +164,9 @@
 								<div class="hextech-card w-100 mb-0 d-flex flex-column justify-content-between">
 									<div class="card-title-gold mb-3"><i class="fa-solid fa-bolt"></i> Running Tasks</div>
 									<div class="row text-center mt-auto mb-auto">
-										<div class="col-3 running-task-col" onclick="toggleRunningTask('autoAccept')" title="Toggle Auto-Accept">
-											<div class="small text-muted mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">AUTO-ACCEPT</div>
-											<span class="badge" id="badge-accept" style="font-size: 0.8rem;">Disabled</span>
+										<div class="col-3 running-task-col" onclick="toggleRunningTask('blacklistEnabled')" title="Toggle Blacklist">
+											<div class="small text-muted mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">BLACKLIST</div>
+											<span class="badge" id="badge-blacklist" style="font-size: 0.8rem;">Disabled</span>
 										</div>
 										<div class="col-3 border-start running-task-col" onclick="toggleRunningTask('autoReport')" title="Toggle Auto-Report" style="border-color: rgba(200, 155, 60, 0.15) !important;">
 											<div class="small text-muted mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">AUTO-REPORT</div>
@@ -176,28 +176,11 @@
 											<div class="small text-muted mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">BENCH SNIPER</div>
 											<span class="badge" id="badge-sniper" style="font-size: 0.8rem;">Disabled</span>
 										</div>
-										<div class="col-3 running-task-col" onclick="toggleRunningTask('blacklistEnabled')" title="Toggle Blacklist">
-											<div class="small text-muted mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">BLACKLIST</div>
-											<span class="badge" id="badge-blacklist" style="font-size: 0.8rem;">Disabled</span>
+										<div class="col-3 running-task-col" onclick="toggleRunningTask('autoAccept')" title="Toggle Auto-Accept">
+											<div class="small text-muted mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">AUTO-ACCEPT</div>
+											<span class="badge" id="badge-accept" style="font-size: 0.8rem;">Disabled</span>
 										</div>
 									</div>
-								</div>
-							</div>
-						</div>
-
-						<!-- Debug Champion ID 9 Card -->
-						<div class="hextech-card mb-4" id="debug-champ-card" style="border-color: rgba(0, 140, 255, 0.35);">
-							<div class="card-title-gold d-flex justify-content-between align-items-center mb-2">
-								<span><i class="fa-solid fa-bug text-info"></i> Champion ID 9 Debug Preview</span>
-								<span class="badge bg-dark border text-info" style="font-size: 0.7rem; border-color: rgba(0, 140, 255, 0.3) !important;">Debug Helper</span>
-							</div>
-							<div class="d-flex align-items-center gap-3 p-2">
-								<div class="border border-2 border-secondary" style="width: 52px; height: 52px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3); background: rgba(5, 8, 12, 0.65);">
-									<img id="debug-champ-img" style="width: 100%; height: 100%; object-fit: cover; transform: scale(1.15);" onerror="this.src='https://ddragon.leagueoflegends.com/cdn/16.12.1/img/profileicon/29.png'">
-								</div>
-								<div>
-									<div class="font-weight-bold" id="debug-champ-name" style="color: #fff; font-size: 0.95rem; font-weight: 600;">Loading ID 9...</div>
-									<div class="text-muted small" style="font-size: 0.75rem;">Alias/Clean File: <span class="text-warning font-weight-bold" id="debug-champ-alias">None</span> | DDragon URL: <span class="text-info" id="debug-champ-url" style="word-break: break-all; font-family: monospace;">-</span></div>
 								</div>
 							</div>
 						</div>
@@ -226,8 +209,7 @@
 							</div>
 
 							<!-- Dodge Button Row -->
-							<div class="d-flex justify-content-between align-items-center mt-3 border-top pt-3" style="border-color: rgba(200, 155, 60, 0.1) !important;">
-								<span class="small text-muted"><i class="fa-solid fa-circle-info text-info me-1"></i> Border highlights: <span class="text-primary font-weight-bold">Blue = You</span>, <span class="text-danger font-weight-bold">Pulsing Red = Blacklisted</span></span>
+							<div class="d-flex justify-content-end align-items-center mt-3 border-top pt-3" style="border-color: rgba(200, 155, 60, 0.1) !important;">
 								<button class="btn btn-outline-danger btn-sm" onclick="ahk.dodgeLobby()"><i class="fa-solid fa-right-from-bracket me-1"></i> Instadodge Lobby</button>
 							</div>
 						</div>
@@ -357,27 +339,55 @@
 							</div>
 						</div>
 
-						<!-- Auto Accept Configuration -->
-						<div class="hextech-card" id="card-accept">
+						<!-- Lobby Blacklist Configuration -->
+						<div class="hextech-card" id="card-blacklist">
 							<div class="d-flex justify-content-between align-items-center mb-3">
-								<div class="card-title-gold m-0"><i class="fa-regular fa-square-check"></i> Auto Accept Queue</div>
+								<div class="card-title-gold m-0">
+									<i class="fa-solid fa-user-slash"></i> Lobby Blacklist
+								</div>
 								<div class="d-flex align-items-center gap-3">
 									<div class="form-check form-switch m-0">
-										<input class="form-check-input" type="checkbox" id="toggle-autoAccept" onchange="updateConfig('autoAccept', this.checked)">
+										<input class="form-check-input" type="checkbox" id="toggle-blacklistEnabled" onchange="updateConfig('blacklistEnabled', this.checked)">
 									</div>
-									<button class="btn btn-link text-warning p-0 border-0" onclick="toggleCardCollapse(this)" data-fold-key="foldAccept" style="font-size: 1.1rem; line-height: 1; cursor: pointer; text-decoration: none;">
+									<button class="btn btn-link text-warning p-0 border-0" onclick="toggleCardCollapse(this)" data-fold-key="foldBlacklist" style="font-size: 1.1rem; line-height: 1; cursor: pointer; text-decoration: none;">
 										<i class="fa-solid fa-chevron-up collapse-icon"></i>
 									</button>
 								</div>
 							</div>
+							
 							<div class="card-collapse-body">
-								<p class="text-muted small">Automatically accepts matchmaking ready checks when they appear.</p>
-								<div class="mt-3">
-									<label for="range-acceptDelay" class="form-label d-flex justify-content-between">
-										<span>Accept Delay (Humanizer)</span>
-										<span class="text-warning"><strong id="val-acceptDelay">0</strong> seconds</span>
-									</label>
-									<input type="range" class="form-range" min="0" max="5" step="1" id="range-acceptDelay" oninput="document.getElementById('val-acceptDelay').innerText=this.value" onchange="updateConfig('acceptDelay', parseInt(this.value))">
+								<p class="text-muted small">Alerts you immediately during Champion Select if any player on your blacklist is found in your lobby.</p>
+								
+								<div class="row g-3">
+									<div class="col-md-7">
+										<label class="form-label small text-warning font-weight-bold">Search & Add Players (Recent Match History)</label>
+										<div class="position-relative">
+											<div class="input-group input-group-sm">
+												<span class="input-group-text bg-dark border-secondary text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+												<input class="form-control" id="search-blacklist-player" placeholder="Type player name to search latest 10 games..." style="font-size: 0.8rem;" autocomplete="off" onfocus="showBlacklistDropdown()" oninput="filterBlacklistDropdown()" onblur="hideBlacklistDropdownDelayed()">
+											</div>
+											<!-- Custom Dropdown Menu for Recent Players -->
+											<div id="blacklist-players-dropdown" class="position-absolute w-100 mt-1 d-none rounded border" style="top: 100%; left: 0; background: rgba(10, 14, 20, 0.98); border-color: var(--hextech-gold) !important; max-height: 200px; overflow-y: auto; z-index: 99999; box-shadow: 0 10px 25px rgba(0,0,0,0.6); backdrop-filter: blur(8px);">
+												<!-- JS populated options -->
+											</div>
+										</div>
+										
+										<div class="mt-3">
+											<label class="form-label small text-muted font-weight-bold">Or Add Manually (Name#Tag)</label>
+											<div class="d-flex gap-2">
+												<input type="text" class="form-control form-control-sm" id="manual-blacklist-name" placeholder="SummonerName#TAG" style="font-size: 0.8rem;">
+												<input type="text" class="form-control form-control-sm" id="manual-blacklist-note" placeholder="Add note (optional)..." style="font-size: 0.8rem;">
+												<button class="btn btn-sm btn-outline-warning" onclick="addManualBlacklist()" style="min-width: 60px;"><i class="fa-solid fa-plus"></i> Add</button>
+											</div>
+										</div>
+									</div>
+									
+									<div class="col-md-5">
+										<label class="form-label small text-warning font-weight-bold">Blacklisted Players</label>
+										<div id="blacklist-container" class="d-flex flex-column gap-2 overflow-y-auto px-2 py-2 rounded" style="background: rgba(5, 8, 12, 0.4); border: 1px solid rgba(255,255,255,0.05); max-height: 160px; min-height: 120px;">
+											<span class="text-muted small my-auto text-center" id="blacklist-empty-msg">No players blacklisted yet.</span>
+										</div>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -454,54 +464,27 @@
 							</div>
 						</div>
 
-						<!-- Lobby Blacklist Configuration -->
-						<div class="hextech-card" id="card-blacklist">
+						<!-- Auto Accept Configuration -->
+						<div class="hextech-card" id="card-accept">
 							<div class="d-flex justify-content-between align-items-center mb-3">
-								<div class="card-title-gold m-0">
-									<i class="fa-solid fa-user-slash"></i> Lobby Blacklist
-								</div>
+								<div class="card-title-gold m-0"><i class="fa-regular fa-square-check"></i> Auto Accept Queue</div>
 								<div class="d-flex align-items-center gap-3">
 									<div class="form-check form-switch m-0">
-										<input class="form-check-input" type="checkbox" id="toggle-blacklistEnabled" onchange="updateConfig('blacklistEnabled', this.checked)">
+										<input class="form-check-input" type="checkbox" id="toggle-autoAccept" onchange="updateConfig('autoAccept', this.checked)">
 									</div>
-									<button class="btn btn-link text-warning p-0 border-0" onclick="toggleCardCollapse(this)" data-fold-key="foldBlacklist" style="font-size: 1.1rem; line-height: 1; cursor: pointer; text-decoration: none;">
+									<button class="btn btn-link text-warning p-0 border-0" onclick="toggleCardCollapse(this)" data-fold-key="foldAccept" style="font-size: 1.1rem; line-height: 1; cursor: pointer; text-decoration: none;">
 										<i class="fa-solid fa-chevron-up collapse-icon"></i>
 									</button>
 								</div>
 							</div>
-							
 							<div class="card-collapse-body">
-								<p class="text-muted small">Alerts you immediately during Champion Select if any player on your blacklist is found in your lobby.</p>
-								
-								<div class="row g-3">
-									<div class="col-md-7">
-										<label class="form-label small text-warning font-weight-bold">Search & Add Players (Recent Match History)</label>
-										<div class="position-relative">
-											<div class="input-group input-group-sm">
-												<span class="input-group-text bg-dark border-secondary text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
-												<input class="form-control" id="search-blacklist-player" placeholder="Type player name to search latest 10 games..." style="font-size: 0.8rem;" autocomplete="off" onfocus="showBlacklistDropdown()" oninput="filterBlacklistDropdown()" onblur="hideBlacklistDropdownDelayed()">
-											</div>
-											<!-- Custom Dropdown Menu for Recent Players -->
-											<div id="blacklist-players-dropdown" class="position-absolute w-100 mt-1 d-none rounded border" style="top: 100%; left: 0; background: rgba(10, 14, 20, 0.98); border-color: var(--hextech-gold) !important; max-height: 200px; overflow-y: auto; z-index: 99999; box-shadow: 0 10px 25px rgba(0,0,0,0.6); backdrop-filter: blur(8px);">
-												<!-- JS populated options -->
-											</div>
-										</div>
-										
-										<div class="mt-3">
-											<label class="form-label small text-muted font-weight-bold">Or Add Manually (Name#Tag)</label>
-											<div class="input-group input-group-sm">
-												<input type="text" class="form-control" id="manual-blacklist-name" placeholder="SummonerName#TAG" style="font-size: 0.8rem;">
-												<button class="btn btn-outline-warning" onclick="addManualBlacklist()"><i class="fa-solid fa-plus"></i> Add</button>
-											</div>
-										</div>
-									</div>
-									
-									<div class="col-md-5">
-										<label class="form-label small text-warning font-weight-bold">Blacklisted Players</label>
-										<div id="blacklist-container" class="d-flex flex-column gap-2 overflow-y-auto px-2 py-2 rounded" style="background: rgba(5, 8, 12, 0.4); border: 1px solid rgba(255,255,255,0.05); max-height: 160px; min-height: 120px;">
-											<span class="text-muted small my-auto text-center" id="blacklist-empty-msg">No players blacklisted yet.</span>
-										</div>
-									</div>
+								<p class="text-muted small">Automatically accepts matchmaking ready checks when they appear.</p>
+								<div class="mt-3">
+									<label for="range-acceptDelay" class="form-label d-flex justify-content-between">
+										<span>Accept Delay (Humanizer)</span>
+										<span class="text-warning"><strong id="val-acceptDelay">0</strong> seconds</span>
+									</label>
+									<input type="range" class="form-range" min="0" max="5" step="1" id="range-acceptDelay" oninput="document.getElementById('val-acceptDelay').innerText=this.value" onchange="updateConfig('acceptDelay', parseInt(this.value))">
 								</div>
 							</div>
 						</div>
@@ -771,7 +754,6 @@
 		// Main update dashboard loop callback
 		function updateDashboard(me, gameflow, history, queueSize, currentStatus) {
 			window.currentMe = me;
-			try { updateDebugChamp9(); } catch(e) {}
 			// 1. Connection states
 			const stateEl = document.getElementById('connection-state');
 			const dotEl = document.getElementById('connection-dot');
@@ -1317,26 +1299,6 @@
 			return result;
 		}
 
-		function updateDebugChamp9() {
-			const nameEl = document.getElementById('debug-champ-name');
-			const aliasEl = document.getElementById('debug-champ-alias');
-			const urlEl = document.getElementById('debug-champ-url');
-			const imgEl = document.getElementById('debug-champ-img');
-			if (!nameEl || !aliasEl || !urlEl || !imgEl) return;
-
-			const champId = 9;
-			const name = championList[champId] || "Fiddlesticks";
-			const clean = getChampCleanFile(name);
-			const imgUrl = `https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/champion/${clean}.png`;
-
-			nameEl.innerText = `${name} (ID: ${champId})`;
-			aliasEl.innerText = clean;
-			urlEl.innerText = imgUrl;
-			if (imgEl.getAttribute('src') !== imgUrl) {
-				imgEl.src = imgUrl;
-			}
-		}
-
 		function onLobbyScraped(playerList) {
 			console.log("Lobby scraped:", playerList);
 			lobbyPlayers = playerList;
@@ -1477,6 +1439,11 @@
 								<div class="text-muted small mt-1 text-truncate w-100" style="font-size: 0.7rem; font-weight: 500; letter-spacing: 0.3px;">
 									${player.championId > 0 ? player.championName : 'Selecting...'}
 								</div>
+								${player.isBlacklisted && player.blacklistNote ? `
+									<div class="text-danger small mt-1 text-truncate w-100 p-1 rounded" style="font-size: 0.65rem; background: rgba(220, 53, 69, 0.12); border: 1px solid rgba(220, 53, 69, 0.25); font-weight: 500;" title="${player.blacklistNote}">
+										<i class="fa-solid fa-circle-exclamation me-1"></i>${player.blacklistNote}
+									</div>
+								` : ''}
 							</div>
 						</div>
 					`;
@@ -1612,7 +1579,6 @@
 
 		function renderBlacklist() {
 			const container = document.getElementById('blacklist-container');
-			const emptyMsg = document.getElementById('blacklist-empty-msg');
 			if (!container) return;
 
 			// Clear container
@@ -1620,23 +1586,37 @@
 
 			if (window.blacklist.length === 0) {
 				const msg = document.createElement('span');
-				msg.className = 'text-muted small my-auto text-center';
+				msg.className = 'text-muted small my-auto text-center w-100';
 				msg.id = 'blacklist-empty-msg';
 				msg.innerText = 'No players blacklisted yet.';
 				container.appendChild(msg);
 				return;
 			}
 
-			window.blacklist.forEach(player => {
+			window.blacklist.forEach((player, index) => {
+				let name = "";
+				let note = "";
+				if (player && typeof player === 'object') {
+					name = player.name || "";
+					note = player.note || "";
+				} else {
+					name = player || "";
+				}
+
 				const item = document.createElement('div');
-				item.className = 'd-flex justify-content-between align-items-center p-2 rounded mb-1';
-				item.style.background = 'rgba(255, 255, 255, 0.03)';
-				item.style.border = '1px solid rgba(255, 255, 255, 0.05)';
-				item.style.fontSize = '0.8rem';
+				item.className = 'd-flex flex-column p-2 rounded mb-1 w-100';
+				item.style.background = 'rgba(255, 255, 255, 0.025)';
+				item.style.border = '1px solid rgba(255, 255, 255, 0.04)';
+				item.style.fontSize = '0.78rem';
+
+				// Row 1: Name and Delete button
+				const row1 = document.createElement('div');
+				row1.className = 'd-flex justify-content-between align-items-center w-100';
 
 				const nameSpan = document.createElement('span');
-				nameSpan.className = 'text-white text-truncate me-2';
-				nameSpan.innerText = player;
+				nameSpan.className = 'text-white text-truncate font-weight-bold';
+				nameSpan.style.maxWidth = '80%';
+				nameSpan.innerText = name;
 
 				const removeBtn = document.createElement('button');
 				removeBtn.className = 'btn btn-link text-danger p-0 border-0';
@@ -1644,34 +1624,113 @@
 				removeBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
 				removeBtn.onclick = () => removePlayerFromBlacklist(player);
 
-				item.appendChild(nameSpan);
-				item.appendChild(removeBtn);
+				row1.appendChild(nameSpan);
+				row1.appendChild(removeBtn);
+
+				// Row 2: Note and Edit button
+				const row2 = document.createElement('div');
+				row2.className = 'd-flex mt-1 align-items-center justify-content-between w-100';
+
+				const noteSpan = document.createElement('span');
+				noteSpan.className = note ? 'text-warning text-truncate small font-weight-bold' : 'text-muted text-truncate small';
+				noteSpan.style.fontSize = '0.7rem';
+				noteSpan.style.fontStyle = 'italic';
+				noteSpan.style.maxWidth = '85%';
+				noteSpan.innerText = note ? `Note: ${note}` : 'No note added...';
+
+				const editBtn = document.createElement('button');
+				editBtn.className = 'btn btn-link text-warning p-0 border-0';
+				editBtn.style.fontSize = '0.75rem';
+				editBtn.style.lineHeight = '1';
+				editBtn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i>';
+				editBtn.onclick = () => editBlacklistNote(index);
+
+				row2.appendChild(noteSpan);
+				row2.appendChild(editBtn);
+
+				item.appendChild(row1);
+				item.appendChild(row2);
 				container.appendChild(item);
 			});
 		}
 
-		function addPlayerToBlacklist(playerNameWithTag) {
+		function editBlacklistNote(index) {
+			const playerObj = window.blacklist[index];
+			let currentNote = "";
+			let playerName = "";
+			if (playerObj && typeof playerObj === 'object') {
+				playerName = playerObj.name || "";
+				currentNote = playerObj.note || "";
+			} else {
+				playerName = playerObj || "";
+			}
+
+			const newNote = prompt(`Edit blacklist note for ${playerName}:`, currentNote);
+			if (newNote === null) return;
+
+			const trimmedNote = newNote.trim();
+			if (playerObj && typeof playerObj === 'object') {
+				playerObj.note = trimmedNote;
+			} else {
+				window.blacklist[index] = {
+					name: playerName,
+					note: trimmedNote
+				};
+			}
+
+			updateConfig('blacklist', JSON.stringify(window.blacklist));
+			renderBlacklist();
+		}
+
+		function addPlayerToBlacklist(playerNameWithTag, note = "") {
 			if (!playerNameWithTag || typeof playerNameWithTag !== 'string') return;
 			const trimmed = playerNameWithTag.trim();
 			if (!trimmed) return;
 
-			if (window.blacklist.includes(trimmed)) {
+			const exists = window.blacklist.some(p => {
+				if (p && typeof p === 'object') {
+					return p.name.toLowerCase() === trimmed.toLowerCase();
+				}
+				return p.toLowerCase() === trimmed.toLowerCase();
+			});
+
+			if (exists) {
 				return; // Already added
 			}
 
-			window.blacklist.push(trimmed);
+			window.blacklist.push({
+				name: trimmed,
+				note: note.trim()
+			});
 			updateConfig('blacklist', JSON.stringify(window.blacklist));
 			renderBlacklist();
 		}
 
 		function removePlayerFromBlacklist(player) {
-			window.blacklist = window.blacklist.filter(p => p !== player);
+			let nameToRemove = "";
+			if (player && typeof player === 'object') {
+				nameToRemove = player.name || "";
+			} else {
+				nameToRemove = player || "";
+			}
+
+			window.blacklist = window.blacklist.filter(p => {
+				let currentName = "";
+				if (p && typeof p === 'object') {
+					currentName = p.name || "";
+				} else {
+					currentName = p || "";
+				}
+				return currentName.toLowerCase() !== nameToRemove.toLowerCase();
+			});
+
 			updateConfig('blacklist', JSON.stringify(window.blacklist));
 			renderBlacklist();
 		}
 
 		function addManualBlacklist() {
 			const input = document.getElementById('manual-blacklist-name');
+			const noteInput = document.getElementById('manual-blacklist-note');
 			if (!input) return;
 			const value = input.value.trim();
 			if (!value) return;
@@ -1681,8 +1740,10 @@
 				return;
 			}
 
-			addPlayerToBlacklist(value);
+			const note = noteInput ? noteInput.value.trim() : "";
+			addPlayerToBlacklist(value, note);
 			input.value = '';
+			if (noteInput) noteInput.value = '';
 		}
 
 		// Search Dropdown Functions

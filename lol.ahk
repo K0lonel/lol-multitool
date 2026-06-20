@@ -129,6 +129,7 @@ global initConfigSent := false
 global historyTimer := 9
 global champTimer := 9
 global lastGameflow := "INIT"
+global wasLcuConnected := false
 
 loop {
     historyTimer++
@@ -137,6 +138,18 @@ loop {
     lcuConnected := false
     if (LCU.Token != "" || LCU.Initialize()) {
         lcuConnected := true
+    }
+    
+    if (lcuConnected && !wasLcuConnected) {
+        wasLcuConnected := true
+        championsLoaded := false
+        initConfigSent := false
+        champTimer := 9  ; Force quick champion load attempt
+        LogToWeb("LCU connection established. Syncing active configuration and inventory...", "success")
+    } else if (!lcuConnected && wasLcuConnected) {
+        wasLcuConnected := false
+        championsLoaded := false
+        LogToWeb("LCU connection lost. Standing by...", "warning")
     }
     
     if (lcuConnected) {

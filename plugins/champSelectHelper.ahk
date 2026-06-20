@@ -98,9 +98,21 @@ ScanChampSelectLobby(session) {
             champLobbyNames.Push(nameWithTag)
             
             if (config.Has("blacklistEnabled") && config["blacklistEnabled"] && config.Has("blacklist")) {
-                for blacklistedName in config["blacklist"] {
-                    if (StrCompare(nameWithTag, blacklistedName, false) == 0) {
-                        LogToWeb("WARNING: Blacklisted player " nameWithTag " detected in lobby!", "error")
+                for entry in config["blacklist"] {
+                    entryName := ""
+                    entryNote := ""
+                    if (IsObject(entry)) {
+                        entryName := entry.Has("name") ? entry["name"] : ""
+                        entryNote := entry.Has("note") ? entry["note"] : ""
+                    } else {
+                        entryName := entry
+                    }
+                    if (entryName != "" && StrCompare(nameWithTag, entryName, false) == 0) {
+                        alertMsg := "WARNING: Blacklisted player " nameWithTag " detected in lobby!"
+                        if (entryNote != "") {
+                            alertMsg .= " Note: " entryNote
+                        }
+                        LogToWeb(alertMsg, "error")
                     }
                 }
             }
@@ -271,7 +283,7 @@ ProcessBenchSwaps(session) {
     ; Log target configuration info periodically
     if (Mod(tickCount, 10) == 1) {
         targetsList := config.Has("autoPickBenchIds") ? DumpPreferredRaw() : "N/A"
-        LogToWeb("Bench Sniper Check: tickCount=" tickCount ", benchCount=" benchData.Length ", targets=" targetsList, "debug")
+        ; LogToWeb("Bench Sniper Check: tickCount=" tickCount ", benchCount=" benchData.Length ", targets=" targetsList, "debug")
     }
     
     ; --- Gate 3: Do we have target champion IDs configured? ---
@@ -382,47 +394,7 @@ UpdateChampSelectFrontend(session) {
     for player in session["myTeam"] {
         puuid := player.Has("puuid") ? player["puuid"] : ""
         cellId := player.Has("cellId") ? player["cellId"] : -1
-        
-        nameWithTag := ""
-        if (player.Has("nameVisibilityType") && player["nameVisibilityType"] == "VISIBLE") {
-            if (player.Has("gameName") && player.Has("tagLine")) {
-                nameWithTag := player["gameName"] "#" player["tagLine"]
-            }
-        }
-        
-        if (nameWithTag == "") {
-            if (puuid != "") {
-                nameWithTag := GetSummonerNameByPuuid(puuid)
-            }
-            if (nameWithTag == "") {
-                nameWithTag := "Teammate " (cellId >= 0 ? cellId : "")
-            }
-        }
-        
-        ; Split name and tag
-        gameName := ""
-        tagLine := ""
-        if (nameWithTag != "") {
-            parts := StrSplit(nameWithTag, "#")
-            if (parts.Length >= 1)
-                gameName := parts[1]
-            if (parts.Length >= 2)
-                tagLine := parts[2]
-        }
-        
-        champId := player.Has("championId") ? player["championId"] : 0
-        champName := champId > 0 ? GetChampionName(champId) : ""
         isMe := (cellId == session["localPlayerCellId"])
-        
-        ; Check if blacklisted
-        isBlacklisted := false
-        if (config.Has("blacklistEnabled") && config["blacklistEnabled"] && config.Has("blacklist") && nameWithTag != "" && !InStr(nameWithTag, "Teammate")) {
-            for blacklistedName in config["blacklist"] {
-                if (StrCompare(nameWithTag, blacklistedName, false) == 0) {
-                    isBlacklisted := true
-                }
-            }
-        }
         
         teamVal := player.Has("team") ? player["team"] : 0
         myTeamSize := session["myTeam"].Length
@@ -442,11 +414,61 @@ UpdateChampSelectFrontend(session) {
         
         position := -1
         if (teamVal == 1) {
-            ; If team = 1, expect cellId to be between 1 and myTeam size (or 0 and myTeam size - 1 if 0-indexed)
-            position := cellId
+            ; Since cellId is 0-indexed (0 to 4), we add 1 to make position 1-indexed (between 1 and myTeamSize)
+            position := cellId + 1
         } else if (teamVal == 2) {
-            ; If team = 2, perform cellId - myTeam size to find current position
-            position := cellId - myTeamSize
+            ; Performing cellId - myTeamSize to find current position, plus 1 to make it 1-indexed (between 1 and myTeamSize)
+            position := cellId - myTeamSize + 1
+        }
+        
+        nameWithTag := ""
+        if (player.Has("nameVisibilityType") && player["nameVisibilityType"] == "VISIBLE") {
+            if (player.Has("gameName") && player.Has("tagLine")) {
+                nameWithTag := player["gameName"] "#" player["tagLine"]
+            }
+        }
+        
+        if (nameWithTag == "") {
+            if (puuid != "") {
+                nameWithTag := GetSummonerNameByPuuid(puuid)
+            }
+            if (nameWithTag == "") {
+                nameWithTag := "Teammate " (position >= 1 ? position : "")
+            }
+        }
+        
+        ; Split name and tag
+        gameName := ""
+        tagLine := ""
+        if (nameWithTag != "") {
+            parts := StrSplit(nameWithTag, "#")
+            if (parts.Length >= 1)
+                gameName := parts[1]
+            if (parts.Length >= 2)
+                tagLine := parts[2]
+        }
+        
+        champId := player.Has("championId") ? player["championId"] : 0
+        champName := champId > 0 ? GetChampionName(champId) : ""
+        
+        ; Check if blacklisted
+        isBlacklisted := false
+        blacklistNote := ""
+        if (config.Has("blacklistEnabled") && config["blacklistEnabled"] && config.Has("blacklist") && nameWithTag != "" && !InStr(nameWithTag, "Teammate")) {
+            for entry in config["blacklist"] {
+                entryName := ""
+                entryNote := ""
+                if (IsObject(entry)) {
+                    entryName := entry.Has("name") ? entry["name"] : ""
+                    entryNote := entry.Has("note") ? entry["note"] : ""
+                } else {
+                    entryName := entry
+                }
+                if (entryName != "" && StrCompare(nameWithTag, entryName, false) == 0) {
+                    isBlacklisted := true
+                    blacklistNote := entryNote
+                }
+            }
         }
         
         playerMap := Map(
@@ -458,6 +480,7 @@ UpdateChampSelectFrontend(session) {
             "championName", champName,
             "isMe", isMe,
             "isBlacklisted", isBlacklisted,
+            "blacklistNote", blacklistNote,
             "cellId", cellId,
             "position", position
         )
