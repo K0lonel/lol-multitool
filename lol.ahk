@@ -9,6 +9,8 @@ global plugins := Array()
 #Include plugins/autoAccept.ahk
 #Include plugins/autoReport.ahk
 #Include plugins/champSelectHelper.ahk
+#Include plugins/blacklist.ahk
+#Include plugins/autoSkipPreEnd.ahk
 
 FileEncoding "UTF-8"
 JSON.EscapeUnicode := False
@@ -37,7 +39,10 @@ if(!FileExist("config.json")) {
         "favoriteChampIds", Array(),
         "foldSniper", False,
         "foldAccept", False,
-        "foldReport", False
+        "foldReport", False,
+        "blacklistEnabled", True,
+        "blacklist", Array(),
+        "foldBlacklist", False
     )
     FileAppend(JSON.Dump(defaultConfig, True), "config.json")
 }
@@ -60,6 +65,18 @@ if (!config.Has("foldAccept")) {
 }
 if (!config.Has("foldReport")) {
     config["foldReport"] := False
+    SaveConfig()
+}
+if (!config.Has("blacklistEnabled")) {
+    config["blacklistEnabled"] := True
+    SaveConfig()
+}
+if (!config.Has("blacklist")) {
+    config["blacklist"] := Array()
+    SaveConfig()
+}
+if (!config.Has("foldBlacklist")) {
+    config["foldBlacklist"] := False
     SaveConfig()
 }
 
@@ -87,6 +104,7 @@ MyWindow.AddCallBackToScript("updateConfig", UpdateConfigCallback)
 MyWindow.AddCallBackToScript("Tooltip", WebTooltipEvent)
 MyWindow.AddCallBackToScript("dodgeLobby", DodgeLobbyCallback)
 MyWindow.AddCallBackToScript("benchSwap", BenchSwapCallback)
+MyWindow.AddCallBackToScript("getRecentPlayers", GetRecentPlayersCallback)
 MyWindow.AddCallBackToScript("Close", CloseWindow)
 MyWindow.AddCallBackToScript("DragWindow", DragWindow)
 MyWindow.AddCallBackToScript("Minimize", MinimizeWindow)
@@ -294,7 +312,7 @@ MaximizeWindow(WebView) {
 
 UpdateConfigCallback(WebView, key, value) {
     global config
-    if (key == "reportCategories" || key == "autoPickBenchIds" || key == "favoriteChampIds") {
+    if (key == "reportCategories" || key == "autoPickBenchIds" || key == "favoriteChampIds" || key == "blacklist") {
         config[key] := JSON.Load(value)
     } else if (key == "acceptDelay") {
         config[key] := Number(value)

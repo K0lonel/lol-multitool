@@ -32,6 +32,32 @@
 			.shadow-warning {
 				box-shadow: 0 0 10px rgba(255, 193, 7, 0.6);
 			}
+			@keyframes pulseAlert {
+				0% { box-shadow: 0 0 10px rgba(220, 53, 69, 0.4); border-color: rgba(220, 53, 69, 0.5) !important; }
+				50% { box-shadow: 0 0 25px rgba(220, 53, 69, 0.85); border-color: rgba(220, 53, 69, 1.0) !important; }
+				100% { box-shadow: 0 0 10px rgba(220, 53, 69, 0.4); border-color: rgba(220, 53, 69, 0.5) !important; }
+			}
+			.shadow-danger-pulse {
+				border-color: var(--hextech-red) !important;
+				box-shadow: 0 0 15px rgba(224, 67, 67, 0.4);
+				animation: borderPulse 1.5s infinite;
+			}
+			@keyframes borderPulse {
+				0% { border-color: rgba(224, 67, 67, 0.4) !important; box-shadow: 0 0 8px rgba(224, 67, 67, 0.35); }
+				50% { border-color: rgba(224, 67, 67, 1.0) !important; box-shadow: 0 0 20px rgba(224, 67, 67, 0.75); }
+				100% { border-color: rgba(224, 67, 67, 0.4) !important; box-shadow: 0 0 8px rgba(224, 67, 67, 0.35); }
+			}
+			.running-task-col {
+				cursor: pointer;
+				transition: transform 0.15s ease, filter 0.15s ease;
+			}
+			.running-task-col:hover {
+				transform: scale(1.05);
+				filter: brightness(1.2);
+			}
+			.running-task-col:active {
+				transform: scale(0.95);
+			}
 		</style>
 	</head>
 	<body>
@@ -138,47 +164,71 @@
 								<div class="hextech-card w-100 mb-0 d-flex flex-column justify-content-between">
 									<div class="card-title-gold mb-3"><i class="fa-solid fa-bolt"></i> Running Tasks</div>
 									<div class="row text-center mt-auto mb-auto">
-										<div class="col-4">
-											<div class="small text-muted mb-1" style="font-size: 0.75rem; letter-spacing: 0.5px;">AUTO-ACCEPT</div>
-											<span class="badge" id="badge-accept" style="font-size: 0.9rem;">Disabled</span>
+										<div class="col-3 running-task-col" onclick="toggleRunningTask('autoAccept')" title="Toggle Auto-Accept">
+											<div class="small text-muted mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">AUTO-ACCEPT</div>
+											<span class="badge" id="badge-accept" style="font-size: 0.8rem;">Disabled</span>
 										</div>
-										<div class="col-4 border-start border-end" style="border-color: rgba(200, 155, 60, 0.15) !important;">
-											<div class="small text-muted mb-1" style="font-size: 0.75rem; letter-spacing: 0.5px;">AUTO-REPORT</div>
-											<span class="badge" id="badge-report" style="font-size: 0.9rem;">Disabled</span>
+										<div class="col-3 border-start running-task-col" onclick="toggleRunningTask('autoReport')" title="Toggle Auto-Report" style="border-color: rgba(200, 155, 60, 0.15) !important;">
+											<div class="small text-muted mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">AUTO-REPORT</div>
+											<span class="badge" id="badge-report" style="font-size: 0.8rem;">Disabled</span>
 										</div>
-										<div class="col-4">
-											<div class="small text-muted mb-1" style="font-size: 0.75rem; letter-spacing: 0.5px;">BENCH SNIPER</div>
-											<span class="badge" id="badge-sniper" style="font-size: 0.9rem;">Disabled</span>
+										<div class="col-3 border-start border-end running-task-col" onclick="toggleRunningTask('autoPickBenchEnabled')" title="Toggle Bench Sniper" style="border-color: rgba(200, 155, 60, 0.15) !important;">
+											<div class="small text-muted mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">BENCH SNIPER</div>
+											<span class="badge" id="badge-sniper" style="font-size: 0.8rem;">Disabled</span>
+										</div>
+										<div class="col-3 running-task-col" onclick="toggleRunningTask('blacklistEnabled')" title="Toggle Blacklist">
+											<div class="small text-muted mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">BLACKLIST</div>
+											<span class="badge" id="badge-blacklist" style="font-size: 0.8rem;">Disabled</span>
 										</div>
 									</div>
-								</div>
-							</div>
-						</div>
-						<!-- Active ChampSelect Dodge Lobby Card -->
-						<div class="hextech-card" id="dodge-lobby-card" style="display:none; border-color: var(--hextech-red); background: rgba(122, 29, 29, 0.15);">
-							<div class="card-title-gold" style="color: var(--hextech-red) !important; border-bottom: 1px solid rgba(224, 67, 67, 0.2); padding-bottom: 8px;"><i class="fa-solid fa-triangle-exclamation"></i> Champion Select Active</div>
-							<div class="row align-items-center">
-								<div class="col-md-9">
-									<div class="small text-muted mb-2 mb-md-0">You are currently in champion select. You can instantly dodge the lobby below. Warning: Dodging triggers standard League client penalties (LP loss / queue lockout).</div>
-								</div>
-								<div class="col-md-3 text-end">
-									<button class="btn btn-outline-danger w-100" onclick="ahk.dodgeLobby()"><i class="fa-solid fa-right-from-bracket"></i> Dodge Lobby</button>
 								</div>
 							</div>
 						</div>
 
-						<!-- Active Lobby Scraper Card -->
-						<div class="hextech-card" id="lobby-helper-card" style="display:none; border-color: var(--hextech-gold);">
-							<div class="card-title-gold"><i class="fa-solid fa-users-viewfinder"></i> Active Champion Draft Companion</div>
-							<div class="row align-items-center">
-								<div class="col-md-8">
-									<div class="small text-muted mb-2">Teammates found in lobby:</div>
-									<div id="lobby-players-list" class="d-flex flex-wrap gap-2 mb-2">
-									</div>
+						<!-- Debug Champion ID 9 Card -->
+						<div class="hextech-card mb-4" id="debug-champ-card" style="border-color: rgba(0, 140, 255, 0.35);">
+							<div class="card-title-gold d-flex justify-content-between align-items-center mb-2">
+								<span><i class="fa-solid fa-bug text-info"></i> Champion ID 9 Debug Preview</span>
+								<span class="badge bg-dark border text-info" style="font-size: 0.7rem; border-color: rgba(0, 140, 255, 0.3) !important;">Debug Helper</span>
+							</div>
+							<div class="d-flex align-items-center gap-3 p-2">
+								<div class="border border-2 border-secondary" style="width: 52px; height: 52px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3); background: rgba(5, 8, 12, 0.65);">
+									<img id="debug-champ-img" style="width: 100%; height: 100%; object-fit: cover; transform: scale(1.15);" onerror="this.src='https://ddragon.leagueoflegends.com/cdn/16.12.1/img/profileicon/29.png'">
 								</div>
-								<div class="col-md-4 text-end">
-									<button class="btn btn-outline-danger btn-sm w-100" onclick="ahk.dodgeLobby()"><i class="fa-solid fa-right-from-bracket"></i> Instadodge Lobby</button>
+								<div>
+									<div class="font-weight-bold" id="debug-champ-name" style="color: #fff; font-size: 0.95rem; font-weight: 600;">Loading ID 9...</div>
+									<div class="text-muted small" style="font-size: 0.75rem;">Alias/Clean File: <span class="text-warning font-weight-bold" id="debug-champ-alias">None</span> | DDragon URL: <span class="text-info" id="debug-champ-url" style="word-break: break-all; font-family: monospace;">-</span></div>
 								</div>
+							</div>
+						</div>
+
+						<!-- Live Champ Select Draft Card -->
+						<div class="hextech-card" id="live-champ-select-card" style="display:none; border-color: var(--hextech-gold);">
+							<div class="card-title-gold d-flex justify-content-between align-items-center mb-3">
+								<span><i class="fa-solid fa-users-viewfinder"></i> Live Champ Select Draft</span>
+								<div class="d-flex align-items-center gap-2">
+									<span class="badge" id="champ-select-team-badge" style="font-size: 0.7rem; display: none; padding: 4px 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.25);"></span>
+									<span class="badge bg-dark border text-warning" id="champ-select-queue-type" style="font-size: 0.75rem; border-color: rgba(200, 155, 60, 0.3) !important;">Active Lobby</span>
+								</div>
+							</div>
+							
+							<!-- Players List (Mimicking Champ Select Screen) -->
+							<div class="row row-cols-1 row-cols-md-5 g-3 mb-4" id="champ-select-players-grid">
+								<!-- Dynamically populated by JS: 5 columns, one for each teammate -->
+							</div>
+
+							<!-- Bench Section (moved to dashboard) -->
+							<div id="bench-helper-card" style="display:none; border-top: 1px solid rgba(200, 155, 60, 0.15); padding-top: 15px;">
+								<div class="small text-muted mb-2"><i class="fa-solid fa-gamepad text-info me-1"></i> Team Bench (Click a champion to swap manually, bypassing auto-picker):</div>
+								<div id="bench-champions-list" class="d-flex flex-wrap gap-3 py-1">
+									<!-- Dynamically populated bench -->
+								</div>
+							</div>
+
+							<!-- Dodge Button Row -->
+							<div class="d-flex justify-content-between align-items-center mt-3 border-top pt-3" style="border-color: rgba(200, 155, 60, 0.1) !important;">
+								<span class="small text-muted"><i class="fa-solid fa-circle-info text-info me-1"></i> Border highlights: <span class="text-primary font-weight-bold">Blue = You</span>, <span class="text-danger font-weight-bold">Pulsing Red = Blacklisted</span></span>
+								<button class="btn btn-outline-danger btn-sm" onclick="ahk.dodgeLobby()"><i class="fa-solid fa-right-from-bracket me-1"></i> Instadodge Lobby</button>
 							</div>
 						</div>
 
@@ -243,12 +293,7 @@
 							</div>
 							
 							<div class="card-collapse-body">
-								<!-- Visual ARAM Bench (moved from Dashboard) -->
-								<div id="bench-helper-card" style="display:none; border-bottom: 1px solid rgba(200, 155, 60, 0.15); padding-bottom: 15px; margin-bottom: 15px;">
-									<div class="small text-muted mb-2"><i class="fa-solid fa-gamepad text-info me-1"></i> Click on a champion below to swap manually (bypasses auto-picker selections):</div>
-									<div id="bench-champions-list" class="d-flex flex-wrap gap-3 py-1">
-									</div>
-								</div>
+
 
 								<div class="row g-4 align-items-stretch">
 								<div class="col-md-7 d-flex flex-column">
@@ -408,6 +453,58 @@
 								</div>
 							</div>
 						</div>
+
+						<!-- Lobby Blacklist Configuration -->
+						<div class="hextech-card" id="card-blacklist">
+							<div class="d-flex justify-content-between align-items-center mb-3">
+								<div class="card-title-gold m-0">
+									<i class="fa-solid fa-user-slash"></i> Lobby Blacklist
+								</div>
+								<div class="d-flex align-items-center gap-3">
+									<div class="form-check form-switch m-0">
+										<input class="form-check-input" type="checkbox" id="toggle-blacklistEnabled" onchange="updateConfig('blacklistEnabled', this.checked)">
+									</div>
+									<button class="btn btn-link text-warning p-0 border-0" onclick="toggleCardCollapse(this)" data-fold-key="foldBlacklist" style="font-size: 1.1rem; line-height: 1; cursor: pointer; text-decoration: none;">
+										<i class="fa-solid fa-chevron-up collapse-icon"></i>
+									</button>
+								</div>
+							</div>
+							
+							<div class="card-collapse-body">
+								<p class="text-muted small">Alerts you immediately during Champion Select if any player on your blacklist is found in your lobby.</p>
+								
+								<div class="row g-3">
+									<div class="col-md-7">
+										<label class="form-label small text-warning font-weight-bold">Search & Add Players (Recent Match History)</label>
+										<div class="position-relative">
+											<div class="input-group input-group-sm">
+												<span class="input-group-text bg-dark border-secondary text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+												<input class="form-control" id="search-blacklist-player" placeholder="Type player name to search latest 10 games..." style="font-size: 0.8rem;" autocomplete="off" onfocus="showBlacklistDropdown()" oninput="filterBlacklistDropdown()" onblur="hideBlacklistDropdownDelayed()">
+											</div>
+											<!-- Custom Dropdown Menu for Recent Players -->
+											<div id="blacklist-players-dropdown" class="position-absolute w-100 mt-1 d-none rounded border" style="top: 100%; left: 0; background: rgba(10, 14, 20, 0.98); border-color: var(--hextech-gold) !important; max-height: 200px; overflow-y: auto; z-index: 99999; box-shadow: 0 10px 25px rgba(0,0,0,0.6); backdrop-filter: blur(8px);">
+												<!-- JS populated options -->
+											</div>
+										</div>
+										
+										<div class="mt-3">
+											<label class="form-label small text-muted font-weight-bold">Or Add Manually (Name#Tag)</label>
+											<div class="input-group input-group-sm">
+												<input type="text" class="form-control" id="manual-blacklist-name" placeholder="SummonerName#TAG" style="font-size: 0.8rem;">
+												<button class="btn btn-outline-warning" onclick="addManualBlacklist()"><i class="fa-solid fa-plus"></i> Add</button>
+											</div>
+										</div>
+									</div>
+									
+									<div class="col-md-5">
+										<label class="form-label small text-warning font-weight-bold">Blacklisted Players</label>
+										<div id="blacklist-container" class="d-flex flex-column gap-2 overflow-y-auto px-2 py-2 rounded" style="background: rgba(5, 8, 12, 0.4); border: 1px solid rgba(255,255,255,0.05); max-height: 160px; min-height: 120px;">
+											<span class="text-muted small my-auto text-center" id="blacklist-empty-msg">No players blacklisted yet.</span>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
 					</div>
 
 
@@ -545,6 +642,12 @@
 			if (config.foldReport !== undefined) {
 				setCardCollapseState('#card-report', config.foldReport);
 			}
+			if (config.foldBlacklist !== undefined) {
+				setCardCollapseState('#card-blacklist', config.foldBlacklist);
+			}
+			
+			// Initialize blacklist state
+			initBlacklist(config);
 		}
 
 		function updateBadge(badgeId, isEnabled) {
@@ -564,10 +667,17 @@
 			// Send to AutoHotkey via host object
 			ahk.updateConfig(key, value);
 			
+			if (window.loadedConfig) {
+				window.loadedConfig[key] = value;
+			}
+			
 			// Reflect in active badge summaries immediately
 			if (key === 'autoAccept') updateBadge('badge-accept', value);
 			if (key === 'autoReport') updateBadge('badge-report', value);
 			if (key === 'autoPickBenchEnabled') updateBadge('badge-sniper', value);
+			if (key === 'blacklistEnabled') {
+				updateBadge('badge-blacklist', value);
+			}
 		}
 
 		function onCategoryToggle() {
@@ -661,6 +771,7 @@
 		// Main update dashboard loop callback
 		function updateDashboard(me, gameflow, history, queueSize, currentStatus) {
 			window.currentMe = me;
+			try { updateDebugChamp9(); } catch(e) {}
 			// 1. Connection states
 			const stateEl = document.getElementById('connection-state');
 			const dotEl = document.getElementById('connection-dot');
@@ -1196,32 +1307,43 @@
 			} else {
 				result = name.replace(/[^a-zA-Z0-9]/g, '');
 			}
+
+			// Map alias casing issues (e.g. FiddleSticks -> Fiddlesticks)
+			if (result === "FiddleSticks") {
+				result = "Fiddlesticks";
+			}
+
 			cleanFileCache[name] = result;
 			return result;
+		}
+
+		function updateDebugChamp9() {
+			const nameEl = document.getElementById('debug-champ-name');
+			const aliasEl = document.getElementById('debug-champ-alias');
+			const urlEl = document.getElementById('debug-champ-url');
+			const imgEl = document.getElementById('debug-champ-img');
+			if (!nameEl || !aliasEl || !urlEl || !imgEl) return;
+
+			const champId = 9;
+			const name = championList[champId] || "Fiddlesticks";
+			const clean = getChampCleanFile(name);
+			const imgUrl = `https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/champion/${clean}.png`;
+
+			nameEl.innerText = `${name} (ID: ${champId})`;
+			aliasEl.innerText = clean;
+			urlEl.innerText = imgUrl;
+			if (imgEl.getAttribute('src') !== imgUrl) {
+				imgEl.src = imgUrl;
+			}
 		}
 
 		function onLobbyScraped(playerList) {
 			console.log("Lobby scraped:", playerList);
 			lobbyPlayers = playerList;
-			const card = document.getElementById('lobby-helper-card');
-			const list = document.getElementById('lobby-players-list');
-			
-			if (card && list) {
-				card.style.display = 'block';
-				let html = '';
-				playerList.forEach(name => {
-					html += `<span class="badge bg-dark border text-info" style="border-color: rgba(10, 200, 185, 0.3) !important; font-size: 0.85rem; padding: 6px 12px;">${name}</span>`;
-				});
-				list.innerHTML = html;
-			}
 		}
 
 		function onLobbyCleared() {
 			lobbyPlayers = [];
-			const card = document.getElementById('lobby-helper-card');
-			if (card) {
-				card.style.display = 'none';
-			}
 		}
 
 		function updateBenchDisplay(payload) {
@@ -1272,6 +1394,370 @@
 			}
 		}
 
+		let alertedBlacklistForLobby = false;
 
+		function playBellSound() {
+			try {
+				const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+				const now = audioCtx.currentTime;
+				
+				// Bell sound synthesis: C5, G5, C6, E6 overtones with decay
+				const frequencies = [523.25, 783.99, 1046.50, 1318.51];
+				const gains = [0.4, 0.2, 0.1, 0.05];
+				
+				frequencies.forEach((f, index) => {
+					const osc = audioCtx.createOscillator();
+					const gainNode = audioCtx.createGain();
+					
+					osc.type = 'sine';
+					osc.frequency.setValueAtTime(f, now);
+					
+					gainNode.gain.setValueAtTime(gains[index], now);
+					gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
+					
+					osc.connect(gainNode);
+					gainNode.connect(audioCtx.destination);
+					
+					osc.start(now);
+					osc.stop(now + 1.2);
+				});
+				console.log("Blacklist alarm played successfully (Synthesized bell sound).");
+			} catch (e) {
+				console.error("Failed to play synthesized bell sound: ", e);
+			}
+		}
+
+		function updateChampSelectDraft(payload) {
+			const card = document.getElementById('live-champ-select-card');
+			const grid = document.getElementById('champ-select-players-grid');
+			if (!card || !grid) return;
+
+			card.style.display = 'block';
+
+			// Render players list
+			let playersHtml = '';
+			let hasBlacklisted = false;
+
+			if (payload && payload.players && payload.players.length > 0) {
+				// Sort players by position inside the team grid for proper ordering
+				payload.players.sort((a, b) => (a.position !== undefined && b.position !== undefined) ? a.position - b.position : 0);
+
+				payload.players.forEach(player => {
+					if (player.isBlacklisted) {
+						hasBlacklisted = true;
+					}
+
+					const borderClass = player.isBlacklisted ? 'shadow-danger-pulse' : (player.isMe ? 'border-primary' : 'border-secondary');
+					const labelClass = player.isBlacklisted ? 'text-danger' : (player.isMe ? 'text-info' : 'text-white');
+					
+					// Champion image mapping
+					let imgUrl = `https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/profileicon/29.png`;
+					if (player.championId > 0 && player.championName) {
+						const cleanName = getChampCleanFile(player.championName);
+						imgUrl = `https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/champion/${cleanName}.png`;
+					}
+
+					playersHtml += `
+						<div class="col d-flex">
+							<div class="border rounded p-3 text-center w-100 position-relative d-flex flex-column align-items-center justify-content-between ${borderClass}" 
+								 style="background: rgba(5, 8, 12, 0.65); min-height: 155px; border-width: 2px !important; transition: all 0.3s ease-in-out;">
+								${player.isBlacklisted ? '<span class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-danger border border-light" style="font-size: 0.6rem; letter-spacing: 0.5px; z-index: 5;"><i class="fa-solid fa-user-slash me-1"></i>BLACKLIST</span>' : ''}
+								${player.isMe ? '<span class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-primary border border-light" style="font-size: 0.6rem; letter-spacing: 0.5px; z-index: 5;">YOU</span>' : ''}
+								
+								<div class="mb-2 mt-1" style="position: relative;">
+									<div class="border border-2 ${player.isBlacklisted ? 'border-danger' : 'border-secondary'}" style="width: 52px; height: 52px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
+										<img src="${imgUrl}" style="width: 100%; height: 100%; object-fit: cover; transform: scale(1.15);" 
+											 onerror="this.src='https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/profileicon/29.png'">
+									</div>
+								</div>
+								
+								<div class="w-100 text-truncate small ${labelClass}" style="font-weight: 600; font-size: 0.8rem;" title="${player.nameWithTag || 'Summoner'}">
+									${player.gameName || 'Summoner'}<span class="text-muted small">#${player.tagLine || '----'}</span>
+								</div>
+								<div class="text-muted small mt-1 text-truncate w-100" style="font-size: 0.7rem; font-weight: 500; letter-spacing: 0.3px;">
+									${player.championId > 0 ? player.championName : 'Selecting...'}
+								</div>
+							</div>
+						</div>
+					`;
+				});
+				grid.innerHTML = playersHtml;
+			} else {
+				grid.innerHTML = '<div class="text-muted text-center py-3 w-100">Waiting for lobby player data...</div>';
+			}
+
+			// Handle sound alert
+			if (hasBlacklisted) {
+				if (!alertedBlacklistForLobby) {
+					alertedBlacklistForLobby = true;
+					playBellSound();
+				}
+			}
+
+			// Render Queue Type Label
+			const queueTypeLabel = document.getElementById('champ-select-queue-type');
+			if (queueTypeLabel) {
+				queueTypeLabel.innerText = payload.benchEnabled ? "ARAM Draft" : "Normal/Ranked Draft";
+			}
+
+			// Render Team Badge
+			const teamBadge = document.getElementById('champ-select-team-badge');
+			if (teamBadge) {
+				if (payload.myTeamId === 1) {
+					teamBadge.style.display = 'inline-block';
+					teamBadge.innerText = 'Blue Team';
+					teamBadge.style.backgroundColor = 'rgba(13, 110, 253, 0.15)';
+					teamBadge.style.border = '1px solid rgba(13, 110, 253, 0.45)';
+					teamBadge.style.color = '#38b6ff';
+					teamBadge.style.textShadow = '0 0 4px rgba(13, 110, 253, 0.4)';
+				} else if (payload.myTeamId === 2) {
+					teamBadge.style.display = 'inline-block';
+					teamBadge.innerText = 'Red Team';
+					teamBadge.style.backgroundColor = 'rgba(220, 53, 69, 0.15)';
+					teamBadge.style.border = '1px solid rgba(220, 53, 69, 0.45)';
+					teamBadge.style.color = '#ff6b6b';
+					teamBadge.style.textShadow = '0 0 4px rgba(220, 53, 69, 0.4)';
+				} else {
+					teamBadge.style.display = 'none';
+				}
+			}
+
+			// Render bench if ARAM / benchEnabled
+			const benchCard = document.getElementById('bench-helper-card');
+			const benchList = document.getElementById('bench-champions-list');
+			if (benchCard && benchList) {
+				if (payload.benchEnabled && payload.bench && payload.bench.length > 0) {
+					benchCard.style.display = 'block';
+					let benchHtml = '';
+					payload.bench.forEach(champ => {
+						const name = championList[champ.id] || champ.name;
+						const cleanName = getChampCleanFile(name);
+						const imgUrl = `https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/champion/${cleanName}.png`;
+						const borderClass = champ.isTarget ? 'border-warning shadow-warning' : 'border-secondary';
+						const tooltipText = champ.isTarget ? 'Target Champion (Autopick)' : 'Bench Champion';
+						
+						benchHtml += `
+							<div class="bench-champion-item d-flex flex-column align-items-center" 
+								 onclick="ahk.benchSwap(${champ.id})"
+								 title="${tooltipText}"
+								 style="cursor: pointer; position: relative; transition: all 0.2s ease-in-out; width: 60px;">
+								<div style="position: relative;">
+									<div class="border border-2 ${borderClass}" style="width: 48px; height: 48px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+										<img src="${imgUrl}" style="width: 100%; height: 100%; object-fit: cover; transform: scale(1.15);" 
+											 onerror="this.src='https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/profileicon/29.png'">
+									</div>
+									${champ.isTarget ? '<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning" style="padding: 3px 6px; font-size: 0.6rem; color: #000; border: 1px solid #000; z-index: 5;"><i class="fa-solid fa-crosshairs"></i></span>' : ''}
+								</div>
+								<span class="text-truncate text-center w-100 mt-1" style="font-size: 0.7rem; color: #fff;">${name}</span>
+							</div>
+						`;
+					});
+					benchList.innerHTML = benchHtml;
+				} else {
+					benchCard.style.display = 'none';
+					benchList.innerHTML = '';
+				}
+			}
+		}
+
+		function clearChampSelectDraft() {
+			const card = document.getElementById('live-champ-select-card');
+			const grid = document.getElementById('champ-select-players-grid');
+			if (card) card.style.display = 'none';
+			if (grid) grid.innerHTML = '';
+			
+			const benchCard = document.getElementById('bench-helper-card');
+			const benchList = document.getElementById('bench-champions-list');
+			if (benchCard) benchCard.style.display = 'none';
+			if (benchList) benchList.innerHTML = '';
+
+			const teamBadge = document.getElementById('champ-select-team-badge');
+			if (teamBadge) {
+				teamBadge.style.display = 'none';
+				teamBadge.innerText = '';
+			}
+
+			alertedBlacklistForLobby = false;
+		}
+
+		// Blacklist functionality
+		window.blacklist = [];
+		window.recentPlayersList = [];
+
+		function initBlacklist(config) {
+			if (config.blacklistEnabled !== undefined) {
+				document.getElementById('toggle-blacklistEnabled').checked = config.blacklistEnabled;
+				updateBadge('badge-blacklist', config.blacklistEnabled);
+			}
+			if (config.blacklist !== undefined) {
+				window.blacklist = Array.isArray(config.blacklist) ? config.blacklist : [];
+				renderBlacklist();
+			}
+			// Trigger loading recent players from history
+			if (window.chrome && window.chrome.webview && window.chrome.webview.hostObjects && window.chrome.webview.hostObjects.ahk) {
+				setTimeout(() => {
+					try {
+						ahk.getRecentPlayers();
+					} catch(err) {
+						console.error("Error invoking getRecentPlayers", err);
+					}
+				}, 1000);
+			}
+		}
+
+		function onRecentPlayersLoaded(players) {
+			console.log("Recent players loaded from history:", players);
+			window.recentPlayersList = players || [];
+		}
+
+		function renderBlacklist() {
+			const container = document.getElementById('blacklist-container');
+			const emptyMsg = document.getElementById('blacklist-empty-msg');
+			if (!container) return;
+
+			// Clear container
+			container.innerHTML = '';
+
+			if (window.blacklist.length === 0) {
+				const msg = document.createElement('span');
+				msg.className = 'text-muted small my-auto text-center';
+				msg.id = 'blacklist-empty-msg';
+				msg.innerText = 'No players blacklisted yet.';
+				container.appendChild(msg);
+				return;
+			}
+
+			window.blacklist.forEach(player => {
+				const item = document.createElement('div');
+				item.className = 'd-flex justify-content-between align-items-center p-2 rounded mb-1';
+				item.style.background = 'rgba(255, 255, 255, 0.03)';
+				item.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+				item.style.fontSize = '0.8rem';
+
+				const nameSpan = document.createElement('span');
+				nameSpan.className = 'text-white text-truncate me-2';
+				nameSpan.innerText = player;
+
+				const removeBtn = document.createElement('button');
+				removeBtn.className = 'btn btn-link text-danger p-0 border-0';
+				removeBtn.style.lineHeight = '1';
+				removeBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+				removeBtn.onclick = () => removePlayerFromBlacklist(player);
+
+				item.appendChild(nameSpan);
+				item.appendChild(removeBtn);
+				container.appendChild(item);
+			});
+		}
+
+		function addPlayerToBlacklist(playerNameWithTag) {
+			if (!playerNameWithTag || typeof playerNameWithTag !== 'string') return;
+			const trimmed = playerNameWithTag.trim();
+			if (!trimmed) return;
+
+			if (window.blacklist.includes(trimmed)) {
+				return; // Already added
+			}
+
+			window.blacklist.push(trimmed);
+			updateConfig('blacklist', JSON.stringify(window.blacklist));
+			renderBlacklist();
+		}
+
+		function removePlayerFromBlacklist(player) {
+			window.blacklist = window.blacklist.filter(p => p !== player);
+			updateConfig('blacklist', JSON.stringify(window.blacklist));
+			renderBlacklist();
+		}
+
+		function addManualBlacklist() {
+			const input = document.getElementById('manual-blacklist-name');
+			if (!input) return;
+			const value = input.value.trim();
+			if (!value) return;
+
+			if (!value.includes('#')) {
+				alert('Please enter the name in SummonerName#TAG format (e.g. Hide on bush#KR1)');
+				return;
+			}
+
+			addPlayerToBlacklist(value);
+			input.value = '';
+		}
+
+		// Search Dropdown Functions
+		function showBlacklistDropdown() {
+			filterBlacklistDropdown();
+		}
+
+		function filterBlacklistDropdown() {
+			const input = document.getElementById('search-blacklist-player');
+			const dropdown = document.getElementById('blacklist-players-dropdown');
+			if (!input || !dropdown) return;
+
+			const query = input.value.toLowerCase().trim();
+			
+			// Filter from recent history players
+			const filtered = window.recentPlayersList.filter(player => {
+				return player.nameWithTag.toLowerCase().includes(query) || 
+				       player.gameName.toLowerCase().includes(query);
+			});
+
+			if (filtered.length === 0) {
+				dropdown.innerHTML = '<div class="text-muted p-2 small text-center">No recent players match your search.</div>';
+				dropdown.classList.remove('d-none');
+				return;
+			}
+
+			let html = '';
+			filtered.slice(0, 10).forEach(player => {
+				html += `
+					<div class="dropdown-item p-2 text-white border-bottom border-dark" 
+						 style="cursor: pointer; font-size: 0.8rem; background: rgba(10, 14, 20, 0.95);" 
+						 onclick="addPlayerToBlacklist('${player.nameWithTag.replace(/'/g, "\\'")}'); document.getElementById('search-blacklist-player').value='';"
+						 onmouseover="this.style.background='rgba(200, 155, 60, 0.1)';" 
+						 onmouseout="this.style.background='transparent';">
+						<i class="fa-solid fa-user text-warning me-1"></i> ${player.gameName}<span class="text-muted">#${player.tagLine}</span>
+					</div>
+				`;
+			});
+			dropdown.innerHTML = html;
+			dropdown.classList.remove('d-none');
+		}
+
+		let blacklistBlurTimeout;
+		function hideBlacklistDropdownDelayed() {
+			clearTimeout(blacklistBlurTimeout);
+			blacklistBlurTimeout = setTimeout(() => {
+				const dropdown = document.getElementById('blacklist-players-dropdown');
+				if (dropdown) dropdown.classList.add('d-none');
+			}, 250);
+		}
+
+		function toggleRunningTask(taskName) {
+			if (!window.loadedConfig) return;
+			
+			if (taskName === 'autoAccept') {
+				const val = !window.loadedConfig.autoAccept;
+				const el = document.getElementById('toggle-autoAccept');
+				if (el) el.checked = val;
+				updateConfig('autoAccept', val);
+			} else if (taskName === 'autoReport') {
+				const val = !window.loadedConfig.autoReport;
+				const el = document.getElementById('toggle-autoReport');
+				if (el) el.checked = val;
+				updateConfig('autoReport', val);
+			} else if (taskName === 'autoPickBenchEnabled') {
+				const val = !window.loadedConfig.autoPickBenchEnabled;
+				const el = document.getElementById('toggle-autoPickBenchEnabled');
+				if (el) el.checked = val;
+				toggleSniper(val);
+			} else if (taskName === 'blacklistEnabled') {
+				const val = !window.loadedConfig.blacklistEnabled;
+				const el = document.getElementById('toggle-blacklistEnabled');
+				if (el) el.checked = val;
+				updateConfig('blacklistEnabled', val);
+			}
+		}
 	</script>
 </html>

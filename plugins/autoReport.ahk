@@ -142,7 +142,6 @@ ScanNewMatches() {
                 "retries", 0
             ))
             queuedForMatch++
-            LogToWeb("Auto-Report: Queued player " playerName " (puuid: " puuid ") for Match #" gameId, "debug")
         }
         LogToWeb("Auto-Report: Finished scan for Match #" gameId ". Queued " queuedForMatch " players.", "info")
     }

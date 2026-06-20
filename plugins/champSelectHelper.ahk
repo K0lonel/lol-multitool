@@ -31,6 +31,7 @@ champSelectHelper() {
             if (IsObject(session) && !session.Has("error")) {
                 sessionFailCount := 0
                 ScanChampSelectLobby(session)
+                UpdateChampSelectFrontend(session)
                 ProcessBenchSwaps(session)
             } else if (IsObject(session) && session.Has("error")) {
                 sessionFailCount++
@@ -79,11 +80,30 @@ ScanChampSelectLobby(session) {
     
     LogToWeb("Draft Companion: Scraping team lobby participants...", "info")
     for player in session["myTeam"] {
-        puuid := player["puuid"]
-        summoner := APICall("GET", "/lol-summoner/v1/summoners/by-puuid/" puuid)
-        if (IsObject(summoner) && summoner.Has("gameName")) {
-            nameWithTag := summoner["gameName"] "#" summoner["tagLine"]
+        nameWithTag := ""
+        if (player.Has("nameVisibilityType") && player["nameVisibilityType"] == "VISIBLE") {
+            if (player.Has("gameName") && player.Has("tagLine")) {
+                nameWithTag := player["gameName"] "#" player["tagLine"]
+            }
+        }
+        
+        if (nameWithTag == "") {
+            puuid := player.Has("puuid") ? player["puuid"] : ""
+            if (puuid != "") {
+                nameWithTag := GetSummonerNameByPuuid(puuid)
+            }
+        }
+        
+        if (nameWithTag != "" && !InStr(nameWithTag, "Teammate")) {
             champLobbyNames.Push(nameWithTag)
+            
+            if (config.Has("blacklistEnabled") && config["blacklistEnabled"] && config.Has("blacklist")) {
+                for blacklistedName in config["blacklist"] {
+                    if (StrCompare(nameWithTag, blacklistedName, false) == 0) {
+                        LogToWeb("WARNING: Blacklisted player " nameWithTag " detected in lobby!", "error")
+                    }
+                }
+            }
         }
     }
     
@@ -208,22 +228,14 @@ ProcessBenchSwaps(session) {
     ; --- Gate: Is the bench actually enabled in this queue session? ---
     benchEnabled := session.Has("benchEnabled") && (session["benchEnabled"] = true || session["benchEnabled"] = "true")
     if (!benchEnabled) {
-        try MyWindow.ExecuteScriptAsync("clearBenchDisplay()")
         if (Mod(tickCount, 10) == 1) {
             LogToWeb("Bench Sniper: [SKIP] Bench is not enabled in this session.", "debug")
         }
         return
     }
     
-    ; --- Retrieve bench data and player info for the visual bench (independent of sniper toggle) ---
     benchResult := GetBenchFromSession(session)
     myInfo := GetMyChampInfo(session)
-
-    if (benchResult["data"] != "") {
-        SendBenchToFrontend(benchResult["data"], benchResult["key"], myInfo)
-    } else {
-        try MyWindow.ExecuteScriptAsync("clearBenchDisplay()")
-    }
     
     ; --- Gate 0: Has the user manually bypassed the auto-picker? ---
     global bypassAutoPick
@@ -357,45 +369,167 @@ ProcessBenchSwaps(session) {
     }
 }
 
-SendBenchToFrontend(benchData, benchKeyName, myInfo) {
+UpdateChampSelectFrontend(session) {
     global config
-    static lastSentState := ""
     
-    ; Build state string for change detection
-    stateStr := ""
-    for entry in benchData {
-        stateStr .= GetBenchChampId(entry) ","
-    }
-    stateStr .= "|" myInfo["championId"]
-    
-    if (stateStr == lastSentState)
+    if (!session.Has("myTeam")) {
         return
-    lastSentState := stateStr
-    
-    ; Build JSON array of bench champ objects
-    benchArr := Array()
-    preferredIdsArray := config.Has("autoPickBenchIds") ? config["autoPickBenchIds"] : Array()
-    preferredIds := Map()
-    for id in preferredIdsArray {
-        preferredIds[id] := true
     }
     
-    for entry in benchData {
-        cid := GetBenchChampId(entry)
-        cname := GetChampionName(cid)
-        isTarget := preferredIds.Has(cid)
-        benchArr.Push(Map("id", cid, "name", cname, "isTarget", isTarget ? true : false))
+    myTeamId := 0
+    ; Build team list
+    teamArr := Array()
+    for player in session["myTeam"] {
+        puuid := player.Has("puuid") ? player["puuid"] : ""
+        cellId := player.Has("cellId") ? player["cellId"] : -1
+        
+        nameWithTag := ""
+        if (player.Has("nameVisibilityType") && player["nameVisibilityType"] == "VISIBLE") {
+            if (player.Has("gameName") && player.Has("tagLine")) {
+                nameWithTag := player["gameName"] "#" player["tagLine"]
+            }
+        }
+        
+        if (nameWithTag == "") {
+            if (puuid != "") {
+                nameWithTag := GetSummonerNameByPuuid(puuid)
+            }
+            if (nameWithTag == "") {
+                nameWithTag := "Teammate " (cellId >= 0 ? cellId : "")
+            }
+        }
+        
+        ; Split name and tag
+        gameName := ""
+        tagLine := ""
+        if (nameWithTag != "") {
+            parts := StrSplit(nameWithTag, "#")
+            if (parts.Length >= 1)
+                gameName := parts[1]
+            if (parts.Length >= 2)
+                tagLine := parts[2]
+        }
+        
+        champId := player.Has("championId") ? player["championId"] : 0
+        champName := champId > 0 ? GetChampionName(champId) : ""
+        isMe := (cellId == session["localPlayerCellId"])
+        
+        ; Check if blacklisted
+        isBlacklisted := false
+        if (config.Has("blacklistEnabled") && config["blacklistEnabled"] && config.Has("blacklist") && nameWithTag != "" && !InStr(nameWithTag, "Teammate")) {
+            for blacklistedName in config["blacklist"] {
+                if (StrCompare(nameWithTag, blacklistedName, false) == 0) {
+                    isBlacklisted := true
+                }
+            }
+        }
+        
+        teamVal := player.Has("team") ? player["team"] : 0
+        myTeamSize := session["myTeam"].Length
+        
+        ; Fallback team identification if "team" key is missing
+        if (teamVal == 0) {
+            if (cellId < myTeamSize) {
+                teamVal := 1
+            } else {
+                teamVal := 2
+            }
+        }
+        
+        if (isMe) {
+            myTeamId := teamVal
+        }
+        
+        position := -1
+        if (teamVal == 1) {
+            ; If team = 1, expect cellId to be between 1 and myTeam size (or 0 and myTeam size - 1 if 0-indexed)
+            position := cellId
+        } else if (teamVal == 2) {
+            ; If team = 2, perform cellId - myTeam size to find current position
+            position := cellId - myTeamSize
+        }
+        
+        playerMap := Map(
+            "puuid", puuid,
+            "nameWithTag", nameWithTag,
+            "gameName", gameName,
+            "tagLine", tagLine,
+            "championId", champId,
+            "championName", champName,
+            "isMe", isMe,
+            "isBlacklisted", isBlacklisted,
+            "cellId", cellId,
+            "position", position
+        )
+        teamArr.Push(playerMap)
+    }
+    
+    ; Build bench list
+    benchArr := Array()
+    benchEnabled := session.Has("benchEnabled") && (session["benchEnabled"] = true || session["benchEnabled"] = "true")
+    if (benchEnabled) {
+        benchResult := GetBenchFromSession(session)
+        if (benchResult["data"] != "") {
+            preferredIdsArray := config.Has("autoPickBenchIds") ? config["autoPickBenchIds"] : Array()
+            preferredIds := Map()
+            for id in preferredIdsArray {
+                preferredIds[id] := true
+            }
+            
+            for entry in benchResult["data"] {
+                cid := GetBenchChampId(entry)
+                cname := GetChampionName(cid)
+                isTarget := preferredIds.Has(cid)
+                benchArr.Push(Map("id", cid, "name", cname, "isTarget", isTarget ? true : false))
+            }
+        }
+    }
+    
+    if (myTeamId == 0 && teamArr.Length > 0) {
+        firstPlayer := session["myTeam"][1]
+        firstPlayerCell := firstPlayer.Has("cellId") ? firstPlayer["cellId"] : 0
+        firstPlayerTeam := firstPlayer.Has("team") ? firstPlayer["team"] : 0
+        if (firstPlayerTeam == 0) {
+            if (firstPlayerCell < session["myTeam"].Length) {
+                myTeamId := 1
+            } else {
+                myTeamId := 2
+            }
+        } else {
+            myTeamId := firstPlayerTeam
+        }
     }
     
     payload := Map(
+        "players", teamArr,
         "bench", benchArr,
-        "myChampId", myInfo["championId"],
-        "myChampName", myInfo["championName"]
+        "benchEnabled", benchEnabled,
+        "myCellId", session.Has("localPlayerCellId") ? session["localPlayerCellId"] : -1,
+        "myTeamId", myTeamId
     )
     
     try {
-        MyWindow.ExecuteScriptAsync("updateBenchDisplay(" JSON.Dump(payload) ")")
+        MyWindow.ExecuteScriptAsync("updateChampSelectDraft(" JSON.Dump(payload) ")")
     }
+}
+
+GetSummonerNameByPuuid(puuid) {
+    global summonerCache
+    if (!IsSet(summonerCache)) {
+        global summonerCache := Map()
+    }
+    if (summonerCache.Has(puuid)) {
+        return summonerCache[puuid]
+    }
+    summoner := APICall("GET", "/lol-summoner/v1/summoners/by-puuid/" puuid)
+    if (IsObject(summoner) && summoner.Has("gameName")) {
+        nameWithTag := summoner["gameName"] "#" summoner["tagLine"]
+        if (nameWithTag != "#") {
+            summonerCache[puuid] := nameWithTag
+            return nameWithTag
+        }
+    }
+    return ""
 }
 
 ResetChampSelectHelper() {
@@ -407,4 +541,5 @@ ResetChampSelectHelper() {
     bypassAutoPick := false
     try MyWindow.ExecuteScriptAsync("onLobbyCleared()")
     try MyWindow.ExecuteScriptAsync("clearBenchDisplay()")
+    try MyWindow.ExecuteScriptAsync("clearChampSelectDraft()")
 }
