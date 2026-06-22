@@ -3,7 +3,7 @@
 plugins.Push(smartAutoHonorer)
 
 smartAutoHonorer() {
-    global config, gameflow, friend_puuid, autoHonorCompleted
+    global config, gameflow, autoHonorCompleted
     static lastHonorGameId := 0
     
     if (!config.Has("autoHonorerEnabled") || !config["autoHonorerEnabled"]) {
@@ -20,13 +20,13 @@ smartAutoHonorer() {
         return
         
     try {
-        room := APICall("GET", "/lol-honor-v2/v1/room")
-        if (!IsObject(room) || !room.Has("gameId") || !room.Has("available") || !room.Has("summoners")) {
-            ; Room not ready or doesn't exist
+        ballot := APICall("GET", "/lol-honor-v2/v1/ballot")
+        if (!IsObject(ballot) || !ballot.Has("gameId")) {
+            ; Ballot not ready or doesn't exist
             return
         }
         
-        gameId := room["gameId"]
+        gameId := ballot["gameId"]
         
         ; If we already processed this gameId, mark completed and return
         if (gameId == lastHonorGameId) {
@@ -34,113 +34,100 @@ smartAutoHonorer() {
             return
         }
         
-        if (room["available"] == false) {
-            LogToWeb("Auto-Honorer: Honoring is not available for this game.", "warning")
+        ; If already honored someone in this ballot, skip
+        if (ballot.Has("honoredPlayers") && IsObject(ballot["honoredPlayers"]) && ballot["honoredPlayers"].Length > 0) {
+            LogToWeb("Auto-Honorer: You have already honored players for this match.", "info")
             lastHonorGameId := gameId
             autoHonorCompleted := true
             return
         }
         
-        summoners := room["summoners"]
-        if (Type(summoners) != "Array" || summoners.Length == 0) {
-            LogToWeb("Auto-Honorer: No teammates found in the honor room.", "warning")
+        ; Read available votes count
+        votesCount := 1
+        if (ballot.Has("votePool") && IsObject(ballot["votePool"]) && ballot["votePool"].Has("votes")) {
+            votesCount := ballot["votePool"]["votes"]
+        }
+        
+        opponents := Array()
+        allies := Array()
+        
+        if (ballot.Has("eligibleOpponents") && IsObject(ballot["eligibleOpponents"])) {
+            opponents := ballot["eligibleOpponents"]
+        }
+        if (ballot.Has("eligibleAllies") && IsObject(ballot["eligibleAllies"])) {
+            allies := ballot["eligibleAllies"]
+        }
+        
+        ; Gather target players based on votesCount
+        targets := Array()
+        
+        ; 1. Pick unique opponents first
+        oppsTemp := opponents.Clone()
+        while (oppsTemp.Length > 0 && targets.Length < votesCount) {
+            randIdx := Random(1, oppsTemp.Length)
+            targets.Push(Map("player", oppsTemp[randIdx], "isOpponent", true))
+            oppsTemp.RemoveAt(randIdx)
+        }
+        
+        ; 2. Fall back to unique allies if we have remaining votes
+        alliesTemp := allies.Clone()
+        while (alliesTemp.Length > 0 && targets.Length < votesCount) {
+            randIdx := Random(1, alliesTemp.Length)
+            targets.Push(Map("player", alliesTemp[randIdx], "isOpponent", false))
+            alliesTemp.RemoveAt(randIdx)
+        }
+        
+        if (targets.Length == 0) {
+            LogToWeb("Auto-Honorer: No eligible players found in the ballot to honor.", "warning")
             lastHonorGameId := gameId
             autoHonorCompleted := true
             return
         }
         
-        ; Fetch lobby members to identify premades
-        premades := Map()
-        try {
-            lobby := APICall("GET", "/lol-lobby/v2/lobby")
-            if (IsObject(lobby) && lobby.Has("members")) {
-                members := lobby["members"]
-                if (Type(members) == "Array") {
-                    for member in members {
-                        if (member.Has("puuid")) {
-                            premades[member["puuid"]] := true
-                        }
-                    }
-                }
-            }
-        } catch {
-            ; Lobby call might fail if lobby already destroyed, ignore
-        }
+        LogToWeb("Auto-Honorer: Detected " . votesCount . " available vote(s). Processing honors...", "info")
         
-        ; Filter eligible candidates (omit friends and premades)
-        candidates := Array()
-        for player in summoners {
-            if (!player.Has("puuid") || !player.Has("summonerId"))
-                continue
-                
-            pPuuid := player["puuid"]
-            pId := player["summonerId"]
+        for idx, targetInfo in targets {
+            targetPlayer := targetInfo["player"]
+            isOpponent := targetInfo["isOpponent"]
             
-            pName := ""
-            if (player.Has("gameName") && player["gameName"] != "")
-                pName := player["gameName"]
-            else if (player.Has("summonerName") && player["summonerName"] != "")
-                pName := player["summonerName"]
-            else if (player.Has("displayName") && player["displayName"] != "")
-                pName := player["displayName"]
+            targetId := targetPlayer["summonerId"]
+            targetPuuid := targetPlayer["puuid"]
+            
+            targetName := ""
+            if (targetPlayer.Has("summonerName") && targetPlayer["summonerName"] != "")
+                targetName := targetPlayer["summonerName"]
+            else if (targetPlayer.Has("championName") && targetPlayer["championName"] != "")
+                targetName := targetPlayer["championName"]
             else
-                pName := "Teammate"
+                targetName := "Player"
                 
-            pTag := player.Has("tagLine") ? player["tagLine"] : ""
-            fullName := pName . (pTag != "" ? "#" . pTag : "")
+            randomHonorType := "GG"
+            entityType := isOpponent ? "opponent" : "ally"
+            LogToWeb("Auto-Honorer: Sending honor (" . randomHonorType . ") to " . entityType . " " . targetName . "...", "info")
             
-            ; Omit friends
-            if (friend_puuid.Has(pPuuid)) {
-                LogToWeb("Auto-Honorer: Filtering out friend " . fullName, "debug")
-                continue
+            body := Map(
+                "summonerId", targetId,
+                "puuid", targetPuuid,
+                "honorType", randomHonorType,
+                "gameId", gameId
+            )
+            
+            res := APICall("POST", "/lol-honor-v2/v1/honor-player", JSON.Dump(body))
+            if (IsObject(res) && res.Has("error")) {
+                LogToWeb("Auto-Honorer: Failed to honor " . targetName . ". Status: " . res["status"], "error")
+            } else {
+                msg := ""
+                if (IsObject(res)) {
+                    msg := " Response: " . JSON.Dump(res)
+                }
+                LogToWeb("Auto-Honorer: Successfully honored " . entityType . " " . targetName . "!" . msg, "success")
             }
-            
-            ; Omit premades/lobby members
-            if (premades.Has(pPuuid)) {
-                LogToWeb("Auto-Honorer: Filtering out premade " . fullName, "debug")
-                continue
-            }
-            
-            candidates.Push(Map("summonerId", pId, "fullName", fullName))
-        }
-        
-        if (candidates.Length == 0) {
-            LogToWeb("Auto-Honorer: No eligible teammates to honor (all are friends or lobby members). Skipping.", "warning")
-            lastHonorGameId := gameId
-            autoHonorCompleted := true
-            return
-        }
-        
-        ; Pick a random candidate
-        randomIndex := Random(1, candidates.Length)
-        targetPlayer := candidates[randomIndex]
-        targetId := targetPlayer["summonerId"]
-        targetFullName := targetPlayer["fullName"]
-        
-        ; Pick a random honor type: COOL, SHOTCALLER, HEART
-        honorTypes := ["COOL", "SHOTCALLER", "HEART"]
-        randomHonorType := honorTypes[Random(1, 3)]
-        
-        LogToWeb("Auto-Honorer: Sending honor (" . randomHonorType . ") to " . targetFullName . "...", "info")
-        
-        body := Map(
-            "gameId", gameId,
-            "summonerId", targetId,
-            "honorCategory", randomHonorType
-        )
-        
-        res := APICall("POST", "/lol-honor-v2/v1/honor-player", JSON.Dump(body))
-        if (IsObject(res) && res.Has("error")) {
-            LogToWeb("Auto-Honorer: Failed to submit honor. Status: " . res["status"], "error")
-        } else {
-            LogToWeb("Auto-Honorer: Successfully honored " . targetFullName . "!", "success")
         }
         
         lastHonorGameId := gameId
         autoHonorCompleted := true
     } catch Error as e {
-        LogToWeb("Auto-Honorer: Error processing honor room: " . e.Message, "error")
-        ; Set autoHonorCompleted to true on error to avoid blocking the skipper
+        LogToWeb("Auto-Honorer: Error processing honor ballot: " . e.Message, "error")
         autoHonorCompleted := true
     }
 }

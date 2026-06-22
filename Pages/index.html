@@ -162,10 +162,7 @@
 													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">RECENT WIN RATE</div>
 													<span id="game-stats-winrate" class="badge bg-dark border text-warning" style="border-color: rgba(200, 155, 60, 0.3) !important; font-size: 0.7rem; padding: 3px 6px;">--</span>
 												</div>
-												<div class="p-2 rounded border d-flex flex-column justify-content-center align-items-center" title="Honor Level progress checkpoint" style="flex: 1 0 calc(33.333% - 10px); min-width: 100px; max-width: calc(33.333% - 10px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(200, 155, 60, 0.12) !important;">
-													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">HONOR PROGRESS</div>
-													<span id="game-stats-honor" class="badge bg-dark border text-info" style="border-color: rgba(10, 200, 185, 0.3) !important; font-size: 0.7rem; padding: 3px 6px;">--</span>
-												</div>
+
 											</div>
 										</div>
 
@@ -796,7 +793,15 @@
 			ahk.updateConfig(key, value);
 			
 			if (window.loadedConfig) {
-				window.loadedConfig[key] = value;
+				if (key === 'reportCategories' || key === 'autoPickBenchIds' || key === 'favoriteChampIds' || key === 'blacklist') {
+					try {
+						window.loadedConfig[key] = JSON.parse(value);
+					} catch(e) {
+						window.loadedConfig[key] = value;
+					}
+				} else {
+					window.loadedConfig[key] = value;
+				}
 			}
 			
 			// Reflect in active badge summaries immediately
@@ -981,11 +986,7 @@
 					winrateEl.innerText = me.lol.recentWinRate !== undefined ? me.lol.recentWinRate : "--";
 				}
 
-				// Honor level update
-				const honorEl = document.getElementById('game-stats-honor');
-				if (honorEl) {
-					honorEl.innerText = me.lol.honorLevel !== undefined ? me.lol.honorLevel : "--";
-				}
+
 			}
 
 			const champsCountEl = document.getElementById('game-stats-champs');
@@ -1039,27 +1040,40 @@
 				
 				if (entries.length > 0) {
 					entries.slice(0, 15).forEach(item => {
-						let reportedList = item.ReportedPlayers ? item.ReportedPlayers.join(', ') : 'All Lobby';
-						
 						let players = [];
+						let pillsHtml = '';
+						
 						if (item.ReportedPlayers && Array.isArray(item.ReportedPlayers)) {
 							item.ReportedPlayers.forEach(p => {
+								let isSkipped = p.endsWith(' (Skipped)');
 								let cleanName = p.replace(/\s*\(Skipped\)\s*$/, '').trim();
 								if (cleanName && cleanName !== "Unknown Player") {
 									players.push(cleanName.replace('#', '-'));
+									if (isSkipped) {
+										pillsHtml += `<span class="player-pill skipped-pill" title="${cleanName} (Skipped)">${cleanName}</span>`;
+									} else {
+										pillsHtml += `<span class="player-pill reported-pill" title="${cleanName} (Reported)">${cleanName}</span>`;
+									}
 								}
 							});
 						}
+						
+						if (!pillsHtml) {
+							pillsHtml = `<span class="player-pill reported-pill">All Lobby</span>`;
+						}
+
 						let link = `https://u.gg/lol/multisearch?summoners=${players.map(encodeURIComponent).join(',')}&region=eun1`;
 						let dateStr = new Date(item.Timestamp).toLocaleString();
 						
 						html += `
 							<div class="report-item d-flex flex-column align-items-stretch">
-								<div class="d-flex justify-content-between align-items-center w-100 mb-1">
-									<span class="report-match-id">MATCH #${item.gameId} &bull; ${dateStr}</span>
-									<a href="${link}" target="_blank" class="btn btn-sm btn-hextech" style="padding: 2px 8px; font-size: 0.75rem;">Link</a>
+								<div class="d-flex justify-content-between align-items-center w-100 mb-2">
+									<span class="report-match-id"><i class="fa-solid fa-gamepad me-1" style="font-size: 0.8em; opacity: 0.6;"></i>MATCH #${item.gameId} <span class="mx-1 opacity-50">&bull;</span> ${dateStr}</span>
+									<a href="${link}" target="_blank" class="btn btn-sm btn-hextech" style="padding: 2px 8px; font-size: 0.7rem; font-weight: 600;">Link</a>
 								</div>
-								<span class="report-players" title="${reportedList}">${reportedList}</span>
+								<div class="report-players-container d-flex flex-wrap gap-1">
+									${pillsHtml}
+								</div>
 							</div>
 						`;
 					});
@@ -1077,6 +1091,57 @@
 		let championNameMap = {};
 		let championRoles = {}; // Maps champion ID to lowercase roles array
 		let championAliases = {}; // Maps champion ID to alias string
+
+		const roleColors = {
+			mage: {
+				bg: 'rgba(168, 85, 247, 0.15)', // Purple
+				text: '#c084fc',
+				border: 'rgba(168, 85, 247, 0.4)'
+			},
+			support: {
+				bg: 'rgba(34, 197, 94, 0.15)', // Green
+				text: '#4ade80',
+				border: 'rgba(34, 197, 94, 0.4)'
+			},
+			tank: {
+				bg: 'rgba(234, 179, 8, 0.15)', // Yellow/Gold
+				text: '#fde047',
+				border: 'rgba(234, 179, 8, 0.4)'
+			},
+			marksman: {
+				bg: 'rgba(59, 130, 246, 0.15)', // Blue
+				text: '#60a5fa',
+				border: 'rgba(59, 130, 246, 0.4)'
+			},
+			fighter: {
+				bg: 'rgba(249, 115, 22, 0.15)', // Orange
+				text: '#fb923c',
+				border: 'rgba(249, 115, 22, 0.4)'
+			},
+			assassin: {
+				bg: 'rgba(239, 68, 68, 0.15)', // Red
+				text: '#f87171',
+				border: 'rgba(239, 68, 68, 0.4)'
+			},
+			default: {
+				bg: 'rgba(255, 255, 255, 0.05)',
+				text: '#94a3b8',
+				border: 'rgba(255, 255, 255, 0.1)'
+			}
+		};
+
+		function getChampRoleStyle(champId) {
+			let roles = championRoles[champId];
+			if (roles && roles.length > 0) {
+				for (let i = 0; i < roles.length; i++) {
+					let r = roles[i].toLowerCase();
+					if (roleColors[r]) {
+						return roleColors[r];
+					}
+				}
+			}
+			return roleColors.default;
+		}
 		let lobbyPlayers = [];
 		let ddragonVersion = '16.12.1'; // Default modern fallback version
 
@@ -1184,13 +1249,22 @@
 			if (!container) { _renderingFavorites = false; return; }
 			
 			if (favIds && favIds.length > 0) {
+				// Sort favIds alphabetically by champion name
+				let sortedFavIds = [...favIds];
+				sortedFavIds.sort((a, b) => {
+					let nameA = (championList[a] || "").toLowerCase();
+					let nameB = (championList[b] || "").toLowerCase();
+					return nameA.localeCompare(nameB);
+				});
+
 				let html = '';
-				favIds.forEach(id => {
+				sortedFavIds.forEach(id => {
 					let name = championList[id];
 					if (name) {
+						let style = getChampRoleStyle(id);
 						html += `
-							<span class="badge border d-inline-flex align-items-center gap-1 border-warning text-warning" 
-								  style="background: rgba(200, 155, 60, 0.15); font-size: 0.8rem; padding: 4px 8px;">
+							<span class="badge border d-inline-flex align-items-center gap-1" 
+								  style="background: ${style.bg}; color: ${style.text}; border-color: ${style.border} !important; font-size: 0.8rem; padding: 4px 8px;">
 								${name}
 								<i class="fa-solid fa-xmark text-danger ms-1" style="cursor: pointer; font-size: 0.85rem;" 
 								   onclick="removeFavoriteChamp(event, ${id})"></i>
@@ -1326,12 +1400,21 @@
 		function renderActiveBadges(ids) {
 			let badgeHtml = '';
 			if (ids && ids.length > 0) {
-				ids.forEach(id => {
+				// Sort ids alphabetically by champion name
+				let sortedIds = [...ids];
+				sortedIds.sort((a, b) => {
+					let nameA = (championList[a] || "").toLowerCase();
+					let nameB = (championList[b] || "").toLowerCase();
+					return nameA.localeCompare(nameB);
+				});
+
+				sortedIds.forEach(id => {
 					let name = championList[id];
 					if (name) {
+						let style = getChampRoleStyle(id);
 						badgeHtml += `
-							<span class="badge bg-dark border text-warning d-inline-flex align-items-center gap-2" style="border-color: var(--hextech-gold) !important; font-size: 0.9rem; padding: 4px 10px; margin-bottom: 2px; height: 38px; line-height: 1;">
-								<span style="width: 26px; height: 26px; border-radius: 50%; overflow: hidden; border: 1px solid var(--hextech-gold); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
+							<span class="badge border d-inline-flex align-items-center gap-2" style="background: ${style.bg}; color: ${style.text}; border-color: ${style.border} !important; font-size: 0.9rem; padding: 4px 10px; margin-bottom: 2px; height: 38px; line-height: 1;">
+								<span style="width: 26px; height: 26px; border-radius: 50%; overflow: hidden; border: 1px solid ${style.text}; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
 									<img src="https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/champion/${getChampCleanFile(name)}.png" style="width: 100%; height: 100%; object-fit: cover; transform: scale(1.15);" onerror="this.style.display='none'">
 								</span>
 								<span>${name}</span>

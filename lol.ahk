@@ -31,7 +31,6 @@ global autoHonorCompleted := false
 global friendsCount := 0
 global friendsOnline := 0
 global recentWinRate := "--"
-global honorLevel := "--"
 global sessionStartTime := A_TickCount
 
 ; Load or create configuration
@@ -221,8 +220,7 @@ loop {
                     "friendsCount", friendsCount,
                     "friendsOnline", friendsOnline,
                     "recentWinRate", recentWinRate,
-                    "sessionTime", sessionTime,
-                    "honorLevel", honorLevel
+                    "sessionTime", sessionTime
                 ))
             } else {
                 global me := Map()
@@ -280,7 +278,7 @@ loop {
     }
     
     ; 2. Match History & Stats (every 30 seconds, or 5 seconds if not yet loaded)
-    forceStatsCheck := (lcuConnected && (recentWinRate == "--" || honorLevel == "--"))
+    forceStatsCheck := (lcuConnected && recentWinRate == "--")
     if (historyTimer >= 30 || (forceStatsCheck && historyTimer >= 5)) {
         historyTimer := 0
         if (lcuConnected) {
@@ -294,11 +292,17 @@ loop {
                         gamesArr := tempHistory["games"]["games"]
                         winsCount := 0
                         lossesCount := 0
-                        gamesToCheck := gamesArr.Length > 10 ? 10 : gamesArr.Length
+                        validGamesCount := 0
                         
                         for index, game in gamesArr {
-                            if (index > gamesToCheck)
+                            if (validGamesCount >= 20)
                                 break
+                                
+                            ; Ignore custom games or practice tool
+                            isCustom := (game.Has("gameType") && game["gameType"] == "CUSTOM_GAME") || (game.Has("queueId") && game["queueId"] == 0)
+                            isPracticeTool := game.Has("gameMode") && game["gameMode"] == "PRACTICETOOL"
+                            if (isCustom || isPracticeTool)
+                                continue
                                 
                             partId := 0
                             if (game.Has("participantIdentities")) {
@@ -310,6 +314,7 @@ loop {
                                 }
                             }
                             
+                            foundGameResult := false
                             if (partId > 0 && game.Has("participants")) {
                                 for idx, participant in game["participants"] {
                                     if (participant.Has("participantId") && participant["participantId"] == partId) {
@@ -319,10 +324,15 @@ loop {
                                             } else {
                                                 lossesCount++
                                             }
+                                            foundGameResult := true
                                         }
                                         break
                                     }
                                 }
+                            }
+                            
+                            if (foundGameResult) {
+                                validGamesCount++
                             }
                         }
                         
@@ -341,18 +351,6 @@ loop {
                 }
             } catch Error as e {
                 LogToWeb("Failed to fetch match history: " e.Message, "error")
-            }
-            
-            try {
-                tempHonor := APICall("GET", "/lol-honor-v2/v1/profile")
-                if (IsObject(tempHonor) && tempHonor.Has("honorLevel")) {
-                    hl := tempHonor["honorLevel"]
-                    cp := tempHonor.Has("checkpoint") ? tempHonor["checkpoint"] : 0
-                    global honorLevel := "Lvl " String(hl) " (CP " String(cp) ")"
-                }
-            } catch Error as e {
-                global honorLevel := "--"
-                LogToWeb("Failed to query honor progress: " e.Message, "error")
             }
         }
     }
@@ -496,7 +494,7 @@ WebTooltipEvent(WebView, Msg) {
 
 DodgeLobbyCallback(WebView) {
     LogToWeb("Dodge Lobby: User requested dodge", "warning")
-    res := APICall("POST", "/lol-lobby-team-builder/champ-select/v1/session/quit")
+    res := APICall("POST", "/lol-gameflow/v1/session/dodge", "{}")
     if (IsObject(res) && res.Has("error")) {
         errStatus := res.Has("status") ? res["status"] : "?"
         errMsg := res.Has("error") ? res["error"] : "Unknown"

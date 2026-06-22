@@ -232,7 +232,7 @@ ProcessReportQueue() {
     
     if (reportQueue.Length > 0) {
         reportStatus := "Reported " playerName ". " reportQueue.Length " remaining."
-        LogToWeb("Auto-Report: Reported player " playerName ". " reportQueue.Length " remaining in queue.", "success")
+        LogToWeb("Auto-Report: " reportQueue.Length " remaining in queue. Reported player " playerName, "success")
     } else {
         reportStatus := "All reports sent successfully!"
         LogToWeb("Auto-Report: Successfully finished reporting all players for Match #" gameId "!", "success")
