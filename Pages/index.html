@@ -263,6 +263,40 @@
 								</div>
 							</div>
 
+							<!-- Summoner Spells Section -->
+							<div id="my-spells-helper-card" style="display:none; border-top: 1px solid rgba(200, 155, 60, 0.15); padding-top: 15px; margin-top: 15px;">
+								<div class="small text-muted mb-2"><i class="fa-solid fa-wand-magic-sparkles text-warning me-1"></i> Change Summoner Spells (Click to swap):</div>
+								<div class="d-flex gap-4 align-items-center py-1">
+									<!-- Spell 1 Slot -->
+									<div class="d-flex align-items-center gap-2">
+										<span class="small text-muted" style="font-size: 0.75rem;">Spell 1 (D):</span>
+										<div class="position-relative">
+											<button class="btn btn-sm btn-outline-warning d-flex align-items-center gap-2 p-1 px-2" id="my-spell1-btn" onclick="toggleSpellSelectorDropdown(1, event)" style="min-width: 120px; font-size: 0.8rem; background: rgba(5,8,12,0.4); border-color: rgba(200,155,60,0.45) !important;">
+												<img id="my-spell1-img" src="" width="20" height="20" style="border-radius: 3px;">
+												<span id="my-spell1-name">Loading...</span>
+											</button>
+											<div class="position-absolute d-none rounded border p-2 spell-selector-dropdown shadow-lg" id="my-spell1-dropdown" style="bottom: 120%; left: 0; background: rgba(10, 14, 20, 0.98); border-color: var(--hextech-gold) !important; width: 230px; z-index: 1050; backdrop-filter: blur(8px); box-shadow: 0 -10px 25px rgba(0,0,0,0.65);">
+												<!-- Populated dynamically -->
+											</div>
+										</div>
+									</div>
+
+									<!-- Spell 2 Slot -->
+									<div class="d-flex align-items-center gap-2">
+										<span class="small text-muted" style="font-size: 0.75rem;">Spell 2 (F):</span>
+										<div class="position-relative">
+											<button class="btn btn-sm btn-outline-warning d-flex align-items-center gap-2 p-1 px-2" id="my-spell2-btn" onclick="toggleSpellSelectorDropdown(2, event)" style="min-width: 120px; font-size: 0.8rem; background: rgba(5,8,12,0.4); border-color: rgba(200,155,60,0.45) !important;">
+												<img id="my-spell2-img" src="" width="20" height="20" style="border-radius: 3px;">
+												<span id="my-spell2-name">Loading...</span>
+											</button>
+											<div class="position-absolute d-none rounded border p-2 spell-selector-dropdown shadow-lg" id="my-spell2-dropdown" style="bottom: 120%; left: 0; background: rgba(10, 14, 20, 0.98); border-color: var(--hextech-gold) !important; width: 230px; z-index: 1050; backdrop-filter: blur(8px); box-shadow: 0 -10px 25px rgba(0,0,0,0.65);">
+												<!-- Populated dynamically -->
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+
 							<!-- Dodge Button Row -->
 							<div class="d-flex justify-content-end align-items-center mt-3 border-top pt-3" style="border-color: rgba(200, 155, 60, 0.1) !important;">
 								<button class="btn btn-outline-danger btn-sm" onclick="ahk.dodgeLobby()"><i class="fa-solid fa-right-from-bracket me-1"></i> Instadodge Lobby</button>
@@ -1659,6 +1693,110 @@
 			}
 		}
 
+		const summonerSpellsMap = {
+			1: { name: "Cleanse", key: "SummonerBoost" },
+			3: { name: "Exhaust", key: "SummonerExhaust" },
+			4: { name: "Flash", key: "SummonerFlash" },
+			6: { name: "Ghost", key: "SummonerHaste" },
+			7: { name: "Heal", key: "SummonerHeal" },
+			12: { name: "Teleport", key: "SummonerTeleport" },
+			13: { name: "Clarity", key: "SummonerMana" },
+			14: { name: "Ignite", key: "SummonerDot" },
+			21: { name: "Barrier", key: "SummonerBarrier" },
+			32: { name: "Mark", key: "SummonerSnowball" }
+		};
+
+		let currentSpell1Id = 0;
+		let currentSpell2Id = 0;
+
+		function getSpellImgUrl(spellId) {
+			const spell = summonerSpellsMap[spellId];
+			if (spell) {
+				return `https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/spell/${spell.key}.png`;
+			}
+			return `https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/profileicon/29.png`;
+		}
+
+		function getSpellName(spellId) {
+			const spell = summonerSpellsMap[spellId];
+			return spell ? spell.name : "None";
+		}
+
+		function toggleSpellSelectorDropdown(slot, event) {
+			event.stopPropagation();
+			const dropdown = document.getElementById(`my-spell${slot}-dropdown`);
+			const otherDropdown = document.getElementById(`my-spell${slot === 1 ? 2 : 1}-dropdown`);
+			
+			if (otherDropdown) otherDropdown.classList.add('d-none');
+			
+			if (dropdown.classList.contains('d-none')) {
+				populateSpellDropdown(slot);
+				dropdown.classList.remove('d-none');
+			} else {
+				dropdown.classList.add('d-none');
+			}
+		}
+
+		function populateSpellDropdown(slot) {
+			const dropdown = document.getElementById(`my-spell${slot}-dropdown`);
+			if (!dropdown) return;
+			
+			const aramSpells = [32, 4, 7, 6, 3, 13, 1, 21, 14];
+			
+			let html = '<div class="row g-1 row-cols-3">';
+			
+			aramSpells.forEach(spellId => {
+				const spell = summonerSpellsMap[spellId];
+				if (!spell) return;
+				
+				const isCurrent = (slot === 1 && currentSpell1Id === spellId) || (slot === 2 && currentSpell2Id === spellId);
+				const borderClass = isCurrent ? 'border-warning shadow-warning' : 'border-secondary';
+				const bgStyle = isCurrent ? 'background: rgba(200, 155, 60, 0.25);' : 'background: rgba(5,8,12,0.65);';
+				
+				const otherSlotId = slot === 1 ? currentSpell2Id : currentSpell1Id;
+				const isDisabled = (spellId === otherSlotId);
+				const opacityStyle = isDisabled ? 'opacity: 0.3; cursor: not-allowed;' : 'cursor: pointer;';
+				
+				html += `
+					<div class="col text-center" style="${opacityStyle}" ${isDisabled ? '' : `onclick="selectSummonerSpell(${slot}, ${spellId})"`}>
+						<div class="border rounded p-1 d-flex flex-column align-items-center justify-content-center ${borderClass}" style="${bgStyle} height: 60px;" title="${spell.name}">
+							<img src="${getSpellImgUrl(spellId)}" width="24" height="24" style="border-radius: 3px;">
+							<span class="text-white mt-1" style="font-size: 0.6rem; font-weight: 600; white-space: nowrap;">${spell.name}</span>
+						</div>
+					</div>
+				`;
+			});
+			
+			html += '</div>';
+			dropdown.innerHTML = html;
+		}
+
+		function selectSummonerSpell(slot, spellId) {
+			const dropdown = document.getElementById(`my-spell${slot}-dropdown`);
+			if (dropdown) dropdown.classList.add('d-none');
+			
+			let s1 = currentSpell1Id;
+			let s2 = currentSpell2Id;
+			
+			if (slot === 1) {
+				s1 = spellId;
+			} else {
+				s2 = spellId;
+			}
+			
+			try {
+				ahk.setSummonerSpells(s1, s2);
+			} catch (err) {
+				console.error("Error invoking setSummonerSpells", err);
+			}
+		}
+
+		// Close dropdowns on outer click
+		document.addEventListener('click', function(e) {
+			const dropdowns = document.querySelectorAll('.spell-selector-dropdown');
+			dropdowns.forEach(d => d.classList.add('d-none'));
+		});
+
 		function updateChampSelectDraft(payload) {
 			const card = document.getElementById('live-champ-select-card');
 			const grid = document.getElementById('champ-select-players-grid');
@@ -1669,30 +1807,45 @@
 			// Render players list
 			let playersHtml = '';
 			let hasBlacklisted = false;
+			let mePlayer = null;
 
 			if (payload && payload.players && payload.players.length > 0) {
-				// Sort players by position inside the team grid for proper ordering
 				payload.players.sort((a, b) => (a.position !== undefined && b.position !== undefined) ? a.position - b.position : 0);
 
 				payload.players.forEach(player => {
 					if (player.isBlacklisted) {
 						hasBlacklisted = true;
 					}
+					if (player.isMe) {
+						mePlayer = player;
+						currentSpell1Id = player.spell1Id || 0;
+						currentSpell2Id = player.spell2Id || 0;
+					}
 
 					const borderClass = player.isBlacklisted ? 'shadow-danger-pulse' : (player.isMe ? 'border-primary' : 'border-secondary');
 					const labelClass = player.isBlacklisted ? 'text-danger' : (player.isMe ? 'text-info' : 'text-white');
 					
-					// Champion image mapping
 					let imgUrl = `https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/profileicon/29.png`;
 					if (player.championId > 0 && player.championName) {
 						const cleanName = getChampCleanFile(player.championName);
 						imgUrl = `https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/champion/${cleanName}.png`;
 					}
 
+					// Build spells HTML inside the card
+					let spellsCardHtml = '';
+					if (player.spell1Id > 0 || player.spell2Id > 0) {
+						spellsCardHtml = `
+							<div class="d-flex gap-1 mt-2 mb-1 justify-content-center">
+								<img src="${getSpellImgUrl(player.spell1Id)}" style="width: 20px; height: 20px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.15);" title="${getSpellName(player.spell1Id)}">
+								<img src="${getSpellImgUrl(player.spell2Id)}" style="width: 20px; height: 20px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.15);" title="${getSpellName(player.spell2Id)}">
+							</div>
+						`;
+					}
+
 					playersHtml += `
 						<div class="col d-flex">
 							<div class="border rounded p-3 text-center w-100 position-relative d-flex flex-column align-items-center justify-content-between ${borderClass}" 
-								 style="background: rgba(5, 8, 12, 0.65); min-height: 155px; border-width: 2px !important; transition: all 0.3s ease-in-out;">
+								 style="background: rgba(5, 8, 12, 0.65); min-height: 185px; border-width: 2px !important; transition: all 0.3s ease-in-out;">
 								${player.isBlacklisted ? '<span class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-danger border border-light" style="font-size: 0.6rem; letter-spacing: 0.5px; z-index: 5;"><i class="fa-solid fa-user-slash me-1"></i>BLACKLIST</span>' : ''}
 								${player.isMe ? '<span class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-primary border border-light" style="font-size: 0.6rem; letter-spacing: 0.5px; z-index: 5;">YOU</span>' : ''}
 								
@@ -1709,6 +1862,7 @@
 								<div class="text-muted small mt-1 text-truncate w-100" style="font-size: 0.7rem; font-weight: 500; letter-spacing: 0.3px;">
 									${player.championId > 0 ? player.championName : 'Selecting...'}
 								</div>
+								${spellsCardHtml}
 								${player.isBlacklisted && player.blacklistNote ? `
 									<div class="text-danger small mt-1 text-truncate w-100 p-1 rounded" style="font-size: 0.65rem; background: rgba(220, 53, 69, 0.12); border: 1px solid rgba(220, 53, 69, 0.25); font-weight: 500;" title="${player.blacklistNote}">
 										<i class="fa-solid fa-circle-exclamation me-1"></i>${player.blacklistNote}
@@ -1721,6 +1875,28 @@
 				grid.innerHTML = playersHtml;
 			} else {
 				grid.innerHTML = '<div class="text-muted text-center py-3 w-100">Waiting for lobby player data...</div>';
+			}
+
+			// Render my spells selector helper if I am in the lobby
+			const spellsHelperCard = document.getElementById('my-spells-helper-card');
+			if (spellsHelperCard) {
+				if (mePlayer) {
+					spellsHelperCard.style.display = 'block';
+					
+					// Update Spell 1 Display
+					const s1Img = document.getElementById('my-spell1-img');
+					const s1Name = document.getElementById('my-spell1-name');
+					if (s1Img) s1Img.src = getSpellImgUrl(currentSpell1Id);
+					if (s1Name) s1Name.innerText = getSpellName(currentSpell1Id);
+					
+					// Update Spell 2 Display
+					const s2Img = document.getElementById('my-spell2-img');
+					const s2Name = document.getElementById('my-spell2-name');
+					if (s2Img) s2Img.src = getSpellImgUrl(currentSpell2Id);
+					if (s2Name) s2Name.innerText = getSpellName(currentSpell2Id);
+				} else {
+					spellsHelperCard.style.display = 'none';
+				}
 			}
 
 			// Handle sound alert
@@ -1807,6 +1983,9 @@
 			const benchList = document.getElementById('bench-champions-list');
 			if (benchCard) benchCard.style.display = 'none';
 			if (benchList) benchList.innerHTML = '';
+
+			const spellsCard = document.getElementById('my-spells-helper-card');
+			if (spellsCard) spellsCard.style.display = 'none';
 
 			const teamBadge = document.getElementById('champ-select-team-badge');
 			if (teamBadge) {

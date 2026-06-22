@@ -451,6 +451,9 @@ UpdateChampSelectFrontend(session) {
         champId := player.Has("championId") ? player["championId"] : 0
         champName := champId > 0 ? GetChampionName(champId) : ""
         
+        spell1Id := player.Has("spell1Id") ? player["spell1Id"] : 0
+        spell2Id := player.Has("spell2Id") ? player["spell2Id"] : 0
+        
         ; Check if blacklisted
         isBlacklisted := false
         blacklistNote := ""
@@ -482,7 +485,9 @@ UpdateChampSelectFrontend(session) {
             "isBlacklisted", isBlacklisted,
             "blacklistNote", blacklistNote,
             "cellId", cellId,
-            "position", position
+            "position", position,
+            "spell1Id", spell1Id,
+            "spell2Id", spell2Id
         )
         teamArr.Push(playerMap)
     }

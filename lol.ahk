@@ -147,6 +147,7 @@ MyWindow.AddCallBackToScript("Tooltip", WebTooltipEvent)
 MyWindow.AddCallBackToScript("dodgeLobby", DodgeLobbyCallback)
 MyWindow.AddCallBackToScript("triggerMassDisenchant", TriggerMassDisenchantCallback)
 MyWindow.AddCallBackToScript("benchSwap", BenchSwapCallback)
+MyWindow.AddCallBackToScript("setSummonerSpells", SetSummonerSpellsCallback)
 MyWindow.AddCallBackToScript("getRecentPlayers", GetRecentPlayersCallback)
 MyWindow.AddCallBackToScript("Close", CloseWindow)
 MyWindow.AddCallBackToScript("DragWindow", DragWindow)
@@ -493,14 +494,30 @@ WebTooltipEvent(WebView, Msg) {
 }
 
 DodgeLobbyCallback(WebView) {
-    LogToWeb("Dodge Lobby: User requested dodge", "warning")
-    res := APICall("POST", "/lol-gameflow/v1/session/dodge", "{}")
+    LogToWeb("Dodge Lobby: Initiating dodge process...", "warning")
+    
+    ; 1. Try custom game quit first
+    res := APICall("POST", "/lol-lobby-team-builder/champ-select/v1/session/quit", "{}")
+    
+    ; 2. If it's a matchmaking queue (or the quit call fails/has error), trigger a full client quit via process-control
     if (IsObject(res) && res.Has("error")) {
-        errStatus := res.Has("status") ? res["status"] : "?"
-        errMsg := res.Has("error") ? res["error"] : "Unknown"
-        LogToWeb("Dodge Lobby: FAILED — HTTP " errStatus " (" errMsg ")", "error")
+        LogToWeb("Dodge Lobby: Custom quit returned error (likely a PvP lobby). Requesting client closure to dodge...", "warning")
+        resQuit := APICall("POST", "/process-control/v1/process/quit", "{}")
+        if (IsObject(resQuit) && resQuit.Has("error")) {
+            ; Fallback: OS process close in case LCU process control fails
+            LogToWeb("Dodge Lobby: LCU quit failed. Terminating LeagueClient.exe processes via OS...", "error")
+            try {
+                ProcessClose("LeagueClient.exe")
+                ProcessClose("LeagueClientUx.exe")
+                LogToWeb("Dodge Lobby: Terminated League client processes via OS.", "success")
+            } catch Error as e {
+                LogToWeb("Dodge Lobby: OS process close failed: " e.Message, "error")
+            }
+        } else {
+            LogToWeb("Dodge Lobby: Client closure initiated successfully to trigger dodge.", "success")
+        }
     } else {
-        LogToWeb("Dodge Lobby: Sent dodge request successfully!", "success")
+        LogToWeb("Dodge Lobby: Sent custom game lobby quit successfully!", "success")
     }
 }
 
@@ -521,6 +538,19 @@ BenchSwapCallback(WebView, champId) {
     } else {
         LogToWeb("Manual Swap: Swapped to " champName " successfully! Auto-picker paused for this lobby.", "success")
         bypassAutoPick := true
+    }
+}
+
+SetSummonerSpellsCallback(WebView, spell1Id, spell2Id) {
+    LogToWeb("Summoner Spells: Swapping spells to spell1=" spell1Id ", spell2=" spell2Id "...", "info")
+    body := '{"spell1Id":' spell1Id ',"spell2Id":' spell2Id '}'
+    res := APICall("PATCH", "/lol-champ-select/v1/session/my-selection", body)
+    if (IsObject(res) && res.Has("error")) {
+        errStatus := res.Has("status") ? res["status"] : "?"
+        errMsg := res.Has("error") ? res["error"] : "Unknown"
+        LogToWeb("Summoner Spells: Failed to change spells. HTTP " errStatus " (" errMsg ")", "error")
+    } else {
+        LogToWeb("Summoner Spells: Spells updated successfully!", "success")
     }
 }
 
