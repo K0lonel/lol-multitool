@@ -32,6 +32,14 @@
 			.shadow-warning {
 				box-shadow: 0 0 10px rgba(255, 193, 7, 0.6);
 			}
+			.spell-btn-interactive:hover {
+				transform: scale(1.15);
+				border-color: var(--hextech-gold) !important;
+				box-shadow: 0 0 10px rgba(200, 155, 60, 0.6);
+			}
+			.spell-btn-interactive:active {
+				transform: scale(0.95);
+			}
 			@keyframes pulseAlert {
 				0% { box-shadow: 0 0 10px rgba(220, 53, 69, 0.4); border-color: rgba(220, 53, 69, 0.5) !important; }
 				50% { box-shadow: 0 0 25px rgba(220, 53, 69, 0.85); border-color: rgba(220, 53, 69, 1.0) !important; }
@@ -66,7 +74,7 @@
 			<span style="font-weight: 600; color: #c89b3c; padding-left: 1rem; letter-spacing: 0.5px; font-size: 0.9rem;">
 				<i class="fa-solid fa-gamepad" style="margin-right: 6px;"></i> LEAGUE MULTITOOL
 			</span>
-			<span class="flex-grow-1 h-100" style="cursor: grab;" onmousedown="this.style.cursor='grabbing'; ahk.DragWindow();"></span>
+			<span class="grow h-100" style="cursor: grab;" onmousedown="this.style.cursor='grabbing'; ahk.DragWindow();"></span>
 			<div class="d-flex h-100">
 				<span class="ahk-title-btn" onclick="ahk.Minimize()">0</span>
 				<span class='ahk-title-btn ahk-title-btn-maximize' onclick="ahk.Maximize()">1</span>
@@ -122,7 +130,7 @@
 			</div>
 
 			<!-- Main Content Panel -->
-			<div class="flex-grow-1 overflow-auto" id="page-content">
+			<div class="grow overflow-auto" id="page-content">
 				<div class="tab-content" id="v-pills-tabContent">
 					
 					<!-- Dashboard Tab -->
@@ -137,7 +145,7 @@
 								<div class="hextech-card w-100 mb-0 d-flex flex-column justify-content-between">
 									<div class="card-title-gold mb-3"><i class="fa-solid fa-gamepad"></i> Game Stats</div>
 									
-									<div class="d-flex flex-column justify-content-between flex-grow-1 w-100 mt-2">
+									<div class="d-flex flex-column justify-content-between grow w-100 mt-2">
 										<!-- Lobby & Client Section -->
 										<div>
 											<div class="small text-muted mb-2 text-uppercase" style="letter-spacing: 0.8px; font-size: 0.6rem; font-weight: 700; border-bottom: 1px solid rgba(200, 155, 60, 0.12); padding-bottom: 3px;">Lobby & Client</div>
@@ -193,7 +201,7 @@
 								<div class="hextech-card w-100 mb-0 d-flex flex-column justify-content-between">
 									<div class="card-title-gold mb-3"><i class="fa-solid fa-bolt"></i> Running Tasks</div>
 									
-									<div class="d-flex flex-column justify-content-between flex-grow-1 w-100 mt-2">
+									<div class="d-flex flex-column justify-content-between grow w-100 mt-2">
 										<!-- Automated Systems Section -->
 										<div>
 											<div class="small text-muted mb-2 text-uppercase" style="letter-spacing: 0.8px; font-size: 0.6rem; font-weight: 700; border-bottom: 1px solid rgba(200, 155, 60, 0.12); padding-bottom: 3px;">Automated Systems</div>
@@ -241,7 +249,11 @@
 						</div>
 
 						<!-- Live Champ Select Draft Card -->
-						<div class="hextech-card" id="live-champ-select-card" style="display:none; border-color: var(--hextech-gold);">
+						<div class="hextech-card" id="live-champ-select-card" style="display:none; border-color: var(--hextech-gold); position: relative;">
+							<!-- Static Dropdowns for Spells Selection -->
+							<div class="position-absolute d-none rounded border p-2 spell-selector-dropdown shadow-lg" id="my-spell1-dropdown" style="background: rgba(10, 14, 20, 0.98); border-color: var(--hextech-gold) !important; width: 230px; z-index: 1050; backdrop-filter: blur(8px); box-shadow: 0 -10px 25px rgba(0,0,0,0.65);"></div>
+							<div class="position-absolute d-none rounded border p-2 spell-selector-dropdown shadow-lg" id="my-spell2-dropdown" style="background: rgba(10, 14, 20, 0.98); border-color: var(--hextech-gold) !important; width: 230px; z-index: 1050; backdrop-filter: blur(8px); box-shadow: 0 -10px 25px rgba(0,0,0,0.65);"></div>
+
 							<div class="card-title-gold d-flex justify-content-between align-items-center mb-3">
 								<span><i class="fa-solid fa-users-viewfinder"></i> Live Champ Select Draft</span>
 								<div class="d-flex align-items-center gap-2">
@@ -256,44 +268,10 @@
 							</div>
 
 							<!-- Bench Section (moved to dashboard) -->
-							<div id="bench-helper-card" style="display:none; border-top: 1px solid rgba(200, 155, 60, 0.15); padding-top: 15px;">
+							<div id="bench-helper-card" style="display:none; border-top: 1px solid rgba(200, 155, 60, 0.15); padding-top: 15px; margin-top: 15px;">
 								<div class="small text-muted mb-2"><i class="fa-solid fa-gamepad text-info me-1"></i> Team Bench (Click a champion to swap manually, bypassing auto-picker):</div>
 								<div id="bench-champions-list" class="d-flex flex-wrap gap-3 py-1">
 									<!-- Dynamically populated bench -->
-								</div>
-							</div>
-
-							<!-- Summoner Spells Section -->
-							<div id="my-spells-helper-card" style="display:none; border-top: 1px solid rgba(200, 155, 60, 0.15); padding-top: 15px; margin-top: 15px;">
-								<div class="small text-muted mb-2"><i class="fa-solid fa-wand-magic-sparkles text-warning me-1"></i> Change Summoner Spells (Click to swap):</div>
-								<div class="d-flex gap-4 align-items-center py-1">
-									<!-- Spell 1 Slot -->
-									<div class="d-flex align-items-center gap-2">
-										<span class="small text-muted" style="font-size: 0.75rem;">Spell 1 (D):</span>
-										<div class="position-relative">
-											<button class="btn btn-sm btn-outline-warning d-flex align-items-center gap-2 p-1 px-2" id="my-spell1-btn" onclick="toggleSpellSelectorDropdown(1, event)" style="min-width: 120px; font-size: 0.8rem; background: rgba(5,8,12,0.4); border-color: rgba(200,155,60,0.45) !important;">
-												<img id="my-spell1-img" src="" width="20" height="20" style="border-radius: 3px;">
-												<span id="my-spell1-name">Loading...</span>
-											</button>
-											<div class="position-absolute d-none rounded border p-2 spell-selector-dropdown shadow-lg" id="my-spell1-dropdown" style="bottom: 120%; left: 0; background: rgba(10, 14, 20, 0.98); border-color: var(--hextech-gold) !important; width: 230px; z-index: 1050; backdrop-filter: blur(8px); box-shadow: 0 -10px 25px rgba(0,0,0,0.65);">
-												<!-- Populated dynamically -->
-											</div>
-										</div>
-									</div>
-
-									<!-- Spell 2 Slot -->
-									<div class="d-flex align-items-center gap-2">
-										<span class="small text-muted" style="font-size: 0.75rem;">Spell 2 (F):</span>
-										<div class="position-relative">
-											<button class="btn btn-sm btn-outline-warning d-flex align-items-center gap-2 p-1 px-2" id="my-spell2-btn" onclick="toggleSpellSelectorDropdown(2, event)" style="min-width: 120px; font-size: 0.8rem; background: rgba(5,8,12,0.4); border-color: rgba(200,155,60,0.45) !important;">
-												<img id="my-spell2-img" src="" width="20" height="20" style="border-radius: 3px;">
-												<span id="my-spell2-name">Loading...</span>
-											</button>
-											<div class="position-absolute d-none rounded border p-2 spell-selector-dropdown shadow-lg" id="my-spell2-dropdown" style="bottom: 120%; left: 0; background: rgba(10, 14, 20, 0.98); border-color: var(--hextech-gold) !important; width: 230px; z-index: 1050; backdrop-filter: blur(8px); box-shadow: 0 -10px 25px rgba(0,0,0,0.65);">
-												<!-- Populated dynamically -->
-											</div>
-										</div>
-									</div>
 								</div>
 							</div>
 
@@ -322,7 +300,7 @@
 							<div class="col-md-6 d-flex">
 								<div class="hextech-card w-100 mb-0 d-flex flex-column">
 									<div class="card-title-gold"><i class="fa-solid fa-clock-rotate-left"></i> Reported Matches Log</div>
-									<div id="report-timeline" class="flex-grow-1" style="max-height: 300px; overflow-y: auto;">
+									<div id="report-timeline" class="grow" style="max-height: 300px; overflow-y: auto;">
 										<div class="text-center py-4 text-muted">No reports sent in this session yet.</div>
 									</div>
 								</div>
@@ -335,7 +313,7 @@
 										<div class="card-title-gold m-0"><i class="fa-solid fa-terminal"></i> System Event Logs</div>
 										<button class="btn btn-outline-warning btn-sm" onclick="clearSystemLogs()" style="font-size: 0.75rem; padding: 2px 8px;"><i class="fa-solid fa-trash-can"></i> Clear</button>
 									</div>
-									<div id="system-logs-console" class="flex-grow-1 p-2 rounded" style="max-height: 300px; min-height: 250px; overflow-y: auto; background: rgba(5, 8, 12, 0.6); border: 1px solid rgba(200, 155, 60, 0.15); font-family: 'Courier New', Courier, monospace; font-size: 0.8rem; line-height: 1.4;">
+									<div id="system-logs-console" class="grow p-2 rounded" style="max-height: 300px; min-height: 250px; overflow-y: auto; background: rgba(5, 8, 12, 0.6); border: 1px solid rgba(200, 155, 60, 0.15); font-family: 'Courier New', Courier, monospace; font-size: 0.8rem; line-height: 1.4;">
 										<div class="text-center py-4 text-muted">Console initialized. Ready for logs...</div>
 									</div>
 								</div>
@@ -383,7 +361,7 @@
 									
 									<!-- Active Targets Visualizer -->
 									<label class="form-label small text-muted d-block">Active Targets Visualizer:</label>
-									<div id="sniper-active-badges" class="d-flex flex-wrap gap-2 py-2 px-3 rounded flex-grow-1 align-items-start align-content-start" style="background: rgba(5, 8, 12, 0.4); border: 1px dashed var(--panel-border); min-height: 48px;">
+									<div id="sniper-active-badges" class="d-flex flex-wrap gap-2 py-2 px-3 rounded grow align-items-start align-content-start" style="background: rgba(5, 8, 12, 0.4); border: 1px dashed var(--panel-border); min-height: 48px;">
 										<span class="text-muted small my-auto">Type champion names above to load targets...</span>
 									</div>
 								</div>
@@ -1752,6 +1730,7 @@
 			4: { name: "Flash", key: "SummonerFlash" },
 			6: { name: "Ghost", key: "SummonerHaste" },
 			7: { name: "Heal", key: "SummonerHeal" },
+			11: { name: "Smite", key: "SummonerSmite" },
 			12: { name: "Teleport", key: "SummonerTeleport" },
 			13: { name: "Clarity", key: "SummonerMana" },
 			14: { name: "Ignite", key: "SummonerDot" },
@@ -1785,6 +1764,16 @@
 			if (dropdown.classList.contains('d-none')) {
 				populateSpellDropdown(slot);
 				dropdown.classList.remove('d-none');
+				
+				const rect = event.currentTarget.getBoundingClientRect();
+				const parentRect = document.getElementById('live-champ-select-card').getBoundingClientRect();
+				
+				const dropdownHeight = dropdown.offsetHeight || 145;
+				const top = rect.top - parentRect.top - dropdownHeight - 8;
+				const left = rect.left - parentRect.left + (rect.width / 2) - 115;
+				
+				dropdown.style.top = `${top}px`;
+				dropdown.style.left = `${left}px`;
 			} else {
 				dropdown.classList.add('d-none');
 			}
@@ -1794,11 +1783,15 @@
 			const dropdown = document.getElementById(`my-spell${slot}-dropdown`);
 			if (!dropdown) return;
 			
-			const aramSpells = [32, 4, 7, 6, 3, 13, 1, 21, 14];
+			// Default ARAM spells, replace Snowball (32) with Teleport (12) and remove Clarity (13) if not ARAM
+			let spells = [32, 4, 7, 6, 3, 13, 1, 21, 14];
+			if (!window.isAram) {
+				spells = spells.map(id => id === 32 ? 12 : id).filter(id => id !== 13);
+			}
 			
 			let html = '<div class="row g-1 row-cols-3">';
 			
-			aramSpells.forEach(spellId => {
+			spells.forEach(spellId => {
 				const spell = summonerSpellsMap[spellId];
 				if (!spell) return;
 				
@@ -1833,9 +1826,14 @@
 			
 			if (slot === 1) {
 				s1 = spellId;
+				currentSpell1Id = spellId;
 			} else {
 				s2 = spellId;
+				currentSpell2Id = spellId;
 			}
+			
+			const img = document.getElementById(`my-player-spell${slot}-img`);
+			if (img) img.src = getSpellImgUrl(spellId);
 			
 			try {
 				ahk.setSummonerSpells(s1, s2);
@@ -1851,11 +1849,30 @@
 		});
 
 		function updateChampSelectDraft(payload) {
+			window.isAram = !!(payload && payload.benchEnabled);
 			const card = document.getElementById('live-champ-select-card');
 			const grid = document.getElementById('champ-select-players-grid');
 			if (!card || !grid) return;
 
+			// Dynamically move the card to be the first element in the dashboard view
+			const homeTabPane = document.getElementById('v-pills-home');
+			if (homeTabPane) {
+				const header = homeTabPane.firstElementChild;
+				if (header && header.nextElementSibling !== card) {
+					header.insertAdjacentElement('afterend', card);
+					card.classList.add('mb-4');
+				}
+			}
+
+			const isFirstPop = (card.style.display === 'none' || card.style.display === '');
 			card.style.display = 'block';
+
+			if (isFirstPop) {
+				const homeTab = document.getElementById('v-pills-home-tab');
+				if (homeTab && !homeTab.classList.contains('active')) {
+					homeTab.click();
+				}
+			}
 
 			// Render players list
 			let playersHtml = '';
@@ -1887,12 +1904,29 @@
 					// Build spells HTML inside the card
 					let spellsCardHtml = '';
 					if (player.spell1Id > 0 || player.spell2Id > 0) {
-						spellsCardHtml = `
-							<div class="d-flex gap-1 mt-2 mb-1 justify-content-center">
-								<img src="${getSpellImgUrl(player.spell1Id)}" style="width: 20px; height: 20px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.15);" title="${getSpellName(player.spell1Id)}">
-								<img src="${getSpellImgUrl(player.spell2Id)}" style="width: 20px; height: 20px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.15);" title="${getSpellName(player.spell2Id)}">
-							</div>
-						`;
+						if (player.isMe) {
+							spellsCardHtml = `
+								<div class="d-flex gap-2 mt-2 mb-1 justify-content-center">
+									<img id="my-player-spell1-img" src="${getSpellImgUrl(player.spell1Id)}" 
+										 onclick="toggleSpellSelectorDropdown(1, event)"
+										 class="border rounded cursor-pointer spell-btn-interactive border-info" 
+										 style="width: 24px; height: 24px; cursor: pointer; transition: transform 0.2s, border-color 0.2s;"
+										 title="Click to change Spell 1 (D)">
+									<img id="my-player-spell2-img" src="${getSpellImgUrl(player.spell2Id)}" 
+										 onclick="toggleSpellSelectorDropdown(2, event)"
+										 class="border rounded cursor-pointer spell-btn-interactive border-info" 
+										 style="width: 24px; height: 24px; cursor: pointer; transition: transform 0.2s, border-color 0.2s;"
+										 title="Click to change Spell 2 (F)">
+								</div>
+							`;
+						} else {
+							spellsCardHtml = `
+								<div class="d-flex gap-1 mt-2 mb-1 justify-content-center">
+									<img src="${getSpellImgUrl(player.spell1Id)}" style="width: 20px; height: 20px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.15);" title="${getSpellName(player.spell1Id)}">
+									<img src="${getSpellImgUrl(player.spell2Id)}" style="width: 20px; height: 20px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.15);" title="${getSpellName(player.spell2Id)}">
+								</div>
+							`;
+						}
 					}
 
 					playersHtml += `
@@ -1925,32 +1959,19 @@
 						</div>
 					`;
 				});
-				grid.innerHTML = playersHtml;
+				if (window.lastPlayersHtml !== playersHtml) {
+					window.lastPlayersHtml = playersHtml;
+					grid.innerHTML = playersHtml;
+				}
 			} else {
-				grid.innerHTML = '<div class="text-muted text-center py-3 w-100">Waiting for lobby player data...</div>';
-			}
-
-			// Render my spells selector helper if I am in the lobby
-			const spellsHelperCard = document.getElementById('my-spells-helper-card');
-			if (spellsHelperCard) {
-				if (mePlayer) {
-					spellsHelperCard.style.display = 'block';
-					
-					// Update Spell 1 Display
-					const s1Img = document.getElementById('my-spell1-img');
-					const s1Name = document.getElementById('my-spell1-name');
-					if (s1Img) s1Img.src = getSpellImgUrl(currentSpell1Id);
-					if (s1Name) s1Name.innerText = getSpellName(currentSpell1Id);
-					
-					// Update Spell 2 Display
-					const s2Img = document.getElementById('my-spell2-img');
-					const s2Name = document.getElementById('my-spell2-name');
-					if (s2Img) s2Img.src = getSpellImgUrl(currentSpell2Id);
-					if (s2Name) s2Name.innerText = getSpellName(currentSpell2Id);
-				} else {
-					spellsHelperCard.style.display = 'none';
+				const waitingHtml = '<div class="text-muted text-center py-3 w-100">Waiting for lobby player data...</div>';
+				if (window.lastPlayersHtml !== waitingHtml) {
+					window.lastPlayersHtml = waitingHtml;
+					grid.innerHTML = waitingHtml;
 				}
 			}
+
+			// Spells helper card is deleted, selection is interactive inside teammate grid
 
 			// Handle sound alert
 			if (hasBlacklisted) {
@@ -1965,7 +1986,6 @@
 			if (queueTypeLabel) {
 				queueTypeLabel.innerText = payload.benchEnabled ? "ARAM Draft" : "Normal/Ranked Draft";
 			}
-
 			// Render Team Badge
 			const teamBadge = document.getElementById('champ-select-team-badge');
 			if (teamBadge) {
@@ -2018,18 +2038,34 @@
 							</div>
 						`;
 					});
-					benchList.innerHTML = benchHtml;
+					if (window.lastBenchHtml !== benchHtml) {
+						window.lastBenchHtml = benchHtml;
+						benchList.innerHTML = benchHtml;
+					}
 				} else {
 					benchCard.style.display = 'none';
-					benchList.innerHTML = '';
+					if (window.lastBenchHtml !== '') {
+						window.lastBenchHtml = '';
+						benchList.innerHTML = '';
+					}
 				}
 			}
 		}
 
 		function clearChampSelectDraft() {
+			window.isAram = false;
 			const card = document.getElementById('live-champ-select-card');
 			const grid = document.getElementById('champ-select-players-grid');
-			if (card) card.style.display = 'none';
+			if (card) {
+				card.style.display = 'none';
+				card.classList.remove('mb-4');
+				
+				// Restore to original position (before queue progress card)
+				const queueCard = document.getElementById('queue-card');
+				if (queueCard) {
+					queueCard.parentNode.insertBefore(card, queueCard);
+				}
+			}
 			if (grid) grid.innerHTML = '';
 			
 			const benchCard = document.getElementById('bench-helper-card');
@@ -2037,8 +2073,7 @@
 			if (benchCard) benchCard.style.display = 'none';
 			if (benchList) benchList.innerHTML = '';
 
-			const spellsCard = document.getElementById('my-spells-helper-card');
-			if (spellsCard) spellsCard.style.display = 'none';
+			// Spells selection card is deleted, handled via player cards dynamically
 
 			const teamBadge = document.getElementById('champ-select-team-badge');
 			if (teamBadge) {
@@ -2046,6 +2081,8 @@
 				teamBadge.innerText = '';
 			}
 
+			window.lastPlayersHtml = '';
+			window.lastBenchHtml = '';
 			alertedBlacklistForLobby = false;
 		}
 
