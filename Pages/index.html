@@ -369,6 +369,10 @@
 								<div class="row g-4 align-items-stretch">
 								<div class="col-md-7 d-flex flex-column">
 									<p class="text-muted small">Instantly swap to any of these preferred champions the millisecond they are rerolled to the team bench.</p>
+									<div class="form-check form-switch d-flex justify-content-between align-items-center p-0 mb-3">
+										<label class="form-check-label text-muted small" for="toggle-champSelectHelperSilent">Silent Mode (Mute Logs)</label>
+										<input class="form-check-input ms-auto" type="checkbox" id="toggle-champSelectHelperSilent" onchange="updateConfig('champSelectHelperSilent', this.checked)">
+									</div>
 									<div class="mb-3">
 										<label for="input-pickBench" class="form-label small text-warning font-weight-bold">Target Champions List (Comma separated)</label>
 										<div class="input-group">
@@ -446,6 +450,10 @@
 							
 							<div class="card-collapse-body">
 								<p class="text-muted small">Alerts you immediately during Champion Select if any blacklisted player is found in your lobby.</p>
+								<div class="form-check form-switch d-flex justify-content-between align-items-center p-0 mb-3">
+									<label class="form-check-label text-muted small" for="toggle-blacklistSilent">Silent Mode (Mute Logs)</label>
+									<input class="form-check-input ms-auto" type="checkbox" id="toggle-blacklistSilent" onchange="updateConfig('blacklistSilent', this.checked)">
+								</div>
 								
 								<div class="row g-3">
 									<div class="col-md-7">
@@ -496,6 +504,10 @@
 							</div>
 							<div class="card-collapse-body">
 								<p class="text-muted small">Automatically files post-match reports for all participants (excluding friends/teammates) using chosen categories.</p>
+								<div class="form-check form-switch d-flex justify-content-between align-items-center p-0 mb-3">
+									<label class="form-check-label text-muted small" for="toggle-autoReportSilent">Silent Mode (Mute Logs)</label>
+									<input class="form-check-input ms-auto" type="checkbox" id="toggle-autoReportSilent" onchange="updateConfig('autoReportSilent', this.checked)">
+								</div>
 								
 								<div class="mt-3">
 									<label class="form-label text-warning small uppercase mb-2">Report Categories</label>
@@ -568,6 +580,10 @@
 							</div>
 							<div class="card-collapse-body">
 								<p class="text-muted small">Automatically accepts queue ready checks with customizable humanized delays.</p>
+								<div class="form-check form-switch d-flex justify-content-between align-items-center p-0 mb-3">
+									<label class="form-check-label text-muted small" for="toggle-autoAcceptSilent">Silent Mode (Mute Logs)</label>
+									<input class="form-check-input ms-auto" type="checkbox" id="toggle-autoAcceptSilent" onchange="updateConfig('autoAcceptSilent', this.checked)">
+								</div>
 								<div class="mt-3">
 									<label for="range-acceptDelay" class="form-label d-flex justify-content-between">
 										<span>Accept Delay (Humanizer)</span>
@@ -598,6 +614,10 @@
 										<label class="form-check-label text-muted small" for="toggle-autoDisenchantWardsEnabled">Auto-Disenchant Ward Shards (Orange Essence)</label>
 										<input class="form-check-input ms-auto" type="checkbox" id="toggle-autoDisenchantWardsEnabled" onchange="updateConfig('autoDisenchantWardsEnabled', this.checked)">
 									</div>
+									<div class="form-check form-switch d-flex justify-content-between align-items-center p-0 mt-1">
+										<label class="form-check-label text-muted small" for="toggle-disenchantSilent">Silent Mode (Mute Logs)</label>
+										<input class="form-check-input ms-auto" type="checkbox" id="toggle-disenchantSilent" onchange="updateConfig('disenchantSilent', this.checked)">
+									</div>
 								</div>
 
 								<div class="mt-3 border-top pt-3" style="border-color: rgba(200, 155, 60, 0.15) !important;">
@@ -621,6 +641,10 @@
 							</div>
 							<div class="card-collapse-body">
 								<p class="text-muted small">Automatically honors a random eligible teammate at the end of the match. Respects your friends list and excludes lobby premades to focus honor progression on random players.</p>
+								<div class="form-check form-switch d-flex justify-content-between align-items-center p-0 mt-2">
+									<label class="form-check-label text-muted small" for="toggle-autoHonorerSilent">Silent Mode (Mute Logs)</label>
+									<input class="form-check-input ms-auto" type="checkbox" id="toggle-autoHonorerSilent" onchange="updateConfig('autoHonorerSilent', this.checked)">
+								</div>
 							</div>
 						</div>
 
@@ -639,6 +663,10 @@
 							</div>
 							<div class="card-collapse-body">
 								<p class="text-muted small">Automatically skips the pre-end-of-game victory/defeat celebration screen to return to the lobby faster. Integrates with the Smart Auto-Honorer to wait until honor submission is complete.</p>
+								<div class="form-check form-switch d-flex justify-content-between align-items-center p-0 mt-2">
+									<label class="form-check-label text-muted small" for="toggle-autoSkipPreEndSilent">Silent Mode (Mute Logs)</label>
+									<input class="form-check-input ms-auto" type="checkbox" id="toggle-autoSkipPreEndSilent" onchange="updateConfig('autoSkipPreEndSilent', this.checked)">
+								</div>
 							</div>
 						</div>
 					</div>
@@ -735,6 +763,27 @@
 			if (config.autoAccept !== undefined) {
 				document.getElementById('toggle-autoAccept').checked = config.autoAccept;
 				updateBadge('badge-accept', config.autoAccept);
+			}
+			if (config.autoAcceptSilent !== undefined) {
+				document.getElementById('toggle-autoAcceptSilent').checked = config.autoAcceptSilent;
+			}
+			if (config.autoReportSilent !== undefined) {
+				document.getElementById('toggle-autoReportSilent').checked = config.autoReportSilent;
+			}
+			if (config.autoSkipPreEndSilent !== undefined) {
+				document.getElementById('toggle-autoSkipPreEndSilent').checked = config.autoSkipPreEndSilent;
+			}
+			if (config.blacklistSilent !== undefined) {
+				document.getElementById('toggle-blacklistSilent').checked = config.blacklistSilent;
+			}
+			if (config.champSelectHelperSilent !== undefined) {
+				document.getElementById('toggle-champSelectHelperSilent').checked = config.champSelectHelperSilent;
+			}
+			if (config.autoHonorerSilent !== undefined) {
+				document.getElementById('toggle-autoHonorerSilent').checked = config.autoHonorerSilent;
+			}
+			if (config.disenchantSilent !== undefined) {
+				document.getElementById('toggle-disenchantSilent').checked = config.disenchantSilent;
 			}
 			if (config.autoDisenchantChampionsEnabled !== undefined) {
 				document.getElementById('toggle-autoDisenchantChampionsEnabled').checked = config.autoDisenchantChampionsEnabled;

@@ -20,18 +20,25 @@ autoSkipPreEnd() {
         if (gameflow == "PreEndOfGame") {
             if (lastState != "PreEndOfGame") {
                 lastState := "PreEndOfGame"
-                LogToWeb("PreEndOfGame phase detected. Attempting to skip pre-end-of-game screen...", "info")
+                LogSkipPreEnd("PreEndOfGame phase detected. Attempting to skip pre-end-of-game screen...", "info")
                 res := APICall("POST", "/lol-pre-end-of-game/v1/skip-pre-end-of-game")
                 if (IsObject(res) && res.Has("error")) {
-                    LogToWeb("Failed to skip pre-end-of-game screen. Status: " res["status"], "error")
+                    LogSkipPreEnd("Failed to skip pre-end-of-game screen. Status: " res["status"], "error")
                 } else {
-                    LogToWeb("Successfully skipped pre-end-of-game screen.", "success")
+                    LogSkipPreEnd("Successfully skipped pre-end-of-game screen.", "success")
                 }
             }
         } else {
             lastState := gameflow
         }
     } catch Error as e {
-        LogToWeb("Error skipping pre-end-of-game screen: " e.Message, "error")
+        LogSkipPreEnd("Error skipping pre-end-of-game screen: " e.Message, "error")
     }
+}
+
+LogSkipPreEnd(msg, type := "info") {
+    global config
+    if (config.Has("autoSkipPreEndSilent") && config["autoSkipPreEndSilent"])
+        return
+    LogToWeb(msg, type)
 }

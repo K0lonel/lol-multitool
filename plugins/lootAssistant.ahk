@@ -1,21 +1,23 @@
 #Requires AutoHotkey v2.0
 #Include ../lol.ahk
 
-RunMassDisenchant(silent := false, forceChamps := unset, forceWards := unset) {
+RunMassDisenchant(silent := unset, forceChamps := unset, forceWards := unset) {
     global config
     try {
+        isSilent := IsSet(silent) ? silent : (config.Has("disenchantSilent") && config["disenchantSilent"])
+        
         champsEnabled := IsSet(forceChamps) ? forceChamps : (config.Has("autoDisenchantChampionsEnabled") && config["autoDisenchantChampionsEnabled"])
         wardsEnabled := IsSet(forceWards) ? forceWards : (config.Has("autoDisenchantWardsEnabled") && config["autoDisenchantWardsEnabled"])
         
         if (!champsEnabled && !wardsEnabled) {
-            if (!silent)
+            if (!isSilent)
                 LogToWeb("Mass Disenchant: No options are enabled. Enable Champion and/or Ward disenchanting first.", "warning")
             return
         }
 
         lootList := APICall("GET", "/lol-loot/v1/player-loot")
         if (!IsObject(lootList) || Type(lootList) != "Array") {
-            if (!silent)
+            if (!isSilent)
                 LogToWeb("Mass Disenchant: Failed to fetch player loot.", "error")
             return
         }
@@ -57,8 +59,6 @@ RunMassDisenchant(silent := false, forceChamps := unset, forceWards := unset) {
             
             itemName := item.Has("itemDesc") && item["itemDesc"] != "" ? item["itemDesc"] : lootId
             
-            if (!silent)
-                LogToWeb("Mass Disenchant: Disenchanting " . count . "x " . itemName . " shards...", "info")
                 
             ; POST /lol-loot/v1/recipes/{recipeName}/craft?repeat={count} with body [lootId]
             url := "/lol-loot/v1/recipes/" . recipeName . "/craft?repeat=" . count
@@ -66,7 +66,7 @@ RunMassDisenchant(silent := false, forceChamps := unset, forceWards := unset) {
             
             res := APICall("POST", url, JSON.Dump(body))
             if (IsObject(res) && res.Has("error")) {
-                if (!silent)
+                if (!isSilent)
                     LogToWeb("Mass Disenchant: Failed to disenchant " . itemName . ". Status: " . res["status"], "error")
             } else {
                 disenchantCount += count
@@ -75,7 +75,7 @@ RunMassDisenchant(silent := false, forceChamps := unset, forceWards := unset) {
                 } else {
                     blueEssenceGained += (disenchantValue * count)
                 }
-                if (!silent)
+                if (!isSilent)
                     LogToWeb("Mass Disenchant: Successfully disenchanted " . itemName . "! (Gained " . (disenchantValue * count) . " " . currencyName . ")", "success")
             }
         }
@@ -88,11 +88,11 @@ RunMassDisenchant(silent := false, forceChamps := unset, forceWards := unset) {
                 msg .= " Gained " . orangeEssenceGained . " OE."
             LogToWeb(msg, "success")
         } else {
-            if (!silent)
+            if (!isSilent)
                 LogToWeb("Mass Disenchant: No shards found to disenchant for enabled types.", "info")
         }
     } catch Error as e {
-        if (!silent)
+        if (!isSilent)
             LogToWeb("Mass Disenchant: Error during disenchant: " . e.Message, "error")
     }
 }

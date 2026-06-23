@@ -56,7 +56,14 @@ if(!FileExist("config.json")) {
         "autoSkipPreEndEnabled", False,
         "foldDisenchant", False,
         "foldHonorer", False,
-        "foldSkipPreEnd", False
+        "foldSkipPreEnd", False,
+        "autoAcceptSilent", False,
+        "autoReportSilent", False,
+        "autoSkipPreEndSilent", False,
+        "blacklistSilent", False,
+        "champSelectHelperSilent", False,
+        "autoHonorerSilent", False,
+        "disenchantSilent", False
     )
     FileAppend(JSON.Dump(defaultConfig, True), "config.json")
 }
@@ -119,6 +126,34 @@ if (!config.Has("foldHonorer")) {
 }
 if (!config.Has("foldSkipPreEnd")) {
     config["foldSkipPreEnd"] := False
+    SaveConfig()
+}
+if (!config.Has("autoAcceptSilent")) {
+    config["autoAcceptSilent"] := False
+    SaveConfig()
+}
+if (!config.Has("autoReportSilent")) {
+    config["autoReportSilent"] := False
+    SaveConfig()
+}
+if (!config.Has("autoSkipPreEndSilent")) {
+    config["autoSkipPreEndSilent"] := False
+    SaveConfig()
+}
+if (!config.Has("blacklistSilent")) {
+    config["blacklistSilent"] := False
+    SaveConfig()
+}
+if (!config.Has("champSelectHelperSilent")) {
+    config["champSelectHelperSilent"] := False
+    SaveConfig()
+}
+if (!config.Has("autoHonorerSilent")) {
+    config["autoHonorerSilent"] := False
+    SaveConfig()
+}
+if (!config.Has("disenchantSilent")) {
+    config["disenchantSilent"] := False
     SaveConfig()
 }
 

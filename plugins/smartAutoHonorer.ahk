@@ -36,7 +36,7 @@ smartAutoHonorer() {
         
         ; If already honored someone in this ballot, skip
         if (ballot.Has("honoredPlayers") && IsObject(ballot["honoredPlayers"]) && ballot["honoredPlayers"].Length > 0) {
-            LogToWeb("Auto-Honorer: You have already honored players for this match.", "info")
+            LogHonorer("Auto-Honorer: You have already honored players for this match.", "info")
             lastHonorGameId := gameId
             autoHonorCompleted := true
             return
@@ -78,13 +78,13 @@ smartAutoHonorer() {
         }
         
         if (targets.Length == 0) {
-            LogToWeb("Auto-Honorer: No eligible players found in the ballot to honor.", "warning")
+            LogHonorer("Auto-Honorer: No eligible players found in the ballot to honor.", "warning")
             lastHonorGameId := gameId
             autoHonorCompleted := true
             return
         }
         
-        LogToWeb("Auto-Honorer: Detected " . votesCount . " available vote(s). Processing honors...", "info")
+        LogHonorer("Auto-Honorer: Detected " . votesCount . " available vote(s). Processing honors...", "info")
         
         for idx, targetInfo in targets {
             targetPlayer := targetInfo["player"]
@@ -103,7 +103,7 @@ smartAutoHonorer() {
                 
             randomHonorType := "GG"
             entityType := isOpponent ? "opponent" : "ally"
-            LogToWeb("Auto-Honorer: Sending honor (" . randomHonorType . ") to " . entityType . " " . targetName . "...", "info")
+            LogHonorer("Auto-Honorer: Sending honor (" . randomHonorType . ") to " . entityType . " " . targetName . "...", "info")
             
             body := Map(
                 "summonerId", targetId,
@@ -114,20 +114,27 @@ smartAutoHonorer() {
             
             res := APICall("POST", "/lol-honor-v2/v1/honor-player", JSON.Dump(body))
             if (IsObject(res) && res.Has("error")) {
-                LogToWeb("Auto-Honorer: Failed to honor " . targetName . ". Status: " . res["status"], "error")
+                LogHonorer("Auto-Honorer: Failed to honor " . targetName . ". Status: " . res["status"], "error")
             } else {
                 msg := ""
                 if (IsObject(res)) {
                     msg := " Response: " . JSON.Dump(res)
                 }
-                LogToWeb("Auto-Honorer: Successfully honored " . entityType . " " . targetName . "!" . msg, "success")
+                LogHonorer("Auto-Honorer: Successfully honored " . entityType . " " . targetName . "!" . msg, "success")
             }
         }
         
         lastHonorGameId := gameId
         autoHonorCompleted := true
     } catch Error as e {
-        LogToWeb("Auto-Honorer: Error processing honor ballot: " . e.Message, "error")
+        LogHonorer("Auto-Honorer: Error processing honor ballot: " . e.Message, "error")
         autoHonorCompleted := true
     }
+}
+
+LogHonorer(msg, type := "info") {
+    global config
+    if (config.Has("autoHonorerSilent") && config["autoHonorerSilent"])
+        return
+    LogToWeb(msg, type)
 }
