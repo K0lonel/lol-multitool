@@ -20,7 +20,7 @@ smartAutoHonorer() {
         return
         
     try {
-        ballot := APICall("GET", "/lol-honor-v2/v1/ballot")
+        ballot := LeagueAPI.GetHonorBallot()
         if (!IsObject(ballot) || !ballot.Has("gameId")) {
             ; Ballot not ready or doesn't exist
             return
@@ -112,7 +112,7 @@ smartAutoHonorer() {
                 "gameId", gameId
             )
             
-            res := APICall("POST", "/lol-honor-v2/v1/honor-player", JSON.Dump(body))
+            res := LeagueAPI.HonorPlayer(JSON.Dump(body))
             if (IsObject(res) && res.Has("error")) {
                 LogToWeb("Auto-Honorer: Failed to honor " . targetName . ". Status: " . res["status"], "error", "autoHonorerSilent")
             } else {

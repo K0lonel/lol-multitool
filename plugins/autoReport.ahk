@@ -64,7 +64,7 @@ ScanNewMatches() {
         if (game.Has("participantIdentities") && IsObject(game["participantIdentities"]) && game["participantIdentities"].Length > 1) {
             identities := game["participantIdentities"]
         } else {
-            detailed_history := APICall("GET", "/lol-match-history/v1/games/" gameId)
+            detailed_history := LeagueAPI.GetGameDetails(gameId)
             if (IsObject(detailed_history) && detailed_history.Has("participantIdentities")) {
                 identities := detailed_history["participantIdentities"]
             }
@@ -178,7 +178,7 @@ ProcessReportQueue() {
         offenderSummonerId: payload["offenderSummonerId"]
     }
     
-    response := APICall("POST", "/lol-player-report-sender/v1/match-history-reports", JSON.Dump(obj))
+    response := LeagueAPI.SubmitPlayerReport(JSON.Dump(obj))
     
     if (IsObject(response) && response.Has("error") && response["error"] == "Offline") {
         reportStatus := "LCU disconnected. Report queue paused."

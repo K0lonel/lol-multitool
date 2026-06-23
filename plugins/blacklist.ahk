@@ -12,7 +12,7 @@ blacklistPlugin() {
 GetRecentPlayersCallback(WebView) {
     global gameIdentitiesCache
     try {
-        tempHistory := APICall("GET", "/lol-match-history/v1/products/lol/current-summoner/matches?begIndex=0&endIndex=9")
+        tempHistory := LeagueAPI.GetCurrentSummonerMatches(0, 9)
         if (!IsObject(tempHistory) || !tempHistory.Has("games") || !tempHistory["games"].Has("games")) {
             MyWindow.ExecuteScriptAsync("onRecentPlayersLoaded([])")
             return
@@ -29,7 +29,7 @@ GetRecentPlayersCallback(WebView) {
             } else if (gameIdentitiesCache.Has(gameId)) {
                 identities := gameIdentitiesCache[gameId]
             } else {
-                detailed_history := APICall("GET", "/lol-match-history/v1/games/" gameId)
+                detailed_history := LeagueAPI.GetGameDetails(gameId)
                 if (IsObject(detailed_history) && detailed_history.Has("participantIdentities")) {
                     identities := detailed_history["participantIdentities"]
                     gameIdentitiesCache[gameId] := identities

@@ -15,7 +15,7 @@ RunMassDisenchant(silent := unset, forceChamps := unset, forceWards := unset) {
             return
         }
 
-        lootList := APICall("GET", "/lol-loot/v1/player-loot")
+        lootList := LeagueAPI.GetPlayerLoot()
         if (!IsObject(lootList) || Type(lootList) != "Array") {
             LogToWeb("Mass Disenchant: Failed to fetch player loot.", "error", disenchantSilentOverride != "" ? disenchantSilentOverride : "disenchantSilent")
             return
@@ -60,10 +60,8 @@ RunMassDisenchant(silent := unset, forceChamps := unset, forceWards := unset) {
             
                 
             ; POST /lol-loot/v1/recipes/{recipeName}/craft?repeat={count} with body [lootId]
-            url := "/lol-loot/v1/recipes/" . recipeName . "/craft?repeat=" . count
             body := [lootId]
-            
-            res := APICall("POST", url, JSON.Dump(body))
+            res := LeagueAPI.CraftLoot(recipeName, count, JSON.Dump(body))
             if (IsObject(res) && res.Has("error")) {
                 LogToWeb("Mass Disenchant: Failed to disenchant " . itemName . ". Status: " . res["status"], "error", disenchantSilentOverride != "" ? disenchantSilentOverride : "disenchantSilent")
             } else {

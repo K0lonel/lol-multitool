@@ -74,7 +74,7 @@
 			<span style="font-weight: 600; color: #c89b3c; padding-left: 1rem; letter-spacing: 0.5px; font-size: 0.9rem;">
 				<i class="fa-solid fa-gamepad" style="margin-right: 6px;"></i> LEAGUE MULTITOOL
 			</span>
-			<span class="grow h-100" style="cursor: grab;" onmousedown="this.style.cursor='grabbing'; ahk.DragWindow();"></span>
+			<span class="flex-grow-1 h-100" style="cursor: grab;" onmousedown="this.style.cursor='grabbing'; ahk.DragWindow();"></span>
 			<div class="d-flex h-100">
 				<span class="ahk-title-btn" onclick="ahk.Minimize()">0</span>
 				<span class='ahk-title-btn ahk-title-btn-maximize' onclick="ahk.Maximize()">1</span>
@@ -662,7 +662,10 @@
 								<label class="form-check-label text-muted" for="opt-excludeFriends">Exclude Friends List (Safeguard)</label>
 							</div>
 							
-							<button class="btn btn-outline-danger mt-3" type="button" onclick="ahk.Reload()">Force App Reload</button>
+							<div class="d-flex flex-wrap gap-2 mt-3">
+								<button class="btn btn-outline-warning" type="button" onclick="ahk.restartUX()"><i class="fa-solid fa-arrows-rotate me-1"></i> Restart Client UX</button>
+								<button class="btn btn-outline-danger" type="button" onclick="ahk.Reload()">Force App Reload</button>
+							</div>
 						</div>
 					</div>
 

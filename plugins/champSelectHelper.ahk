@@ -27,7 +27,7 @@ champSelectHelper() {
             }
         }
         try {
-            session := APICall("GET", "/lol-champ-select/v1/session")
+            session := LeagueAPI.GetChampSelectSession()
             if (IsObject(session) && !session.Has("error")) {
                 sessionFailCount := 0
                 ScanChampSelectLobby(session)
@@ -348,7 +348,7 @@ ProcessBenchSwaps(session) {
         
         if (matched) {
             LogToWeb("Bench Sniper: Target MATCHED! Attempting swap for " champName " (ID:" champId ")...", "warning", "champSelectHelperSilent")
-            res := APICall("POST", "/lol-champ-select/v1/session/bench/swap/" champId)
+            res := LeagueAPI.SwapBenchChampion(champId)
             
             LogToWeb("Bench Sniper: Swap API response received. Type=" Type(res) " isObject=" IsObject(res), "debug", "champSelectHelperSilent")
             
@@ -361,7 +361,7 @@ ProcessBenchSwaps(session) {
                 ; Confirm swap
                 try {
                     Sleep(300)
-                    confirmSession := APICall("GET", "/lol-champ-select/v1/session")
+                    confirmSession := LeagueAPI.GetChampSelectSession()
                     if (IsObject(confirmSession) && !confirmSession.Has("error")) {
                         newInfo := GetMyChampInfo(confirmSession)
                         if (newInfo["championId"] == champId) {
@@ -551,7 +551,7 @@ GetSummonerNameByPuuid(puuid) {
     if (summonerCache.Has(puuid)) {
         return summonerCache[puuid]
     }
-    summoner := APICall("GET", "/lol-summoner/v1/summoners/by-puuid/" puuid)
+    summoner := LeagueAPI.GetSummonerByPuuid(puuid)
     if (IsObject(summoner) && summoner.Has("gameName")) {
         nameWithTag := summoner["gameName"] "#" summoner["tagLine"]
         if (nameWithTag != "#") {

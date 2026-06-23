@@ -31,7 +31,7 @@ DoAcceptQueue() {
     if (gameflow == "ReadyCheck") {
         LogToWeb("Accepting matchmaking ready check...", "info", "autoAcceptSilent")
         try {
-            res := APICall("POST", "/lol-matchmaking/v1/ready-check/accept")
+            res := LeagueAPI.AcceptReadyCheck()
             if (IsObject(res) && res.Has("error")) {
                 LogToWeb("Failed to accept ready check. Status: " res["status"], "error", "autoAcceptSilent")
             } else {

@@ -21,7 +21,7 @@ autoSkipPreEnd() {
             if (lastState != "PreEndOfGame") {
                 lastState := "PreEndOfGame"
                 LogToWeb("PreEndOfGame phase detected. Attempting to skip pre-end-of-game screen...", "info", "autoSkipPreEndSilent")
-                res := APICall("POST", "/lol-pre-end-of-game/v1/skip-pre-end-of-game")
+                res := LeagueAPI.SkipPreEndOfGame()
                 if (IsObject(res) && res.Has("error")) {
                     LogToWeb("Failed to skip pre-end-of-game screen. Status: " res["status"], "error", "autoSkipPreEndSilent")
                 } else {

@@ -4,7 +4,9 @@ SetWorkingDir(A_ScriptDir)
 global plugins := Array()
 
 #Include lib/JSON.ahk
+#Include lib/Config.ahk
 #Include lib/API.ahk
+#Include lib/LeagueAPI.ahk
 #Include lib/WebView2/WebViewToo.ahk
 #Include plugins/autoAccept.ahk
 #Include plugins/autoReport.ahk
@@ -33,129 +35,8 @@ global friendsOnline := 0
 global recentWinRate := "--"
 global sessionStartTime := A_TickCount
 
-; Load or create configuration
-if(!FileExist("config.json")) {
-    defaultConfig := Map(
-        "autoAccept", True,
-        "autoReport", True,
-        "acceptDelay", 0,
-        "reportCategories", ["LEAVING_AFK", "ASSISTING_ENEMY_TEAM", "THIRD_PARTY_TOOLS", "RANK_MANIPULATION", "BOTTING", "VERBAL_ABUSE", "INAPPROPRIATE_NAME"],
-        "reportComment", "tried to lose",
-        "autoPickBenchEnabled", False,
-        "autoPickBenchIds", Array(),
-        "favoriteChampIds", Array(),
-        "foldSniper", False,
-        "foldAccept", False,
-        "foldReport", False,
-        "blacklistEnabled", True,
-        "blacklist", Array(),
-        "foldBlacklist", False,
-        "autoDisenchantChampionsEnabled", False,
-        "autoDisenchantWardsEnabled", False,
-        "autoHonorerEnabled", False,
-        "autoSkipPreEndEnabled", False,
-        "foldDisenchant", False,
-        "foldHonorer", False,
-        "foldSkipPreEnd", False,
-        "autoAcceptSilent", False,
-        "autoReportSilent", False,
-        "autoSkipPreEndSilent", False,
-        "blacklistSilent", False,
-        "champSelectHelperSilent", False,
-        "autoHonorerSilent", False,
-        "disenchantSilent", False
-    )
-    FileAppend(JSON.Dump(defaultConfig, True), "config.json")
-}
-global config := JSON.Load(FileRead("config.json"))
-if (!config.Has("favoriteChampIds")) {
-    config["favoriteChampIds"] := Array()
-    SaveConfig()
-}
-if (!config.Has("reportComment")) {
-    config["reportComment"] := "tried to lose"
-    SaveConfig()
-}
-if (!config.Has("foldSniper")) {
-    config["foldSniper"] := False
-    SaveConfig()
-}
-if (!config.Has("foldAccept")) {
-    config["foldAccept"] := False
-    SaveConfig()
-}
-if (!config.Has("foldReport")) {
-    config["foldReport"] := False
-    SaveConfig()
-}
-if (!config.Has("blacklistEnabled")) {
-    config["blacklistEnabled"] := True
-    SaveConfig()
-}
-if (!config.Has("blacklist")) {
-    config["blacklist"] := Array()
-    SaveConfig()
-}
-if (!config.Has("foldBlacklist")) {
-    config["foldBlacklist"] := False
-    SaveConfig()
-}
-if (!config.Has("autoDisenchantChampionsEnabled")) {
-    config["autoDisenchantChampionsEnabled"] := False
-    SaveConfig()
-}
-if (!config.Has("autoDisenchantWardsEnabled")) {
-    config["autoDisenchantWardsEnabled"] := False
-    SaveConfig()
-}
-if (!config.Has("autoHonorerEnabled")) {
-    config["autoHonorerEnabled"] := False
-    SaveConfig()
-}
-if (!config.Has("autoSkipPreEndEnabled")) {
-    config["autoSkipPreEndEnabled"] := False
-    SaveConfig()
-}
-if (!config.Has("foldDisenchant")) {
-    config["foldDisenchant"] := False
-    SaveConfig()
-}
-if (!config.Has("foldHonorer")) {
-    config["foldHonorer"] := False
-    SaveConfig()
-}
-if (!config.Has("foldSkipPreEnd")) {
-    config["foldSkipPreEnd"] := False
-    SaveConfig()
-}
-if (!config.Has("autoAcceptSilent")) {
-    config["autoAcceptSilent"] := False
-    SaveConfig()
-}
-if (!config.Has("autoReportSilent")) {
-    config["autoReportSilent"] := False
-    SaveConfig()
-}
-if (!config.Has("autoSkipPreEndSilent")) {
-    config["autoSkipPreEndSilent"] := False
-    SaveConfig()
-}
-if (!config.Has("blacklistSilent")) {
-    config["blacklistSilent"] := False
-    SaveConfig()
-}
-if (!config.Has("champSelectHelperSilent")) {
-    config["champSelectHelperSilent"] := False
-    SaveConfig()
-}
-if (!config.Has("autoHonorerSilent")) {
-    config["autoHonorerSilent"] := False
-    SaveConfig()
-}
-if (!config.Has("disenchantSilent")) {
-    config["disenchantSilent"] := False
-    SaveConfig()
-}
+; Load and initialize configuration
+InitializeConfig()
 
 ScriptPID := DllCall("GetCurrentProcessId")
 GroupAdd("ScriptGroup", "ahk_pid" ScriptPID)
@@ -181,6 +62,7 @@ MyWindow.AddCallBackToScript("updateConfig", UpdateConfigCallback)
 MyWindow.AddCallBackToScript("Tooltip", WebTooltipEvent)
 MyWindow.AddCallBackToScript("dodgeLobby", DodgeLobbyCallback)
 MyWindow.AddCallBackToScript("triggerMassDisenchant", TriggerMassDisenchantCallback)
+MyWindow.AddCallBackToScript("restartUX", RestartUXCallback)
 MyWindow.AddCallBackToScript("benchSwap", BenchSwapCallback)
 MyWindow.AddCallBackToScript("setSummonerSpells", SetSummonerSpellsCallback)
 MyWindow.AddCallBackToScript("getRecentPlayers", GetRecentPlayersCallback)
@@ -188,6 +70,7 @@ MyWindow.AddCallBackToScript("Close", CloseWindow)
 MyWindow.AddCallBackToScript("DragWindow", DragWindow)
 MyWindow.AddCallBackToScript("Minimize", MinimizeWindow)
 MyWindow.AddCallBackToScript("Maximize", MaximizeWindow)
+MyWindow.AddCallBackToScript("Reload", (*) => Reload())
 
 ; Map local Pages folder and navigate to index.html
 MyWindow.BrowseFolder("Pages")
@@ -234,7 +117,7 @@ loop {
     if (lcuConnected) {
         ; 1. Fast checks (every 1 second)
         try {
-            tempMe := APICall("GET", "/lol-summoner/v1/current-summoner")
+            tempMe := LeagueAPI.GetCurrentSummoner()
             if (IsObject(tempMe) && (tempMe.Has("gameName") || tempMe.Has("displayName"))) {
                 gameName := tempMe.Has("gameName") ? tempMe["gameName"] : tempMe["displayName"]
                 tagLine := tempMe.Has("tagLine") ? tempMe["tagLine"] : ""
@@ -266,7 +149,7 @@ loop {
         }
         
         try {
-            tempFriends := APICall("GET", "/lol-chat/v1/friends")
+            tempFriends := LeagueAPI.GetFriends()
             if (Type(tempFriends) == "Array") {
                 global friends := tempFriends
                 global friendsCount := friends.Length
@@ -288,7 +171,7 @@ loop {
         }
         
         try {
-            tempGameflow := APICall("GET", "/lol-gameflow/v1/gameflow-phase")
+            tempGameflow := LeagueAPI.GetGameflowPhase()
             if (Type(tempGameflow) == "String") {
                 global gameflow := tempGameflow
             } else {
@@ -319,7 +202,7 @@ loop {
         historyTimer := 0
         if (lcuConnected) {
             try {
-                tempHistory := APICall("GET", "/lol-match-history/v1/products/lol/current-summoner/matches?begIndex=0&endIndex=49")
+                tempHistory := LeagueAPI.GetCurrentSummonerMatches(0, 49)
                 if (IsObject(tempHistory) && tempHistory.Has("games")) {
                     global match_history := tempHistory
                     
@@ -409,7 +292,7 @@ loop {
             if (champTimer >= 10) {
                 champTimer := 0
                 summonerId := me["lol"]["summonerId"]
-                champs := APICall("GET", "/lol-champions/v1/inventories/" summonerId "/champions-minimal")
+                champs := LeagueAPI.GetChampionsMinimal(summonerId)
                 if (Type(champs) == "Array" && champs.Length > 0) {
                     global championMap := Map()
                     for c in champs {
@@ -458,11 +341,7 @@ CloseWindow(WebView) {
 
 DragWindow(WebView) {
     DllCall("ReleaseCapture")
-    try {
-        PostMessage(0x0112, 0xF012, 0,, "ahk_id " WebView.Gui.Hwnd)
-    } catch {
-        PostMessage(0x0112, 0xF012, 0,, "ahk_id " MyWindow.Hwnd)
-    }
+    PostMessage(0x0112, 0xF012, 0,, "ahk_id " WebView.Hwnd)
 }
 
 MinimizeWindow(WebView) {
@@ -513,15 +392,6 @@ UpdateConfigCallback(WebView, key, value) {
     LogToWeb("Config updated: " key " -> " logVal, "debug")
 }
 
-SaveConfig() {
-    try {
-        fileObj := FileOpen("config.json", "w", "UTF-8")
-        fileObj.Write(JSON.Dump(config, True))
-        fileObj.Close()
-    } catch Error as e {
-        LogToWeb("Failed to save config.json to disk: " e.Message, "error")
-    }
-}
 
 WebTooltipEvent(WebView, Msg) {
     ToolTip(Msg)
@@ -532,12 +402,12 @@ DodgeLobbyCallback(WebView) {
     LogToWeb("Dodge Lobby: Initiating dodge process...", "warning")
     
     ; 1. Try custom game quit first
-    res := APICall("POST", "/lol-lobby-team-builder/champ-select/v1/session/quit", "{}")
+    res := LeagueAPI.QuitLobbySession()
     
     ; 2. If it's a matchmaking queue (or the quit call fails/has error), trigger a full client quit via process-control
     if (IsObject(res) && res.Has("error")) {
         LogToWeb("Dodge Lobby: Custom quit returned error (likely a PvP lobby). Requesting client closure to dodge...", "warning")
-        resQuit := APICall("POST", "/process-control/v1/process/quit", "{}")
+        resQuit := LeagueAPI.QuitProcess()
         if (IsObject(resQuit) && resQuit.Has("error")) {
             ; Fallback: OS process close in case LCU process control fails
             LogToWeb("Dodge Lobby: LCU quit failed. Terminating LeagueClient.exe processes via OS...", "error")
@@ -561,11 +431,23 @@ TriggerMassDisenchantCallback(WebView) {
     RunMassDisenchant(false)
 }
 
+RestartUXCallback(WebView) {
+    LogToWeb("Restart UX: Requesting League client UX restart...", "warning")
+    res := LeagueAPI.RestartUX()
+    if (IsObject(res) && res.Has("error")) {
+        errStatus := res.Has("status") ? res["status"] : "?"
+        errMsg := res.Has("error") ? res["error"] : "Unknown"
+        LogToWeb("Restart UX: FAILED — HTTP " errStatus " (" errMsg ")", "error")
+    } else {
+        LogToWeb("Restart UX: Successfully sent UX restart command.", "success")
+    }
+}
+
 BenchSwapCallback(WebView, champId) {
     global bypassAutoPick
     champName := GetChampionName(champId)
     LogToWeb("Manual Swap: User requested swap to " champName " (ID:" champId ")", "warning")
-    res := APICall("POST", "/lol-champ-select/v1/session/bench/swap/" champId)
+    res := LeagueAPI.SwapBenchChampion(champId)
     if (IsObject(res) && res.Has("error")) {
         errStatus := res.Has("status") ? res["status"] : "?"
         errMsg := res.Has("error") ? res["error"] : "Unknown"
@@ -579,7 +461,7 @@ BenchSwapCallback(WebView, champId) {
 SetSummonerSpellsCallback(WebView, spell1Id, spell2Id) {
     LogToWeb("Summoner Spells: Swapping spells to spell1=" spell1Id ", spell2=" spell2Id "...", "info")
     body := '{"spell1Id":' spell1Id ',"spell2Id":' spell2Id '}'
-    res := APICall("PATCH", "/lol-champ-select/v1/session/my-selection", body)
+    res := LeagueAPI.UpdateMySelection(body)
     if (IsObject(res) && res.Has("error")) {
         errStatus := res.Has("status") ? res["status"] : "?"
         errMsg := res.Has("error") ? res["error"] : "Unknown"
