@@ -58,14 +58,7 @@ GetRecentPlayersCallback(WebView) {
         
         MyWindow.ExecuteScriptAsync("onRecentPlayersLoaded(" JSON.Dump(recentPlayers) ")")
     } catch Error as e {
-        LogBlacklist("Error fetching recent players: " e.Message, "error")
+        LogToWeb("Error fetching recent players: " e.Message, "error", "blacklistSilent")
         MyWindow.ExecuteScriptAsync("onRecentPlayersLoaded([])")
     }
-}
-
-LogBlacklist(msg, type := "info") {
-    global config
-    if (config.Has("blacklistSilent") && config["blacklistSilent"])
-        return
-    LogToWeb(msg, type)
 }

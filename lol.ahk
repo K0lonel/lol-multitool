@@ -589,9 +589,21 @@ SetSummonerSpellsCallback(WebView, spell1Id, spell2Id) {
     }
 }
 
-LogToWeb(msg, type := "info") {
-    global MyWindow, initConfigSent
+LogToWeb(msg, type := "info", silentSetting := "") {
+    global config, MyWindow, initConfigSent
     
+    isSilent := false
+    if (Type(silentSetting) == "String" && silentSetting != "") {
+        if (IsSet(config) && config.Has(silentSetting)) {
+            isSilent := config[silentSetting]
+        }
+    } else if (silentSetting) {
+        isSilent := true
+    }
+    
+    if (isSilent)
+        return
+
     if (IsSet(MyWindow) && initConfigSent) {
         try {
             cleanMsg := StrReplace(msg, "\", "\\")

@@ -1,24 +1,23 @@
 #Requires AutoHotkey v2.0
 #Include ../lol.ahk
 
+global disenchantSilentOverride := ""
+
 RunMassDisenchant(silent := unset, forceChamps := unset, forceWards := unset) {
-    global config
+    global config, disenchantSilentOverride
+    disenchantSilentOverride := IsSet(silent) ? silent : ""
     try {
-        isSilent := IsSet(silent) ? silent : (config.Has("disenchantSilent") && config["disenchantSilent"])
-        
         champsEnabled := IsSet(forceChamps) ? forceChamps : (config.Has("autoDisenchantChampionsEnabled") && config["autoDisenchantChampionsEnabled"])
         wardsEnabled := IsSet(forceWards) ? forceWards : (config.Has("autoDisenchantWardsEnabled") && config["autoDisenchantWardsEnabled"])
         
         if (!champsEnabled && !wardsEnabled) {
-            if (!isSilent)
-                LogToWeb("Mass Disenchant: No options are enabled. Enable Champion and/or Ward disenchanting first.", "warning")
+            LogToWeb("Mass Disenchant: No options are enabled. Enable Champion and/or Ward disenchanting first.", "warning", disenchantSilentOverride != "" ? disenchantSilentOverride : "disenchantSilent")
             return
         }
 
         lootList := APICall("GET", "/lol-loot/v1/player-loot")
         if (!IsObject(lootList) || Type(lootList) != "Array") {
-            if (!isSilent)
-                LogToWeb("Mass Disenchant: Failed to fetch player loot.", "error")
+            LogToWeb("Mass Disenchant: Failed to fetch player loot.", "error", disenchantSilentOverride != "" ? disenchantSilentOverride : "disenchantSilent")
             return
         }
         
@@ -66,8 +65,7 @@ RunMassDisenchant(silent := unset, forceChamps := unset, forceWards := unset) {
             
             res := APICall("POST", url, JSON.Dump(body))
             if (IsObject(res) && res.Has("error")) {
-                if (!isSilent)
-                    LogToWeb("Mass Disenchant: Failed to disenchant " . itemName . ". Status: " . res["status"], "error")
+                LogToWeb("Mass Disenchant: Failed to disenchant " . itemName . ". Status: " . res["status"], "error", disenchantSilentOverride != "" ? disenchantSilentOverride : "disenchantSilent")
             } else {
                 disenchantCount += count
                 if (currencyName == "OE") {
@@ -75,8 +73,7 @@ RunMassDisenchant(silent := unset, forceChamps := unset, forceWards := unset) {
                 } else {
                     blueEssenceGained += (disenchantValue * count)
                 }
-                if (!isSilent)
-                    LogToWeb("Mass Disenchant: Successfully disenchanted " . itemName . "! (Gained " . (disenchantValue * count) . " " . currencyName . ")", "success")
+                LogToWeb("Mass Disenchant: Successfully disenchanted " . itemName . "! (Gained " . (disenchantValue * count) . " " . currencyName . ")", "success", disenchantSilentOverride != "" ? disenchantSilentOverride : "disenchantSilent")
             }
         }
         
@@ -86,13 +83,13 @@ RunMassDisenchant(silent := unset, forceChamps := unset, forceWards := unset) {
                 msg .= " Gained " . blueEssenceGained . " BE."
             if (orangeEssenceGained > 0)
                 msg .= " Gained " . orangeEssenceGained . " OE."
-            LogToWeb(msg, "success")
+            LogToWeb(msg, "success", disenchantSilentOverride != "" ? disenchantSilentOverride : "disenchantSilent")
         } else {
-            if (!isSilent)
-                LogToWeb("Mass Disenchant: No shards found to disenchant for enabled types.", "info")
+            LogToWeb("Mass Disenchant: No shards found to disenchant for enabled types.", "info", disenchantSilentOverride != "" ? disenchantSilentOverride : "disenchantSilent")
         }
     } catch Error as e {
-        if (!isSilent)
-            LogToWeb("Mass Disenchant: Error during disenchant: " . e.Message, "error")
+        LogToWeb("Mass Disenchant: Error during disenchant: " . e.Message, "error", disenchantSilentOverride != "" ? disenchantSilentOverride : "disenchantSilent")
+    } finally {
+        disenchantSilentOverride := ""
     }
 }

@@ -17,7 +17,7 @@ autoReport(){
         try {
             ScanNewMatches()
         } catch Error as e {
-            LogReport("Auto-Report Error (Scan): " e.Message " at line " e.Line " in " e.File, "error")
+            LogToWeb("Auto-Report Error (Scan): " e.Message " at line " e.Line " in " e.File, "error", "autoReportSilent")
         }
     }
     
@@ -28,7 +28,7 @@ autoReport(){
         try {
             ProcessReportQueue()
         } catch Error as e {
-            LogReport("Auto-Report Error (Process): " e.Message " at line " e.Line " in " e.File, "error")
+            LogToWeb("Auto-Report Error (Process): " e.Message " at line " e.Line " in " e.File, "error", "autoReportSilent")
         }
     }
 }
@@ -40,7 +40,7 @@ ScanNewMatches() {
     
     if (!IsSet(match_history) || !match_history.Has("games") || !match_history["games"].Has("games"))
         return
- 
+  
     newMatchesFound := false
     for index, game in match_history["games"]["games"] {
         gameId := String(game["gameId"])
@@ -58,7 +58,7 @@ ScanNewMatches() {
             continue
             
         reportStatus := "Scanning Match #" gameId "..."
-        LogReport("Auto-Report: New match #" gameId " found. Scanning lobby participants...", "info")
+        LogToWeb("Auto-Report: New match #" gameId " found. Scanning lobby participants...", "info", "autoReportSilent")
             
         identities := ""
         if (game.Has("participantIdentities") && IsObject(game["participantIdentities"]) && game["participantIdentities"].Length > 1) {
@@ -71,7 +71,7 @@ ScanNewMatches() {
         }
         
         if (identities == "" || !IsObject(identities) || identities.Length == 0) {
-            LogReport("Auto-Report: Failed to fetch participant identities for match #" gameId ". Will retry later.", "warning")
+            LogToWeb("Auto-Report: Failed to fetch participant identities for match #" gameId ". Will retry later.", "warning", "autoReportSilent")
             continue
         }
             
@@ -88,22 +88,22 @@ ScanNewMatches() {
         newMatchesFound := true
 
         identitiesCount := IsObject(identities) ? identities.Length : 0
-        LogReport("Auto-Report: Match #" gameId " retrieved " identitiesCount " participant identities.", "debug")
+        LogToWeb("Auto-Report: Match #" gameId " retrieved " identitiesCount " participant identities.", "debug", "autoReportSilent")
 
         queuedForMatch := 0
         for pIndex, participant in identities {
             if (!IsObject(participant) || !participant.Has("player")) {
-                LogReport("Auto-Report: Skip index " pIndex " - invalid participant or player key missing", "debug")
+                LogToWeb("Auto-Report: Skip index " pIndex " - invalid participant or player key missing", "debug", "autoReportSilent")
                 continue
             }
             player := participant["player"]
             if (!IsObject(player)) {
-                LogReport("Auto-Report: Skip index " pIndex " - player key is not object", "debug")
+                LogToWeb("Auto-Report: Skip index " pIndex " - player key is not object", "debug", "autoReportSilent")
                 continue
             }
             puuid := player.Has("puuid") ? player["puuid"] : ""
             if (puuid == "") {
-                LogReport("Auto-Report: Skip index " pIndex " - player puuid is empty", "debug")
+                LogToWeb("Auto-Report: Skip index " pIndex " - player puuid is empty", "debug", "autoReportSilent")
                 continue
             }
             
@@ -115,7 +115,7 @@ ScanNewMatches() {
             playerName := (player.Has("gameName") && player.Has("tagLine")) ? (player["gameName"] "#" player["tagLine"]) : "Unknown Player"
             
             if (isSelf || isFriend) {
-                LogReport("Auto-Report: Skip player " playerName " - self=" isSelf " friend=" isFriend, "debug")
+                LogToWeb("Auto-Report: Skip player " playerName " - self=" isSelf " friend=" isFriend, "debug", "autoReportSilent")
                 continue
             }
             
@@ -128,7 +128,7 @@ ScanNewMatches() {
                 }
             }
             if (alreadyQueued) {
-                LogReport("Auto-Report: Skip player " playerName " - already in queue", "debug")
+                LogToWeb("Auto-Report: Skip player " playerName " - already in queue", "debug", "autoReportSilent")
                 continue
             }
             
@@ -143,12 +143,12 @@ ScanNewMatches() {
             ))
             queuedForMatch++
         }
-        LogReport("Auto-Report: Finished scan for Match #" gameId ". Queued " queuedForMatch " players.", "info")
+        LogToWeb("Auto-Report: Finished scan for Match #" gameId ". Queued " queuedForMatch " players.", "info", "autoReportSilent")
     }
     
     if (newMatchesFound && reportQueue.Length > 0) {
         reportStatus := "Queued " reportQueue.Length " player reports."
-        LogReport("Auto-Report: Queued " reportQueue.Length " player reports to pending queue.", "info")
+        LogToWeb("Auto-Report: Queued " reportQueue.Length " player reports to pending queue.", "info", "autoReportSilent")
     }
 }
 
@@ -189,7 +189,7 @@ ProcessReportQueue() {
     if (IsObject(response) && response.Has("error") && response["error"] == "RateLimit") {
         payload["retries"] := payload["retries"] + 1
         reportStatus := "Rate limited. Retrying " playerName " (Attempt " payload["retries"] ")..."
-        LogReport("Auto-Report: API Rate Limit hit reporting " playerName ". Retrying (attempt " payload["retries"] ") in 3 seconds...", "warning")
+        LogToWeb("Auto-Report: API Rate Limit hit reporting " playerName ". Retrying (attempt " payload["retries"] ") in 3 seconds...", "warning", "autoReportSilent")
         sleep 3000
         return
     }
@@ -198,7 +198,7 @@ ProcessReportQueue() {
     if (IsObject(response) && response.Has("error") && response["error"] == "HTTPError") {
         reportQueue.RemoveAt(1)
         reportStatus := "Skipped " playerName " (HTTP Error " response["status"] ")"
-        LogReport("Auto-Report: Skipped reporting " playerName " due to LCU error (HTTP " response["status"] ").", "error")
+        LogToWeb("Auto-Report: Skipped reporting " playerName " due to LCU error (HTTP " response["status"] ").", "error", "autoReportSilent")
         
         ; Still append as skipped to history so it's recorded
         if (!HasHistoryGame(gameId)) {
@@ -232,20 +232,13 @@ ProcessReportQueue() {
     
     if (reportQueue.Length > 0) {
         reportStatus := "Reported " playerName ". " reportQueue.Length " remaining."
-        LogReport("Auto-Report: " reportQueue.Length " remaining in queue. Reported player " playerName, "success")
+        LogToWeb("Auto-Report: " reportQueue.Length " remaining in queue. Reported player " playerName, "success", "autoReportSilent")
     } else {
         reportStatus := "All reports sent successfully!"
-        LogReport("Auto-Report: Successfully finished reporting all players for Match #" gameId "!", "success")
+        LogToWeb("Auto-Report: Successfully finished reporting all players for Match #" gameId "!", "success", "autoReportSilent")
     }
 }
 
 GetEpochMS() {
     return DateDiff(A_NowUTC, "19700101000000", "Seconds") * 1000
-}
-
-LogReport(msg, type := "info") {
-    global config
-    if (config.Has("autoReportSilent") && config["autoReportSilent"])
-        return
-    LogToWeb(msg, type)
 }

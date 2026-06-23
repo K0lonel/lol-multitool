@@ -17,13 +17,13 @@ champSelectHelper() {
         if (!wasInChampSelect) {
             wasInChampSelect := true
             sessionFailCount := 0
-            LogChampSelect("Entered Champion Select lobby. Active Draft Companion initialized.", "info")
+            LogToWeb("Entered Champion Select lobby. Active Draft Companion initialized.", "info", "champSelectHelperSilent")
             ; Log sniper status on entry
             if (config.Has("autoPickBenchEnabled") && config["autoPickBenchEnabled"]) {
                 targetNames := GetTargetChampNames()
-                LogChampSelect("Bench Sniper: ARMED on lobby entry. Targets: " targetNames, "success")
+                LogToWeb("Bench Sniper: ARMED on lobby entry. Targets: " targetNames, "success", "champSelectHelperSilent")
             } else {
-                LogChampSelect("Bench Sniper: DISABLED on lobby entry. Toggle the sniper ON to activate.", "warning")
+                LogToWeb("Bench Sniper: DISABLED on lobby entry. Toggle the sniper ON to activate.", "warning", "champSelectHelperSilent")
             }
         }
         try {
@@ -39,27 +39,27 @@ champSelectHelper() {
                 errType := session.Has("error") ? session["error"] : "?"
                 if (errType == "Offline") {
                     if (sessionFailCount == 1)
-                        LogChampSelect("Bench Sniper: LCU went offline during ChampSelect.", "error")
+                        LogToWeb("Bench Sniper: LCU went offline during ChampSelect.", "error", "champSelectHelperSilent")
                 } else if (errCode == 404) {
                     if (sessionFailCount <= 3)
-                        LogChampSelect("Bench Sniper: Session not ready yet (404). Waiting... (attempt " sessionFailCount ")", "debug")
+                        LogToWeb("Bench Sniper: Session not ready yet (404). Waiting... (attempt " sessionFailCount ")", "debug", "champSelectHelperSilent")
                     else if (sessionFailCount == 10)
-                        LogChampSelect("Bench Sniper: Session still returning 404 after 10 attempts.", "warning")
+                        LogToWeb("Bench Sniper: Session still returning 404 after 10 attempts.", "warning", "champSelectHelperSilent")
                 } else {
-                    LogChampSelect("Bench Sniper: Session query failed — HTTP " errCode " (" errType "). Attempt " sessionFailCount, "warning")
+                    LogToWeb("Bench Sniper: Session query failed — HTTP " errCode " (" errType "). Attempt " sessionFailCount, "warning", "champSelectHelperSilent")
                 }
             } else {
                 sessionFailCount++
-                LogChampSelect("Bench Sniper: Session returned unexpected data type: " Type(session), "error")
+                LogToWeb("Bench Sniper: Session returned unexpected data type: " Type(session), "error", "champSelectHelperSilent")
             }
         } catch Error as e {
-            LogChampSelect("ChampSelect Error: " e.Message " at line " e.Line, "error")
+            LogToWeb("ChampSelect Error: " e.Message " at line " e.Line, "error", "champSelectHelperSilent")
         }
     } else {
         if (wasInChampSelect) {
             wasInChampSelect := false
             sessionFailCount := 0
-            LogChampSelect("Exited Champion Select lobby.", "info")
+            LogToWeb("Exited Champion Select lobby.", "info", "champSelectHelperSilent")
             ResetChampSelectHelper()
         }
     }
@@ -78,7 +78,7 @@ ScanChampSelectLobby(session) {
     lastSessionId := sessionId
     champLobbyNames := Array()
     
-    LogChampSelect("Draft Companion: Scraping team lobby participants...", "info")
+    LogToWeb("Draft Companion: Scraping team lobby participants...", "info", "champSelectHelperSilent")
     for player in session["myTeam"] {
         nameWithTag := ""
         if (player.Has("nameVisibilityType") && player["nameVisibilityType"] == "VISIBLE") {
@@ -122,7 +122,7 @@ ScanChampSelectLobby(session) {
     }
     
     if (champLobbyNames.Length > 0) {
-        LogChampSelect("Draft Companion: Successfully scraped lobby players: " JSON.Dump(champLobbyNames), "success")
+        LogToWeb("Draft Companion: Successfully scraped lobby players: " JSON.Dump(champLobbyNames), "success", "champSelectHelperSilent")
         MyWindow.ExecuteScriptAsync("onLobbyScraped(" JSON.Dump(champLobbyNames) ")")
     }
 }
@@ -236,14 +236,14 @@ ProcessBenchSwaps(session) {
     ; --- Dump session keys once so we know what fields exist ---
     if (!sessionKeysDumped) {
         sessionKeysDumped := true
-        LogChampSelect("Bench Sniper: Session keys: " DumpSessionKeys(session), "debug")
+        LogToWeb("Bench Sniper: Session keys: " DumpSessionKeys(session), "debug", "champSelectHelperSilent")
     }
     
     ; --- Gate: Is the bench actually enabled in this queue session? ---
     benchEnabled := session.Has("benchEnabled") && (session["benchEnabled"] = true || session["benchEnabled"] = "true")
     if (!benchEnabled) {
         if (Mod(tickCount, 10) == 1) {
-            LogChampSelect("Bench Sniper: [SKIP] Bench is not enabled in this session.", "debug")
+            LogToWeb("Bench Sniper: [SKIP] Bench is not enabled in this session.", "debug", "champSelectHelperSilent")
         }
         return
     }
@@ -255,7 +255,7 @@ ProcessBenchSwaps(session) {
     global bypassAutoPick
     if (bypassAutoPick) {
         if (Mod(tickCount, 10) == 1) {
-            LogChampSelect("Bench Sniper: [SKIP] bypassAutoPick is True (manual override active).", "debug")
+            LogToWeb("Bench Sniper: [SKIP] bypassAutoPick is True (manual override active).", "debug", "champSelectHelperSilent")
         }
         return
     }
@@ -266,7 +266,7 @@ ProcessBenchSwaps(session) {
     
     if (!sniperHasKey || !config["autoPickBenchEnabled"]) {
         if (Mod(tickCount, 10) == 1) {
-            LogChampSelect("Bench Sniper: [SKIP] Sniper is OFF (autoPickBenchEnabled=" sniperValue "). Enable it to activate.", "debug")
+            LogToWeb("Bench Sniper: [SKIP] Sniper is OFF (autoPickBenchEnabled=" sniperValue "). Enable it to activate.", "debug", "champSelectHelperSilent")
         }
         return
     }
@@ -274,7 +274,7 @@ ProcessBenchSwaps(session) {
     ; --- Gate 2: Check if bench data was missing ---
     if (benchResult["data"] == "") {
         if (Mod(tickCount, 10) == 1) {
-            LogChampSelect("Bench Sniper: [SKIP] No bench champions found. Error: " benchResult["error"], "debug")
+            LogToWeb("Bench Sniper: [SKIP] No bench champions found. Error: " benchResult["error"], "debug", "champSelectHelperSilent")
         }
         return
     }
@@ -285,13 +285,13 @@ ProcessBenchSwaps(session) {
     ; Log target configuration info periodically
     if (Mod(tickCount, 10) == 1) {
         targetsList := config.Has("autoPickBenchIds") ? DumpPreferredRaw() : "N/A"
-        ; LogChampSelect("Bench Sniper Check: tickCount=" tickCount ", benchCount=" benchData.Length ", targets=" targetsList, "debug")
+        ; LogToWeb("Bench Sniper Check: tickCount=" tickCount ", benchCount=" benchData.Length ", targets=" targetsList, "debug", "champSelectHelperSilent")
     }
     
     ; --- Gate 3: Do we have target champion IDs configured? ---
     if (!config.Has("autoPickBenchIds") || !IsObject(config["autoPickBenchIds"])) {
         if (!warnedNoIds) {
-            LogChampSelect("Bench Sniper: [SKIP] Target IDs config missing. Has key=" config.Has("autoPickBenchIds"), "warning")
+            LogToWeb("Bench Sniper: [SKIP] Target IDs config missing. Has key=" config.Has("autoPickBenchIds"), "warning", "champSelectHelperSilent")
             warnedNoIds := true
         }
         return
@@ -300,7 +300,7 @@ ProcessBenchSwaps(session) {
     preferredIdsArray := config["autoPickBenchIds"]
     if (preferredIdsArray.Length == 0) {
         if (!warnedEmpty) {
-            LogChampSelect("Bench Sniper: [SKIP] Target list is empty. Add champions to snipe.", "warning")
+            LogToWeb("Bench Sniper: [SKIP] Target list is empty. Add champions to snipe.", "warning", "champSelectHelperSilent")
             warnedEmpty := true
         }
         return
@@ -319,7 +319,7 @@ ProcessBenchSwaps(session) {
         ownedKey := myChampId
         if (ownedKey != lastOwnedLog) {
             lastOwnedLog := ownedKey
-            LogChampSelect("Bench Sniper: Already holding target " myInfo["championName"] " (ID:" myChampId "). No swap needed.", "success")
+            LogToWeb("Bench Sniper: Already holding target " myInfo["championName"] " (ID:" myChampId "). No swap needed.", "success", "champSelectHelperSilent")
         }
         return
     }
@@ -343,21 +343,21 @@ ProcessBenchSwaps(session) {
         matched := preferredIds.Has(champId)
         
         if (Mod(tickCount, 5) == 1) {
-            LogChampSelect("Bench Sniper: Checking bench champ " champName " (ID:" champId ") against targets. Match result=" (matched ? "TRUE" : "FALSE"), "debug")
+            LogToWeb("Bench Sniper: Checking bench champ " champName " (ID:" champId ") against targets. Match result=" (matched ? "TRUE" : "FALSE"), "debug", "champSelectHelperSilent")
         }
         
         if (matched) {
-            LogChampSelect("Bench Sniper: Target MATCHED! Attempting swap for " champName " (ID:" champId ")...", "warning")
+            LogToWeb("Bench Sniper: Target MATCHED! Attempting swap for " champName " (ID:" champId ")...", "warning", "champSelectHelperSilent")
             res := APICall("POST", "/lol-champ-select/v1/session/bench/swap/" champId)
             
-            LogChampSelect("Bench Sniper: Swap API response received. Type=" Type(res) " isObject=" IsObject(res), "debug")
+            LogToWeb("Bench Sniper: Swap API response received. Type=" Type(res) " isObject=" IsObject(res), "debug", "champSelectHelperSilent")
             
             if (IsObject(res) && res.Has("error")) {
                 errStatus := res.Has("status") ? res["status"] : "?"
                 errMsg := res.Has("error") ? res["error"] : "Unknown"
-                LogChampSelect("Bench Sniper: SWAP FAILED — " champName " — HTTP " errStatus " (" errMsg ")", "error")
+                LogToWeb("Bench Sniper: SWAP FAILED — " champName " — HTTP " errStatus " (" errMsg ")", "error", "champSelectHelperSilent")
             } else {
-                LogChampSelect("Bench Sniper: SWAP SENT for " champName " successfully. Verifying...", "success")
+                LogToWeb("Bench Sniper: SWAP SENT for " champName " successfully. Verifying...", "success", "champSelectHelperSilent")
                 ; Confirm swap
                 try {
                     Sleep(300)
@@ -365,15 +365,15 @@ ProcessBenchSwaps(session) {
                     if (IsObject(confirmSession) && !confirmSession.Has("error")) {
                         newInfo := GetMyChampInfo(confirmSession)
                         if (newInfo["championId"] == champId) {
-                            LogChampSelect("Bench Sniper: CONFIRMED — you now have " newInfo["championName"], "success")
+                            LogToWeb("Bench Sniper: CONFIRMED — you now have " newInfo["championName"], "success", "champSelectHelperSilent")
                         } else {
-                            LogChampSelect("Bench Sniper: NOT CONFIRMED — expected " champName " but have " newInfo["championName"] " (ID:" newInfo["championId"] "). Server may have rejected swap.", "warning")
+                            LogToWeb("Bench Sniper: NOT CONFIRMED — expected " champName " but have " newInfo["championName"] " (ID:" newInfo["championId"] "). Server may have rejected swap.", "warning", "champSelectHelperSilent")
                         }
                     } else {
-                        LogChampSelect("Bench Sniper: Could not confirm — session re-fetch failed.", "warning")
+                        LogToWeb("Bench Sniper: Could not confirm — session re-fetch failed.", "warning", "champSelectHelperSilent")
                     }
                 } catch Error as e {
-                    LogChampSelect("Bench Sniper: Could not confirm — " e.Message, "warning")
+                    LogToWeb("Bench Sniper: Could not confirm — " e.Message, "warning", "champSelectHelperSilent")
                 }
             }
             
@@ -572,11 +572,4 @@ ResetChampSelectHelper() {
     try MyWindow.ExecuteScriptAsync("onLobbyCleared()")
     try MyWindow.ExecuteScriptAsync("clearBenchDisplay()")
     try MyWindow.ExecuteScriptAsync("clearChampSelectDraft()")
-}
-
-LogChampSelect(msg, type := "info") {
-    global config
-    if (config.Has("champSelectHelperSilent") && config["champSelectHelperSilent"])
-        return
-    LogToWeb(msg, type)
 }
