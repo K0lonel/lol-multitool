@@ -557,7 +557,7 @@ DodgeLobbyCallback(WebView) {
 }
 
 TriggerMassDisenchantCallback(WebView) {
-    LogToWeb("Mass Disenchant: Manual trigger initiated by user...", "info")
+    LogToWeb("Mass Disenchant: Initiated disenchanting...", "info")
     RunMassDisenchant(false)
 }
 
@@ -589,7 +589,7 @@ SetSummonerSpellsCallback(WebView, spell1Id, spell2Id) {
     }
 }
 
-LogToWeb(msg, type := "info", silentSetting := "") {
+LogToWeb(msg, logType := "info", silentSetting := "") {
     global config, MyWindow, initConfigSent
     
     isSilent := false
@@ -610,7 +610,7 @@ LogToWeb(msg, type := "info", silentSetting := "") {
             cleanMsg := StrReplace(cleanMsg, "'", "\'")
             cleanMsg := StrReplace(cleanMsg, "`n", " ")
             cleanMsg := StrReplace(cleanMsg, "`r", "")
-            MyWindow.ExecuteScriptAsync("logSystemMessage('" cleanMsg "', '" type "')")
+            MyWindow.ExecuteScriptAsync("logSystemMessage('" cleanMsg "', '" logType "')")
         } catch {
             ; Ignore frontend log call failures
         }
