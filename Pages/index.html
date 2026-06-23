@@ -130,7 +130,7 @@
 			</div>
 
 			<!-- Main Content Panel -->
-			<div class="grow overflow-auto" id="page-content">
+			<div class="flex-grow-1 overflow-auto" id="page-content">
 				<div class="tab-content" id="v-pills-tabContent">
 					
 					<!-- Dashboard Tab -->
@@ -145,7 +145,7 @@
 								<div class="hextech-card w-100 mb-0 d-flex flex-column justify-content-between">
 									<div class="card-title-gold mb-3"><i class="fa-solid fa-gamepad"></i> Game Stats</div>
 									
-									<div class="d-flex flex-column justify-content-between grow w-100 mt-2">
+									<div class="d-flex flex-column justify-content-between flex-grow-1 w-100 mt-2">
 										<!-- Lobby & Client Section -->
 										<div>
 											<div class="small text-muted mb-2 text-uppercase" style="letter-spacing: 0.8px; font-size: 0.6rem; font-weight: 700; border-bottom: 1px solid rgba(200, 155, 60, 0.12); padding-bottom: 3px;">Lobby & Client</div>
@@ -201,7 +201,7 @@
 								<div class="hextech-card w-100 mb-0 d-flex flex-column justify-content-between">
 									<div class="card-title-gold mb-3"><i class="fa-solid fa-bolt"></i> Running Tasks</div>
 									
-									<div class="d-flex flex-column justify-content-between grow w-100 mt-2">
+									<div class="d-flex flex-column justify-content-between flex-grow-1 w-100 mt-2">
 										<!-- Automated Systems Section -->
 										<div>
 											<div class="small text-muted mb-2 text-uppercase" style="letter-spacing: 0.8px; font-size: 0.6rem; font-weight: 700; border-bottom: 1px solid rgba(200, 155, 60, 0.12); padding-bottom: 3px;">Automated Systems</div>
@@ -299,8 +299,14 @@
 							<!-- Left Column: Reported Matches Log -->
 							<div class="col-md-6 d-flex">
 								<div class="hextech-card w-100 mb-0 d-flex flex-column">
-									<div class="card-title-gold"><i class="fa-solid fa-clock-rotate-left"></i> Reported Matches Log</div>
-									<div id="report-timeline" class="grow" style="max-height: 300px; overflow-y: auto;">
+									<div class="d-flex flex-column mb-3" style="gap: 8px;">
+										<div class="card-title-gold m-0" style="width: 280px; white-space: nowrap;"><i class="fa-solid fa-clock-rotate-left"></i> Reported Matches Log</div>
+										<div class="position-relative" style="width: 280px;">
+											<input type="text" class="form-control form-control-sm text-white border-secondary w-100" id="search-reported-matches" style="background: rgba(5, 8, 12, 0.6); padding-right: 25px; font-size: 0.75rem; border-color: rgba(200, 155, 60, 0.2) !important;" placeholder="Search player/match..." oninput="filterReportedMatches()">
+											<i class="fa-solid fa-magnifying-glass position-absolute text-muted" style="right: 8px; top: 50%; transform: translateY(-50%); font-size: 0.75rem; opacity: 0.6;"></i>
+										</div>
+									</div>
+									<div id="report-timeline" class="flex-grow-1" style="max-height: 300px; overflow-y: auto;">
 										<div class="text-center py-4 text-muted">No reports sent in this session yet.</div>
 									</div>
 								</div>
@@ -313,7 +319,7 @@
 										<div class="card-title-gold m-0"><i class="fa-solid fa-terminal"></i> System Event Logs</div>
 										<button class="btn btn-outline-warning btn-sm" onclick="clearSystemLogs()" style="font-size: 0.75rem; padding: 2px 8px;"><i class="fa-solid fa-trash-can"></i> Clear</button>
 									</div>
-									<div id="system-logs-console" class="grow p-2 rounded" style="max-height: 300px; min-height: 250px; overflow-y: auto; background: rgba(5, 8, 12, 0.6); border: 1px solid rgba(200, 155, 60, 0.15); font-family: 'Courier New', Courier, monospace; font-size: 0.8rem; line-height: 1.4;">
+									<div id="system-logs-console" class="flex-grow-1 p-2 rounded" style="max-height: 300px; min-height: 250px; overflow-y: auto; background: rgba(5, 8, 12, 0.6); border: 1px solid rgba(200, 155, 60, 0.15); font-family: 'Courier New', Courier, monospace; font-size: 0.8rem; line-height: 1.4;">
 										<div class="text-center py-4 text-muted">Console initialized. Ready for logs...</div>
 									</div>
 								</div>
@@ -361,7 +367,7 @@
 									
 									<!-- Active Targets Visualizer -->
 									<label class="form-label small text-muted d-block">Active Targets Visualizer:</label>
-									<div id="sniper-active-badges" class="d-flex flex-wrap gap-2 py-2 px-3 rounded grow align-items-start align-content-start" style="background: rgba(5, 8, 12, 0.4); border: 1px dashed var(--panel-border); min-height: 48px;">
+									<div id="sniper-active-badges" class="d-flex flex-wrap gap-2 py-2 px-3 rounded flex-grow-1 align-items-start align-content-start" style="background: rgba(5, 8, 12, 0.4); border: 1px dashed var(--panel-border); min-height: 48px;">
 										<span class="text-muted small my-auto">Type champion names above to load targets...</span>
 									</div>
 								</div>
@@ -1038,12 +1044,6 @@
 					friendsEl.innerText = `${me.lol.friendsOnline} / ${me.lol.friendsCount}`;
 				}
 
-				// Session time update
-				const sessionEl = document.getElementById('game-stats-session');
-				if (sessionEl) {
-					sessionEl.innerText = me.lol.sessionTime !== undefined ? me.lol.sessionTime : "--:--";
-				}
-
 				// Recent win rate update
 				const winrateEl = document.getElementById('game-stats-winrate');
 				if (winrateEl) {
@@ -1058,19 +1058,19 @@
 				champsCountEl.innerText = window.ownedChampsCount !== undefined ? window.ownedChampsCount : "--";
 			}
 
-			// 3. Queue Status
+			// 3. Queue card update
 			const queueCard = document.getElementById('queue-card');
-			const queueText = document.getElementById('queue-status-text');
-			const queueBadge = document.getElementById('queue-count-badge');
-			
 			if (queueSize > 0) {
 				queueCard.style.display = 'block';
-				queueText.innerText = currentStatus || 'Processing reports...';
-				queueBadge.innerText = queueSize + ' reports pending';
-			} else if (currentStatus && currentStatus.includes('successfully')) {
+				document.getElementById('queue-status-text').innerText = currentStatus || "Reporting...";
+				document.getElementById('queue-count-badge').innerText = `${queueSize} reports queued`;
+				document.getElementById('queue-progress-bar').className = "progress-bar progress-bar-striped progress-bar-animated bg-warning";
+			} else if (currentStatus === 'Completed') {
 				queueCard.style.display = 'block';
-				queueText.innerText = currentStatus;
-				queueBadge.innerText = 'Completed';
+				document.getElementById('queue-status-text').innerText = "All reports sent!";
+				document.getElementById('queue-count-badge').innerText = "Completed";
+				document.getElementById('queue-progress-bar').className = "progress-bar bg-success";
+				
 				// Hide after 5 seconds
 				setTimeout(() => {
 					if (document.getElementById('queue-count-badge').innerText === 'Completed') {
@@ -1082,76 +1082,115 @@
 			}
 
 			// 4. Render Match Report history list
-			const timelineEl = document.getElementById('report-timeline');
+			window.reportedMatchesHistory = history;
 			const historyString = JSON.stringify(history);
 			if (window.lastRenderedHistory !== historyString) {
 				window.lastRenderedHistory = historyString;
-				if (history && Object.keys(history).length > 0) {
+				const searchInput = document.getElementById('search-reported-matches');
+				const searchQuery = searchInput ? searchInput.value : '';
+				renderReportTimeline(history, searchQuery);
+			}
+		}
+
+		function updateSessionTime(sessionTime) {
+			const sessionEl = document.getElementById('game-stats-session');
+			if (sessionEl) {
+				sessionEl.innerText = sessionTime || "--:--";
+			}
+		}
+
+		function renderReportTimeline(history, searchQuery = '') {
+			const timelineEl = document.getElementById('report-timeline');
+			if (!timelineEl) return;
+			
+			if (history && Object.keys(history).length > 0) {
+				// Convert to array and filter out entries without a Timestamp
+				let entries = [];
+				Object.keys(history).forEach(gameId => {
+					let item = history[gameId];
+					if (item && item.Timestamp) {
+						entries.push({
+							gameId: gameId,
+							ReportedPlayers: item.ReportedPlayers,
+							Timestamp: item.Timestamp
+						});
+					}
+				});
+				
+				// Apply search filter if query exists
+				if (searchQuery.trim() !== '') {
+					const query = searchQuery.toLowerCase().trim();
+					entries = entries.filter(item => {
+						// Match Game ID
+						if (item.gameId.toString().toLowerCase().includes(query)) {
+							return true;
+						}
+						// Match any Player Name
+						if (item.ReportedPlayers && Array.isArray(item.ReportedPlayers)) {
+							return item.ReportedPlayers.some(p => p.toLowerCase().includes(query));
+						}
+						return false;
+					});
+				}
+				
+				// Sort by Timestamp descending (newest first)
+				entries.sort((a, b) => b.Timestamp - a.Timestamp);
+				
+				if (entries.length > 0) {
 					let html = '';
-					
-					// Convert to array and filter out entries without a Timestamp
-					let entries = [];
-					Object.keys(history).forEach(gameId => {
-						let item = history[gameId];
-						if (item && item.Timestamp) {
-							entries.push({
-								gameId: gameId,
-								ReportedPlayers: item.ReportedPlayers,
-								Timestamp: item.Timestamp
+					// Limit default view to 15 entries, show more if filtering
+					let displayEntries = searchQuery.trim() !== '' ? entries.slice(0, 50) : entries.slice(0, 15);
+					displayEntries.forEach(item => {
+						let players = [];
+						let pillsHtml = '';
+						
+						if (item.ReportedPlayers && Array.isArray(item.ReportedPlayers)) {
+							item.ReportedPlayers.forEach(p => {
+								let isSkipped = p.endsWith(' (Skipped)');
+								let cleanName = p.replace(/\s*\(Skipped\)\s*$/, '').trim();
+								if (cleanName && cleanName !== "Unknown Player") {
+									players.push(cleanName.replace('#', '-'));
+									if (isSkipped) {
+										pillsHtml += `<span class="player-pill skipped-pill" title="${cleanName} (Skipped)">${cleanName}</span>`;
+									} else {
+										pillsHtml += `<span class="player-pill reported-pill" title="${cleanName} (Reported)">${cleanName}</span>`;
+									}
+								}
 							});
 						}
-					});
-					
-					// Sort by Timestamp descending (newest first)
-					entries.sort((a, b) => b.Timestamp - a.Timestamp);
-					
-					if (entries.length > 0) {
-						entries.slice(0, 15).forEach(item => {
-							let players = [];
-							let pillsHtml = '';
-							
-							if (item.ReportedPlayers && Array.isArray(item.ReportedPlayers)) {
-								item.ReportedPlayers.forEach(p => {
-									let isSkipped = p.endsWith(' (Skipped)');
-									let cleanName = p.replace(/\s*\(Skipped\)\s*$/, '').trim();
-									if (cleanName && cleanName !== "Unknown Player") {
-										players.push(cleanName.replace('#', '-'));
-										if (isSkipped) {
-											pillsHtml += `<span class="player-pill skipped-pill" title="${cleanName} (Skipped)">${cleanName}</span>`;
-										} else {
-											pillsHtml += `<span class="player-pill reported-pill" title="${cleanName} (Reported)">${cleanName}</span>`;
-										}
-									}
-								});
-							}
-							
-							if (!pillsHtml) {
-								pillsHtml = `<span class="player-pill reported-pill">All Lobby</span>`;
-							}
+						
+						if (!pillsHtml) {
+							pillsHtml = `<span class="player-pill reported-pill">All Lobby</span>`;
+						}
 
-							let link = `https://u.gg/lol/multisearch?summoners=${players.map(encodeURIComponent).join(',')}&region=eun1`;
-							let dateStr = new Date(item.Timestamp).toLocaleString();
-							
-							html += `
-								<div class="report-item d-flex flex-column align-items-stretch">
-									<div class="d-flex justify-content-between align-items-center w-100 mb-2">
-										<span class="report-match-id"><i class="fa-solid fa-gamepad me-1" style="font-size: 0.8em; opacity: 0.6;"></i>MATCH #${item.gameId} <span class="mx-1 opacity-50">&bull;</span> ${dateStr}</span>
-										<a href="${link}" target="_blank" class="btn btn-sm btn-hextech" style="padding: 2px 8px; font-size: 0.7rem; font-weight: 600;">Link</a>
-									</div>
-									<div class="report-players-container d-flex flex-wrap gap-1">
-										${pillsHtml}
-									</div>
+						let link = `https://u.gg/lol/multisearch?summoners=${players.map(encodeURIComponent).join(',')}&region=eun1`;
+						let dateStr = new Date(item.Timestamp).toLocaleString();
+						
+						html += `
+							<div class="report-item d-flex flex-column align-items-stretch">
+								<div class="d-flex justify-content-between align-items-center w-100 mb-2">
+									<span class="report-match-id"><i class="fa-solid fa-gamepad me-1" style="font-size: 0.8em; opacity: 0.6;"></i>MATCH #${item.gameId} <span class="mx-1 opacity-50">&bull;</span> ${dateStr}</span>
+									<a href="${link}" target="_blank" class="btn btn-sm btn-hextech" style="padding: 2px 8px; font-size: 0.7rem; font-weight: 600;">Link</a>
 								</div>
-							`;
-						});
-						timelineEl.innerHTML = html;
-					} else {
-						timelineEl.innerHTML = '<div class="text-center py-4 text-muted">No reports sent in this session yet.</div>';
-					}
+								<div class="report-players-container d-flex flex-wrap gap-1">
+									${pillsHtml}
+								</div>
+							</div>
+						`;
+					});
+					timelineEl.innerHTML = html;
 				} else {
-					timelineEl.innerHTML = '<div class="text-center py-4 text-muted">No reports sent in this session yet.</div>';
+					timelineEl.innerHTML = '<div class="text-center py-4 text-muted">No matching reported matches found.</div>';
 				}
+			} else {
+				timelineEl.innerHTML = '<div class="text-center py-4 text-muted">No reports sent in this session yet.</div>';
 			}
+		}
+
+		function filterReportedMatches() {
+			const searchInput = document.getElementById('search-reported-matches');
+			const searchQuery = searchInput ? searchInput.value : '';
+			renderReportTimeline(window.reportedMatchesHistory, searchQuery);
 		}
 
 		// Draft/Champion database and scraper methods

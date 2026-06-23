@@ -92,9 +92,12 @@ global historyTimer := 30
 global champTimer := 9
 global lastGameflow := "INIT"
 global wasLcuConnected := false
+global lastDashboardState := ""
 
 loop {
     historyTimer++
+    sessionSecs := (A_TickCount - sessionStartTime) // 1000
+    sessionTime := FormatSessionTime(sessionSecs)
     
     ; Determine connection status in a fast and CPU-efficient way
     lcuConnected := false
@@ -126,9 +129,6 @@ loop {
                 puuid := tempMe.Has("puuid") ? tempMe["puuid"] : ""
                 summonerId := tempMe.Has("summonerId") ? tempMe["summonerId"] : 0
                 
-                sessionSecs := (A_TickCount - sessionStartTime) // 1000
-                sessionTime := FormatSessionTime(sessionSecs)
-                
                 global me := Map("lol", Map(
                     "gameName", gameName,
                     "tagLine", tagLine,
@@ -138,8 +138,7 @@ loop {
                     "summonerId", summonerId,
                     "friendsCount", friendsCount,
                     "friendsOnline", friendsOnline,
-                    "recentWinRate", recentWinRate,
-                    "sessionTime", sessionTime
+                    "recentWinRate", recentWinRate
                 ))
             } else {
                 global me := Map()
@@ -307,7 +306,15 @@ loop {
             }
         }
         
-        MyWindow.ExecuteScriptAsync("updateDashboard(" JSON.Dump(me) ", '" gameflow "', " JSON.Dump(match_history_dic) ", " reportQueue.Length ", '" reportStatus "')")
+        ; Update session time on the frontend every tick
+        MyWindow.ExecuteScriptAsync("updateSessionTime('" sessionTime "')")
+        
+        ; Only update the dashboard UI when data actually changes
+        currentDashboardState := JSON.Dump(me) "|" gameflow "|" JSON.Dump(match_history_dic) "|" reportQueue.Length "|" reportStatus
+        if (currentDashboardState != lastDashboardState) {
+            lastDashboardState := currentDashboardState
+            MyWindow.ExecuteScriptAsync("updateDashboard(" JSON.Dump(me) ", '" gameflow "', " JSON.Dump(match_history_dic) ", " reportQueue.Length ", '" reportStatus "')")
+        }
     } catch Error as e {
         LogToWeb("Error in main loop script execution: " e.Message, "error")
     }
