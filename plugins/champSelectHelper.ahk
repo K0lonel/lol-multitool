@@ -7,6 +7,7 @@ global lastSessionId := ""
 global warnedNoIds := false
 global warnedEmpty := false
 global bypassAutoPick := false
+global lastSentChampId := 0
 
 champSelectHelper() {
     global config, gameflow
@@ -33,6 +34,7 @@ champSelectHelper() {
                 ScanChampSelectLobby(session)
                 UpdateChampSelectFrontend(session)
                 ProcessBenchSwaps(session)
+                ProcessChampMessages(session)
             } else if (IsObject(session) && session.Has("error")) {
                 sessionFailCount++
                 errCode := session.Has("status") ? session["status"] : "?"
@@ -563,13 +565,83 @@ GetSummonerNameByPuuid(puuid) {
 }
 
 ResetChampSelectHelper() {
-    global lastSessionId, champLobbyNames, warnedNoIds, warnedEmpty, bypassAutoPick
+    global lastSessionId, champLobbyNames, warnedNoIds, warnedEmpty, bypassAutoPick, lastSentChampId
     lastSessionId := ""
     champLobbyNames := Array()
     warnedNoIds := false
     warnedEmpty := false
     bypassAutoPick := false
+    lastSentChampId := 0
     try MyWindow.ExecuteScriptAsync("onLobbyCleared()")
     try MyWindow.ExecuteScriptAsync("clearBenchDisplay()")
     try MyWindow.ExecuteScriptAsync("clearChampSelectDraft()")
+}
+
+ProcessChampMessages(session) {
+    global lastSentChampId
+    
+    if (!session.Has("chatDetails"))
+        return
+        
+    conversationId := session["chatDetails"].Has("multiUserChatId") ? session["chatDetails"]["multiUserChatId"] : ""
+    if (conversationId == "")
+        return
+        
+    myInfo := GetMyChampInfo(session)
+    champId := myInfo["championId"]
+    champName := myInfo["championName"]
+    
+    if (champId == 0) {
+        lastSentChampId := 0
+        return
+    }
+    
+    if (champId == lastSentChampId) {
+        return
+    }
+    
+    messagesFilePath := "champMessages.json"
+    if (!FileExist(messagesFilePath)) {
+        return
+    }
+    
+    try {
+        fileContent := FileRead(messagesFilePath, "UTF-8")
+        if (fileContent == "")
+            return
+        messagesData := JSON.Load(fileContent)
+        if (!IsObject(messagesData))
+            return
+            
+        matchedKey := ""
+        champNameLower := Format("{:L}", champName)
+        champIdStr := String(champId)
+        
+        for k, v in messagesData {
+            kLower := Format("{:L}", String(k))
+            if (kLower == champNameLower || kLower == champIdStr) {
+                matchedKey := k
+                break
+            }
+        }
+        
+        if (matchedKey != "") {
+            messagesList := messagesData[matchedKey]
+            
+            if (Type(messagesList) == "Array") {
+                combinedMsg := ""
+                for msg in messagesList {
+                    combinedMsg .= (combinedMsg == "" ? "" : " ") msg
+                }
+                LeagueAPI.SendChatMessage(conversationId, combinedMsg)
+            } else if (Type(messagesList) == "String") {
+                LeagueAPI.SendChatMessage(conversationId, messagesList)
+            }
+            
+            lastSentChampId := champId
+            LogToWeb("Sent custom chat message for " champName, "success")
+        }
+    } catch Error as e {
+        LogToWeb("Error processing custom champ messages: " e.Message, "error")
+    }
 }

@@ -81,4 +81,9 @@ class LeagueAPI {
     static HonorPlayer(body) {
         return APICall("POST", "/lol-honor-v2/v1/honor-player", body)
     }
+
+    static SendChatMessage(conversationId, bodyText) {
+        body := Map("body", bodyText, "type", "chat")
+        return APICall("POST", "/lol-chat/v1/conversations/" conversationId "/messages", JSON.Dump(body))
+    }
 }
