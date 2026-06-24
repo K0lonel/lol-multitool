@@ -578,8 +578,11 @@ ResetChampSelectHelper() {
 }
 
 ProcessChampMessages(session) {
-    global lastSentChampId
+    global lastSentChampId, config
     
+    if (!config.Has("champMessagesEnabled") || !config["champMessagesEnabled"])
+        return
+        
     if (!session.Has("chatDetails"))
         return
         
@@ -645,3 +648,5 @@ ProcessChampMessages(session) {
         LogToWeb("Error processing custom champ messages: " e.Message, "error")
     }
 }
+
+

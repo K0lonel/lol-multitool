@@ -230,6 +230,10 @@
 													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">SKIP-HONOR</div>
 													<span class="badge" id="badge-skipPreEnd" style="font-size: 0.65rem;">Disabled</span>
 												</div>
+												<div class="running-task-col p-2 rounded border d-flex flex-column justify-content-center align-items-center" onclick="toggleRunningTask('champMessagesEnabled')" title="Toggle Champion Copypasta Message Sender" style="flex: 1 0 calc(33.333% - 10px); min-width: 100px; max-width: calc(33.333% - 10px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(200, 155, 60, 0.12) !important;">
+													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">COPASTA</div>
+													<span class="badge" id="badge-champMessages" style="font-size: 0.65rem;">Disabled</span>
+												</div>
 											</div>
 										</div>
 
@@ -653,6 +657,24 @@
 								</div>
 							</div>
 						</div>
+
+						<!-- Champion Copypasta Messages Configuration -->
+						<div class="hextech-card" id="card-champMessages">
+							<div class="d-flex justify-content-between align-items-center mb-3">
+								<div class="card-title-gold m-0"><i class="fa-regular fa-comment-dots text-warning"></i> Champ Select Copypasta</div>
+								<div class="d-flex align-items-center gap-3">
+									<div class="form-check form-switch m-0">
+										<input class="form-check-input" type="checkbox" id="toggle-champMessagesEnabled" onchange="updateConfig('champMessagesEnabled', this.checked)">
+									</div>
+									<button class="btn btn-link text-warning p-0 border-0" onclick="toggleCardCollapse(this)" data-fold-key="foldChampMessages" style="font-size: 1.1rem; line-height: 1; cursor: pointer; text-decoration: none;">
+										<i class="fa-solid fa-chevron-up collapse-icon"></i>
+									</button>
+								</div>
+							</div>
+							<div class="card-collapse-body">
+								<p class="text-muted small">Automatically sends a custom copypasta or message to the lobby chat when you lock in a champion. Messages are configured in <code>champMessages.json</code>.</p>
+							</div>
+						</div>
 					</div>
 
 
@@ -786,6 +808,10 @@
 				document.getElementById('toggle-autoSkipPreEndEnabled').checked = config.autoSkipPreEndEnabled;
 				updateBadge('badge-skipPreEnd', config.autoSkipPreEndEnabled);
 			}
+			if (config.champMessagesEnabled !== undefined) {
+				document.getElementById('toggle-champMessagesEnabled').checked = config.champMessagesEnabled;
+				updateBadge('badge-champMessages', config.champMessagesEnabled);
+			}
 			if (config.acceptDelay !== undefined) {
 				document.getElementById('range-acceptDelay').value = config.acceptDelay;
 				document.getElementById('val-acceptDelay').innerText = config.acceptDelay;
@@ -840,6 +866,9 @@
 			if (config.foldSkipPreEnd !== undefined) {
 				setCardCollapseState('#card-skipPreEnd', config.foldSkipPreEnd);
 			}
+			if (config.foldChampMessages !== undefined) {
+				setCardCollapseState('#card-champMessages', config.foldChampMessages);
+			}
 			
 			// Initialize blacklist state
 			initBlacklist(config);
@@ -882,6 +911,7 @@
 
 			if (key === 'autoHonorerEnabled') updateBadge('badge-honorer', value);
 			if (key === 'autoSkipPreEndEnabled') updateBadge('badge-skipPreEnd', value);
+			if (key === 'champMessagesEnabled') updateBadge('badge-champMessages', value);
 		}
 
 		function onCategoryToggle() {
@@ -2415,6 +2445,11 @@
 				const el = document.getElementById('toggle-autoSkipPreEndEnabled');
 				if (el) el.checked = val;
 				updateConfig('autoSkipPreEndEnabled', val);
+			} else if (taskName === 'champMessagesEnabled') {
+				const val = !window.loadedConfig.champMessagesEnabled;
+				const el = document.getElementById('toggle-champMessagesEnabled');
+				if (el) el.checked = val;
+				updateConfig('champMessagesEnabled', val);
 			}
 		}
 	</script>
