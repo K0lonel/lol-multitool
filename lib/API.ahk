@@ -17,6 +17,10 @@ request(method, endpoint, post_data?, headersIn := Map()) {
     headers := Map("Content-Type", "application/json", "Accept", "application/json")
 
     req.Open(method, endpoint, False)
+    ; Set resolve/connect/send/receive timeouts in milliseconds
+    ; (Resolve: 5s, Connect: 5s, Send: 5s, Receive: 5s) to prevent script freeze
+    req.SetTimeouts(5000, 5000, 5000, 5000)
+
     for k, v in headersIn
         headers[k] := v
     for k, v in headers
@@ -41,13 +45,18 @@ request(method, endpoint, post_data?, headersIn := Map()) {
         }
         pSafeArray := req.ResponseBody
         if(IsObject(pSafeArray)){
-	        pvData := NumGet(ComObjValue(pSafeArray) + 8 + A_PtrSize, "ptr")
-	        cbElements := pSafeArray.MaxIndex() + 1
+            pvData := NumGet(ComObjValue(pSafeArray) + 8 + A_PtrSize, "ptr")
+            cbElements := pSafeArray.MaxIndex() + 1
             bodyStr := StrGet(pvData, cbElements, "UTF-8")
             if (bodyStr == "") {
                 return Map()
             }
-	        return JSON.Load(bodyStr)
+            try {
+                return JSON.Load(bodyStr)
+            } catch Error as jsonErr {
+                LogToWeb("LCU API JSON Parse Error: " jsonErr.Message " on response: " SubStr(bodyStr, 1, 100), "warning")
+                return Map("error", "JSONError", "message", jsonErr.Message, "status", status)
+            }
         }
     } catch Error as e {
         static lastErrTime := 0
