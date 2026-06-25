@@ -50,10 +50,15 @@ WebViewCtrl.Prototype.DefineProp("__New", {Call: (self, settings := {}) => (
 
 EnsureExtension()
 global MyWindow := WebViewGui("-Caption +Resize", "LoL-App")
-try {
-    MyWindow.Profile.AddBrowserExtensionAsync(A_ScriptDir "\Extensions\AdGuard-AdBlocker")
-} catch Error as e {
-    OutputDebug("Failed to load AdGuard extension: " e.Message "`n")
+extDir := A_ScriptDir "\Extensions\AdGuard-AdBlocker"
+if (DirExist(extDir) && FileExist(extDir "\manifest.json")) {
+    try {
+        MyWindow.Profile.AddBrowserExtensionAsync(extDir)
+    } catch Error as e {
+        OutputDebug("Failed to load AdGuard extension: " e.Message "`n")
+    }
+} else {
+    OutputDebug("AdGuard extension files are missing or incomplete. Extension loading skipped.`n")
 }
 MyWindow.OnEvent("Close", (*) => ExitApp())
 OnExit(ExitSave)
@@ -562,7 +567,7 @@ FormatSessionTime(seconds) {
 
 EnsureExtension() {
     extDir := A_ScriptDir "\Extensions\AdGuard-AdBlocker"
-    if (!DirExist(extDir)) {
+    if (!DirExist(extDir) || !FileExist(extDir "\manifest.json")) {
         if (!DirExist(A_ScriptDir "\Extensions")) {
             DirCreate(A_ScriptDir "\Extensions")
         }
@@ -579,13 +584,25 @@ EnsureExtension() {
         }
         
         ; Extract the downloaded zip file using PowerShell Expand-Archive
+        ; Note: paths are single-quoted within PowerShell command to support spaces in directory names
+        exitCode := 0
         try {
-            RunWait('powershell.exe -Command Expand-Archive -Path "' zipFile '" -DestinationPath "' extDir '" -Force', , "Hide")
-            if (FileExist(zipFile)) {
-                FileDelete(zipFile)
-            }
+            exitCode := RunWait("powershell.exe -Command Expand-Archive -Path '" zipFile "' -DestinationPath '" extDir "' -Force", , "Hide")
         } catch Error as e {
-            MsgBox("Failed to extract AdGuard extension: " e.Message, "Extraction Error", 48)
+            MsgBox("Failed to launch PowerShell for extraction: " e.Message, "Extraction Error", 48)
+        }
+        
+        ; Clean up the zip file
+        if (FileExist(zipFile)) {
+            FileDelete(zipFile)
+        }
+        
+        ; Verify extraction was successful
+        if (exitCode != 0 || !FileExist(extDir "\manifest.json")) {
+            if (DirExist(extDir)) {
+                DirDelete(extDir, true) ; Clean up incomplete folder so we try again next time
+            }
+            MsgBox("Failed to extract AdGuard extension correctly. Please try restarting the application.", "Extraction Error", 48)
         }
     }
 }

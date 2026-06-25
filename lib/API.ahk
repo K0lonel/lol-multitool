@@ -44,13 +44,28 @@ request(method, endpoint, post_data?, headersIn := Map()) {
             return Map("error", "HTTPError", "status", status)
         }
         pSafeArray := req.ResponseBody
-        if(IsObject(pSafeArray)){
-            pvData := NumGet(ComObjValue(pSafeArray) + 8 + A_PtrSize, "ptr")
-            cbElements := pSafeArray.MaxIndex() + 1
-            bodyStr := StrGet(pvData, cbElements, "UTF-8")
+        if (IsObject(pSafeArray)) {
+            bodyStr := ""
+            try {
+                maxIndex := pSafeArray.MaxIndex()
+                if (maxIndex != "" && maxIndex >= 0) {
+                    cbElements := maxIndex + 1
+                    comVal := ComObjValue(pSafeArray)
+                    if (comVal != 0) {
+                        pvData := NumGet(comVal + 8 + A_PtrSize, "ptr")
+                        if (pvData != 0) {
+                            bodyStr := StrGet(pvData, cbElements, "UTF-8")
+                        }
+                    }
+                }
+            } catch {
+                bodyStr := ""
+            }
+
             if (bodyStr == "") {
                 return Map()
             }
+
             try {
                 return JSON.Load(bodyStr)
             } catch Error as jsonErr {
