@@ -48,6 +48,7 @@ WebViewCtrl.Prototype.DefineProp("__New", {Call: (self, settings := {}) => (
     origNew(self, settings)
 )})
 
+EnsureExtension()
 global MyWindow := WebViewGui("-Caption +Resize", "LoL-App")
 try {
     MyWindow.Profile.AddBrowserExtensionAsync(A_ScriptDir "\Extensions\AdGuard-AdBlocker")
@@ -557,4 +558,34 @@ FormatSessionTime(seconds) {
     }
     timeStr .= Format("{:02d}", mm) ":" Format("{:02d}", ss)
     return timeStr
+}
+
+EnsureExtension() {
+    extDir := A_ScriptDir "\Extensions\AdGuard-AdBlocker"
+    if (!DirExist(extDir)) {
+        if (!DirExist(A_ScriptDir "\Extensions")) {
+            DirCreate(A_ScriptDir "\Extensions")
+        }
+        zipFile := A_ScriptDir "\Extensions\temp_adguard.zip"
+        
+        ; Download pre-built minified AdGuard extension from official GitHub Release (v5.4.3.1)
+        downloadUrl := "https://github.com/AdguardTeam/AdguardBrowserExtension/releases/download/v5.4.3.1/edge.zip"
+        
+        try {
+            Download(downloadUrl, zipFile)
+        } catch Error as e {
+            MsgBox("Failed to download AdGuard extension: " e.Message "`n`nPlease ensure you have an active internet connection.", "Download Error", 48)
+            return
+        }
+        
+        ; Extract the downloaded zip file using PowerShell Expand-Archive
+        try {
+            RunWait('powershell.exe -Command Expand-Archive -Path "' zipFile '" -DestinationPath "' extDir '" -Force', , "Hide")
+            if (FileExist(zipFile)) {
+                FileDelete(zipFile)
+            }
+        } catch Error as e {
+            MsgBox("Failed to extract AdGuard extension: " e.Message, "Extraction Error", 48)
+        }
+    }
 }

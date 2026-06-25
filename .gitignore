@@ -8,3 +8,6 @@
 history.json
 config.json
 champMessages.json
+
+# Ignore downloaded WebView extensions
+Extensions/
