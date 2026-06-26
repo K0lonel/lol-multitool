@@ -8,6 +8,7 @@ global warnedNoIds := false
 global warnedEmpty := false
 global bypassAutoPick := false
 global lastSentChampId := 0
+global sentQuotesMap := Map()
 
 champSelectHelper() {
     global config, gameflow
@@ -485,6 +486,7 @@ UpdateChampSelectFrontend(session) {
             "tagLine", tagLine,
             "championId", champId,
             "championName", champName,
+            "hasQuote", HasChampQuote(champId, champName),
             "isMe", isMe,
             "isBlacklisted", isBlacklisted,
             "blacklistNote", blacklistNote,
@@ -512,7 +514,7 @@ UpdateChampSelectFrontend(session) {
                 cid := GetBenchChampId(entry)
                 cname := GetChampionName(cid)
                 isTarget := preferredIds.Has(cid)
-                benchArr.Push(Map("id", cid, "name", cname, "isTarget", isTarget ? true : false))
+                benchArr.Push(Map("id", cid, "name", cname, "isTarget", isTarget ? true : false, "hasQuote", HasChampQuote(cid, cname)))
             }
         }
     }
@@ -565,20 +567,20 @@ GetSummonerNameByPuuid(puuid) {
 }
 
 ResetChampSelectHelper() {
-    global lastSessionId, champLobbyNames, warnedNoIds, warnedEmpty, bypassAutoPick, lastSentChampId
+    global lastSessionId, champLobbyNames, warnedNoIds, warnedEmpty, bypassAutoPick
     lastSessionId := ""
     champLobbyNames := Array()
     warnedNoIds := false
     warnedEmpty := false
     bypassAutoPick := false
-    lastSentChampId := 0
     try MyWindow.ExecuteScriptAsync("onLobbyCleared()")
     try MyWindow.ExecuteScriptAsync("clearBenchDisplay()")
     try MyWindow.ExecuteScriptAsync("clearChampSelectDraft()")
 }
 
 ProcessChampMessages(session) {
-    global lastSentChampId, config
+    global lastSentChampId, config, sentQuotesMap
+    static lastLobbyChatId := ""
     
     if (!config.Has("champMessagesEnabled") || !config["champMessagesEnabled"])
         return
@@ -590,6 +592,12 @@ ProcessChampMessages(session) {
     if (conversationId == "")
         return
         
+    if (conversationId != lastLobbyChatId) {
+        lastLobbyChatId := conversationId
+        sentQuotesMap := Map()
+        lastSentChampId := 0
+    }
+    
     myInfo := GetMyChampInfo(session)
     champId := myInfo["championId"]
     champName := myInfo["championName"]
@@ -600,6 +608,13 @@ ProcessChampMessages(session) {
     }
     
     if (champId == lastSentChampId) {
+        return
+    }
+    
+    if (!IsSet(sentQuotesMap)) {
+        sentQuotesMap := Map()
+    }
+    if (sentQuotesMap.Has(champId) || sentQuotesMap.Has(String(champId))) {
         return
     }
     
@@ -642,11 +657,50 @@ ProcessChampMessages(session) {
             }
             
             lastSentChampId := champId
+            sentQuotesMap[champId] := true
+            sentQuotesMap[String(champId)] := true
             LogToWeb("Sent custom chat message for " champName, "success")
         }
     } catch Error as e {
         LogToWeb("Error processing custom champ messages: " e.Message, "error")
     }
+}
+
+HasChampQuote(champId, champName) {
+    static cachedData := ""
+    static lastFileTime := 0
+    messagesFilePath := "champMessages.json"
+    if (!FileExist(messagesFilePath)) {
+        return false
+    }
+    
+    try {
+        fileTime := FileGetTime(messagesFilePath, "M")
+        if (cachedData == "" || fileTime != lastFileTime) {
+            fileContent := FileRead(messagesFilePath, "UTF-8")
+            if (fileContent != "") {
+                cachedData := JSON.Load(fileContent)
+                lastFileTime := fileTime
+            }
+        }
+    } catch {
+        if (cachedData == "")
+            return false
+    }
+    
+    if (!IsObject(cachedData))
+        return false
+        
+    champNameLower := Format("{:L}", champName)
+    champIdStr := String(champId)
+    
+    for k, v in cachedData {
+        kLower := Format("{:L}", String(k))
+        if (kLower == champNameLower || kLower == champIdStr) {
+            return true
+        }
+    }
+    return false
 }
 
 
