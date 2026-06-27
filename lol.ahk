@@ -195,6 +195,12 @@ loop {
     if (gameflow != lastGameflow) {
         if (gameflow != "") {
             LogToWeb("LCU Gameflow phase changed to: " gameflow, "info")
+            if (gameflow == "EndOfGame") {
+                if WinExist("ahk_exe LeagueClientUx.exe") {
+                    LogToWeb("EndOfGame phase detected. Focusing League Client UX...", "info")
+                    WinActivate("ahk_exe LeagueClientUx.exe")
+                }
+            }
         } else if (lastGameflow != "INIT" && lastGameflow != "") {
             LogToWeb("LCU connection lost or offline.", "error")
         }
