@@ -77,13 +77,70 @@ ScanNewMatches() {
             
         ; Mark as checked only after successful retrieval
         checkedGames[gameId] := true
+        
+        ; Map participantId to playerName
+        idToPlayerMap := Map()
+        if (IsObject(identities)) {
+            for pIdentity in identities {
+                if (IsObject(pIdentity) && pIdentity.Has("player") && pIdentity.Has("participantId")) {
+                    playerObj := pIdentity["player"]
+                    if (IsObject(playerObj) && playerObj.Has("gameName") && playerObj.Has("tagLine")) {
+                        pId := pIdentity["participantId"]
+                        pName := playerObj["gameName"] "#" playerObj["tagLine"]
+                        idToPlayerMap[pId] := pName
+                    }
+                }
+            }
+        }
+
+        participantsList := ""
+        if (game.Has("participants") && IsObject(game["participants"]) && game["participants"].Length > 1) {
+            participantsList := game["participants"]
+        } else {
+            ; Try to use detailed_history if fetched or fetch it
+            if (!IsSet(detailed_history) || !IsObject(detailed_history)) {
+                detailed_history := LeagueAPI.GetGameDetails(gameId)
+            }
+            if (IsObject(detailed_history) && detailed_history.Has("participants")) {
+                participantsList := detailed_history["participants"]
+            }
+        }
+
+        damageStatsList := Array()
+        if (IsObject(participantsList)) {
+            for participant in participantsList {
+                if (IsObject(participant) && participant.Has("participantId") && participant.Has("stats")) {
+                    pId := participant["participantId"]
+                    statsObj := participant["stats"]
+                    champId := participant.Has("championId") ? participant["championId"] : 0
+                    
+                    damageDealt := 0
+                    if (IsObject(statsObj)) {
+                        if (statsObj.Has("totalDamageDealtToChampions")) {
+                            damageDealt := statsObj["totalDamageDealtToChampions"]
+                        } else if (statsObj.Has("physicalDamageDealtToChampions")) {
+                            damageDealt := statsObj["physicalDamageDealtToChampions"] + (statsObj.Has("magicDamageDealtToChampions") ? statsObj["magicDamageDealtToChampions"] : 0) + (statsObj.Has("trueDamageDealtToChampions") ? statsObj["trueDamageDealtToChampions"] : 0)
+                        }
+                    }
+                    
+                    pName := idToPlayerMap.Has(pId) ? idToPlayerMap[pId] : "Unknown Player"
+                    
+                    damageStatsList.Push(Map(
+                        "playerName", pName,
+                        "championId", champId,
+                        "damageDealt", damageDealt
+                    ))
+                }
+            }
+        }
             
-        ; Initialize history map entry with Timestamp
+        ; Initialize history map entry with Timestamp and DamageStats
         gameCreation := game.Has("gameCreation") ? game["gameCreation"] : 0
         
         SetHistoryGame(gameId, Map(
             "ReportedPlayers", Array(),
-            "Timestamp", gameCreation
+            "Timestamp", gameCreation,
+            "DamageStats", damageStatsList
         ))
         newMatchesFound := true
 
