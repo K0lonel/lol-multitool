@@ -273,7 +273,14 @@
 
 							<!-- Bench Section (moved to dashboard) -->
 							<div id="bench-helper-card" style="display:none; border-top: 1px solid rgba(200, 155, 60, 0.15); padding-top: 15px; margin-top: 15px;">
-								<div class="small text-muted mb-2"><i class="fa-solid fa-gamepad text-info me-1"></i> Team Bench (Click a champion to swap manually, bypassing auto-picker):</div>
+								<div class="d-flex justify-content-between align-items-center mb-2">
+									<div id="bench-helper-label" class="small text-muted"><i class="fa-solid fa-gamepad text-info me-1"></i> Team Bench (Click a champion to swap manually, bypassing auto-picker):</div>
+									<div id="bench-timer-container" style="display: none;">
+										<span id="bench-timer-badge" class="badge" style="font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 4px; letter-spacing: 0.5px; transition: all 0.3s ease;">
+											<i class="fa-solid fa-clock me-1"></i><span id="bench-timer-value">0s</span>
+										</span>
+									</div>
+								</div>
 								<div id="bench-champions-list" class="d-flex flex-wrap gap-3 py-1">
 									<!-- Dynamically populated bench -->
 								</div>
@@ -702,6 +709,47 @@
 		</main>
 	</body>
 	<script>
+		// Live Champ Select Timer variables
+		window.lastTimerSync = Date.now();
+		window.lastAdjustedTimeLeft = null;
+		window.timerIsInfinite = false;
+
+		function startBenchTimerLoop() {
+			setInterval(() => {
+				const timerContainer = document.getElementById('bench-timer-container');
+				const timerBadge = document.getElementById('bench-timer-badge');
+				const timerValue = document.getElementById('bench-timer-value');
+				if (!timerContainer || !timerBadge || !timerValue) return;
+
+				if (window.lastAdjustedTimeLeft !== undefined && window.lastAdjustedTimeLeft !== null && !window.timerIsInfinite) {
+					const elapsed = Date.now() - (window.lastTimerSync || Date.now());
+					const currentLeftMs = Math.max(0, window.lastAdjustedTimeLeft - elapsed);
+					const secondsLeft = Math.ceil(currentLeftMs / 1000);
+					
+					timerContainer.style.display = 'block';
+					timerValue.innerText = secondsLeft + 's';
+					
+					// Style based on time remaining
+					if (secondsLeft <= 10) {
+						timerBadge.style.backgroundColor = 'rgba(224, 67, 67, 0.15)';
+						timerBadge.style.border = '1px solid rgba(224, 67, 67, 0.5)';
+						timerBadge.style.color = 'var(--hextech-red)';
+						timerBadge.style.textShadow = '0 0 4px rgba(224, 67, 67, 0.4)';
+						timerBadge.classList.add('shadow-danger-pulse');
+					} else {
+						timerBadge.style.backgroundColor = 'rgba(200, 155, 60, 0.15)';
+						timerBadge.style.border = '1px solid rgba(200, 155, 60, 0.5)';
+						timerBadge.style.color = 'var(--hextech-gold)';
+						timerBadge.style.textShadow = '0 0 4px rgba(200, 155, 60, 0.4)';
+						timerBadge.classList.remove('shadow-danger-pulse');
+					}
+				} else {
+					timerContainer.style.display = 'none';
+				}
+			}, 200);
+		}
+		startBenchTimerLoop();
+
 		window.chrome.webview.addEventListener('message', ahkWebMessage);
 		function ahkWebMessage(Msg) {
 			console.log("AHK Message received: " + Msg.data);
@@ -1835,6 +1883,7 @@
 		}
 
 		function clearBenchDisplay() {
+			window.lastAdjustedTimeLeft = null;
 			const card = document.getElementById('bench-helper-card');
 			if (card) {
 				card.style.display = 'none';
@@ -2004,6 +2053,13 @@
 
 		function updateChampSelectDraft(payload) {
 			window.isAram = !!(payload && payload.benchEnabled);
+			if (payload && payload.timer) {
+				window.lastTimerSync = payload.timer.internalNowInEpochMs || Date.now();
+				window.lastAdjustedTimeLeft = payload.timer.adjustedTimeLeftInPhase;
+				window.timerIsInfinite = !!payload.timer.isInfinite;
+			} else {
+				window.lastAdjustedTimeLeft = null;
+			}
 			const card = document.getElementById('live-champ-select-card');
 			const grid = document.getElementById('champ-select-players-grid');
 			if (!card || !grid) return;
@@ -2210,6 +2266,7 @@
 
 		function clearChampSelectDraft() {
 			window.isAram = false;
+			window.lastAdjustedTimeLeft = null;
 			const card = document.getElementById('live-champ-select-card');
 			const grid = document.getElementById('champ-select-players-grid');
 			if (card) {

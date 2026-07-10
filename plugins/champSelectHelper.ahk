@@ -534,12 +534,22 @@ UpdateChampSelectFrontend(session) {
         }
     }
     
+    timerMap := Map("adjustedTimeLeftInPhase", 0, "internalNowInEpochMs", 0, "isInfinite", false, "phase", "")
+    if (session.Has("timer") && IsObject(session["timer"])) {
+        t := session["timer"]
+        timerMap["adjustedTimeLeftInPhase"] := t.Has("adjustedTimeLeftInPhase") ? t["adjustedTimeLeftInPhase"] : 0
+        timerMap["internalNowInEpochMs"] := t.Has("internalNowInEpochMs") ? t["internalNowInEpochMs"] : 0
+        timerMap["isInfinite"] := t.Has("isInfinite") ? (t["isInfinite"] = true || t["isInfinite"] = "true") : false
+        timerMap["phase"] := t.Has("phase") ? t["phase"] : ""
+    }
+    
     payload := Map(
         "players", teamArr,
         "bench", benchArr,
         "benchEnabled", benchEnabled,
         "myCellId", session.Has("localPlayerCellId") ? session["localPlayerCellId"] : -1,
-        "myTeamId", myTeamId
+        "myTeamId", myTeamId,
+        "timer", timerMap
     )
     
     try {
