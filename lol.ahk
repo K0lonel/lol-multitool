@@ -15,6 +15,7 @@ global plugins := Array()
 #Include plugins/autoSkipPreEnd.ahk
 #Include plugins/lootAssistant.ahk
 #Include plugins/smartAutoHonorer.ahk
+#Include plugins/killLeague.ahk
 
 FileEncoding "UTF-8"
 JSON.EscapeUnicode := False
@@ -376,7 +377,12 @@ MaximizeWindow(WebView) {
 }
 
 UpdateConfigCallback(WebView, key, value) {
-    global config
+    global config, killLeagueEnabled
+    if (key == "killLeagueEnabled") {
+        killLeagueEnabled := (value == "true" || value = True)
+        LogToWeb("Config updated: " key " -> " (killLeagueEnabled ? "True" : "False"), "debug")
+        return
+    }
     if (key == "reportCategories" || key == "autoPickBenchIds" || key == "favoriteChampIds" || key == "blacklist") {
         config[key] := JSON.Load(value)
     } else if (key == "acceptDelay") {

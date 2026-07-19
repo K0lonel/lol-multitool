@@ -231,8 +231,12 @@
 													<span class="badge" id="badge-skipPreEnd" style="font-size: 0.65rem;">Disabled</span>
 												</div>
 												<div class="running-task-col p-2 rounded border d-flex flex-column justify-content-center align-items-center" onclick="toggleRunningTask('champMessagesEnabled')" title="Toggle Champion Copypasta Message Sender" style="flex: 1 0 calc(25% - 6px); min-width: 80px; max-width: calc(25% - 6px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(200, 155, 60, 0.12) !important;">
-													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">COPASTA</div>
+													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">COPYPASTA</div>
 													<span class="badge" id="badge-champMessages" style="font-size: 0.65rem;">Disabled</span>
+												</div>
+												<div class="running-task-col p-2 rounded border d-flex flex-column justify-content-center align-items-center" onclick="toggleRunningTask('killLeagueEnabled')" title="Toggle Auto-Close League on Detect" style="flex: 1 0 calc(25% - 6px); min-width: 80px; max-width: calc(25% - 6px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(200, 155, 60, 0.12) !important;">
+													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">CLOSE LOL</div>
+													<span class="badge" id="badge-killLeague" style="font-size: 0.65rem;">Disabled</span>
 												</div>
 											</div>
 										</div>
@@ -816,6 +820,7 @@
 		function initConfig(config) {
 			console.log("Initializing configs: ", config);
 			window.loadedConfig = config;
+			window.loadedConfig.killLeagueEnabled = false;
 
 			if (config.autoAccept !== undefined) {
 				document.getElementById('toggle-autoAccept').checked = config.autoAccept;
@@ -860,6 +865,7 @@
 				document.getElementById('toggle-champMessagesEnabled').checked = config.champMessagesEnabled;
 				updateBadge('badge-champMessages', config.champMessagesEnabled);
 			}
+			updateBadge('badge-killLeague', false);
 			if (config.acceptDelay !== undefined) {
 				document.getElementById('range-acceptDelay').value = config.acceptDelay;
 				document.getElementById('val-acceptDelay').innerText = config.acceptDelay;
@@ -960,6 +966,7 @@
 			if (key === 'autoHonorerEnabled') updateBadge('badge-honorer', value);
 			if (key === 'autoSkipPreEndEnabled') updateBadge('badge-skipPreEnd', value);
 			if (key === 'champMessagesEnabled') updateBadge('badge-champMessages', value);
+			if (key === 'killLeagueEnabled') updateBadge('badge-killLeague', value);
 		}
 
 		function onCategoryToggle() {
@@ -2598,6 +2605,11 @@
 				const el = document.getElementById('toggle-champMessagesEnabled');
 				if (el) el.checked = val;
 				updateConfig('champMessagesEnabled', val);
+			} else if (taskName === 'killLeagueEnabled') {
+				const val = !window.loadedConfig.killLeagueEnabled;
+				const el = document.getElementById('toggle-killLeagueEnabled');
+				if (el) el.checked = val;
+				updateConfig('killLeagueEnabled', val);
 			}
 		}
 	</script>
