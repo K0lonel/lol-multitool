@@ -135,9 +135,6 @@
 					
 					<!-- Dashboard Tab -->
 					<div class="tab-pane fade show active" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab">
-						<div class="d-flex justify-content-between align-items-center mb-4">
-							<h2 class="m-0" style="font-weight: 700; letter-spacing: 0.5px;">Live Status</h2>
-						</div>
 
 						<div class="row g-3 align-items-stretch mb-4">
 							<!-- Quick Stats Card -->
@@ -186,9 +183,13 @@
 													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">PLAYERS LOGGED</div>
 													<span id="game-stats-players" class="badge bg-dark border text-success" style="border-color: rgba(40, 167, 69, 0.3) !important; font-size: 0.75rem; padding: 3px 6px;">0</span>
 												</div>
-												<div class="p-2 rounded border d-flex flex-column justify-content-center align-items-center" title="Total players currently on your blacklist" style="flex: 1 0 calc(25% - 6px); min-width: 80px; max-width: calc(25% - 6px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(200, 155, 60, 0.12) !important;">
+												<div class="p-2 rounded border d-flex flex-column justify-content-center align-items-center" title="Total players currently on your blacklist" style="flex: 1 0 calc(25% - 6px); min-width: 80px; max-width: calc(25% - 6px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(220, 53, 69, 0.3) !important;">
 													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">BLACKLISTED</div>
 													<span id="game-stats-blacklist-count" class="badge bg-dark border text-danger" style="border-color: rgba(220, 53, 69, 0.3) !important; font-size: 0.75rem; padding: 3px 6px;">0</span>
+												</div>
+												<div class="p-2 rounded border d-flex flex-column justify-content-center align-items-center" title="Time remaining until League of Legends reconnect attempt" style="flex: 1 0 calc(25% - 6px); min-width: 80px; max-width: calc(25% - 6px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(200, 155, 60, 0.12) !important;">
+													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">RECONNECT IN</div>
+													<span id="game-stats-reconnect-time" class="badge bg-dark border text-info" style="border-color: rgba(10, 200, 185, 0.3) !important; font-size: 0.75rem; padding: 3px 6px;">--</span>
 												</div>
 											</div>
 										</div>
@@ -218,7 +219,7 @@
 													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">BENCH-SNIPER</div>
 													<span class="badge" id="badge-sniper" style="font-size: 0.65rem;">Disabled</span>
 												</div>
-												<div class="running-task-col p-2 rounded border d-flex flex-column justify-content-center align-items-center" onclick="toggleRunningTask('autoAccept')" title="Toggle Queue Auto-Acceptor" style="flex: 1 0 calc(25% - 6px); min-width: 80px; max-width: calc(25% - 6px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(200, 155, 60, 0.12) !important;">
+												<div class="running-task-col p-2 rounded border d-flex flex-column justify-content-center align-items-center" onclick="toggleRunningTask('autoAccept')" title="Toggle Queue Auto-Accept" style="flex: 1 0 calc(25% - 6px); min-width: 80px; max-width: calc(25% - 6px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(200, 155, 60, 0.12) !important;">
 													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">ACCEPT</div>
 													<span class="badge" id="badge-accept" style="font-size: 0.65rem;">Disabled</span>
 												</div>
@@ -344,7 +345,6 @@
 
 			<!-- Automation/Plugins Tab -->
 					<div class="tab-pane fade" id="v-pills-plugins" role="tabpanel" aria-labelledby="v-pills-plugins-tab">
-						<h2 class="mb-4" style="font-weight: 700; letter-spacing: 0.5px;">Automation Center</h2>
 
 						<!-- ARAM Bench Sniper Configuration -->
 						<div class="hextech-card" id="card-sniper" style="position: relative; z-index: 10;">
@@ -567,7 +567,7 @@
 						<!-- Auto Accept Configuration -->
 						<div class="hextech-card" id="card-accept">
 							<div class="d-flex justify-content-between align-items-center mb-3">
-								<div class="card-title-gold m-0"><i class="fa-regular fa-square-check"></i> Match Finder Auto-Acceptor</div>
+								<div class="card-title-gold m-0"><i class="fa-regular fa-square-check"></i> Match Finder Auto-Accept</div>
 								<div class="d-flex align-items-center gap-3">
 									<div class="form-check form-switch m-0">
 										<input class="form-check-input" type="checkbox" id="toggle-autoAccept" onchange="updateConfig('autoAccept', this.checked)">
@@ -691,7 +691,6 @@
 
 					<!-- Settings Tab -->
 					<div class="tab-pane fade" id="v-pills-settings" role="tabpanel" aria-labelledby="v-pills-settings-tab">
-						<h2 class="mb-4" style="font-weight: 700; letter-spacing: 0.5px;">System Settings</h2>
 						<div class="hextech-card">
 							<div class="card-title-gold"><i class="fa-solid fa-sliders"></i> Multitool Configuration</div>
 							<p class="text-muted small">Exclusion rules and developer flags.</p>

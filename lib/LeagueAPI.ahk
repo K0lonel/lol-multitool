@@ -74,6 +74,10 @@ class LeagueAPI {
         return APICall("POST", "/riotclient/kill-and-restart-ux", "{}")
     }
 
+    static ReconnectGameflow() {
+        return APICall("POST", "/lol-gameflow/v1/reconnect")
+    }
+
     static GetHonorBallot() {
         return APICall("GET", "/lol-honor-v2/v1/ballot")
     }
