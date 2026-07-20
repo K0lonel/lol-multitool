@@ -66,6 +66,14 @@
 			.running-task-col:active {
 				transform: scale(0.95);
 			}
+			@keyframes modalFadeIn {
+				from { opacity: 0; transform: scale(0.92); }
+				to { opacity: 1; transform: scale(1); }
+			}
+			#hextech-modal-input:focus {
+				border-color: var(--hextech-gold) !important;
+				box-shadow: 0 0 12px rgba(200, 155, 60, 0.4) !important;
+			}
 		</style>
 	</head>
 	<body>
@@ -710,6 +718,32 @@
 				</div>
 			</div>
 		</main>
+
+		<!-- Custom Hextech Prompt Modal Overlay -->
+		<div id="hextech-modal-overlay" class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="z-index: 999999; background: rgba(5, 8, 12, 0.78); backdrop-filter: blur(8px);">
+			<div class="hextech-card p-4 rounded border shadow-lg" style="width: 440px; max-width: 90vw; background: rgba(10, 14, 20, 0.98); border-color: var(--hextech-gold) !important; box-shadow: 0 20px 40px rgba(0,0,0,0.85), 0 0 20px rgba(200, 155, 60, 0.25) !important; animation: modalFadeIn 0.2s ease-out;">
+				<div class="d-flex align-items-center mb-3">
+					<div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 42px; height: 42px; background: rgba(200, 155, 60, 0.12); border: 1px solid var(--hextech-gold);">
+						<i class="fa-solid fa-user-shield text-warning fs-5"></i>
+					</div>
+					<div class="text-truncate" style="max-width: 320px;">
+						<h6 class="text-warning mb-0 font-weight-bold" id="hextech-modal-title" style="letter-spacing: 0.5px; font-size: 0.95rem;">Blacklist Note</h6>
+						<span class="text-muted small text-truncate d-block" id="hextech-modal-subtitle" style="font-size: 0.78rem;">PlayerName#TAG</span>
+					</div>
+					<button type="button" class="btn-close btn-close-white ms-auto shadow-none" onclick="closeHextechModal(null)"></button>
+				</div>
+				
+				<div class="mb-3">
+					<label for="hextech-modal-input" class="form-label text-white small font-weight-bold mb-1" id="hextech-modal-label" style="font-size: 0.8rem;">Note (optional):</label>
+					<input type="text" class="form-control" id="hextech-modal-input" placeholder="e.g. Flamer, Inted last game, Toxic..." style="background: rgba(0, 0, 0, 0.5); border-color: rgba(200, 155, 60, 0.3); color: #fff; font-size: 0.85rem; padding: 8px 12px;" autocomplete="off">
+				</div>
+				
+				<div class="d-flex justify-content-end gap-2 mt-4">
+					<button type="button" class="btn btn-outline-secondary btn-sm px-3" onclick="closeHextechModal(null)" style="font-size: 0.8rem;">Cancel</button>
+					<button type="button" class="btn btn-warning btn-sm px-4 font-weight-bold" id="hextech-modal-confirm-btn" style="background: linear-gradient(135deg, #c89b3c, #f0e6d2); border: none; color: #0a0e14; font-size: 0.8rem;" onclick="confirmHextechModal()">Save Note</button>
+				</div>
+			</div>
+		</div>
 	</body>
 	<script>
 		// Live Champ Select Timer variables
@@ -2425,7 +2459,67 @@
 			});
 		}
 
-		function editBlacklistNote(index) {
+		let hextechModalCallback = null;
+
+		function showHextechPrompt({ title, subtitle, label, defaultValue = '', placeholder = '' }) {
+			return new Promise((resolve) => {
+				const overlay = document.getElementById('hextech-modal-overlay');
+				const titleEl = document.getElementById('hextech-modal-title');
+				const subtitleEl = document.getElementById('hextech-modal-subtitle');
+				const labelEl = document.getElementById('hextech-modal-label');
+				const inputEl = document.getElementById('hextech-modal-input');
+				
+				if (!overlay || !inputEl) {
+					resolve(prompt(subtitle || title, defaultValue));
+					return;
+				}
+
+				titleEl.innerText = title || 'Note Prompt';
+				subtitleEl.innerText = subtitle || '';
+				labelEl.innerText = label || 'Note (optional):';
+				inputEl.value = defaultValue;
+				inputEl.placeholder = placeholder || 'Enter note...';
+				
+				hextechModalCallback = resolve;
+				
+				overlay.classList.remove('d-none');
+				setTimeout(() => {
+					inputEl.focus();
+					inputEl.select();
+				}, 50);
+			});
+		}
+
+		function confirmHextechModal() {
+			const inputEl = document.getElementById('hextech-modal-input');
+			const val = inputEl ? inputEl.value : '';
+			closeHextechModal(val);
+		}
+
+		function closeHextechModal(result) {
+			const overlay = document.getElementById('hextech-modal-overlay');
+			if (overlay) overlay.classList.add('d-none');
+			if (hextechModalCallback) {
+				const cb = hextechModalCallback;
+				hextechModalCallback = null;
+				cb(result);
+			}
+		}
+
+		document.addEventListener('keydown', (e) => {
+			const overlay = document.getElementById('hextech-modal-overlay');
+			if (overlay && !overlay.classList.contains('d-none')) {
+				if (e.key === 'Enter') {
+					e.preventDefault();
+					confirmHextechModal();
+				} else if (e.key === 'Escape') {
+					e.preventDefault();
+					closeHextechModal(null);
+				}
+			}
+		});
+
+		async function editBlacklistNote(index) {
 			const playerObj = window.blacklist[index];
 			let currentNote = "";
 			let playerName = "";
@@ -2436,7 +2530,13 @@
 				playerName = playerObj || "";
 			}
 
-			const newNote = prompt(`Edit blacklist note for ${playerName}:`, currentNote);
+			const newNote = await showHextechPrompt({
+				title: 'Edit Blacklist Note',
+				subtitle: playerName,
+				label: 'Update note for this player:',
+				defaultValue: currentNote,
+				placeholder: 'e.g. Flamer, Inted last game...'
+			});
 			if (newNote === null) return;
 
 			const trimmedNote = newNote.trim();
@@ -2517,6 +2617,22 @@
 			if (noteInput) noteInput.value = '';
 		}
 
+		async function selectBlacklistPlayerFromDropdown(playerNameWithTag) {
+			if (!playerNameWithTag) return;
+			const note = await showHextechPrompt({
+				title: 'Blacklist Player',
+				subtitle: playerNameWithTag,
+				label: 'Add a note for this player (optional):',
+				placeholder: 'e.g. Flamer, Inted last game, Toxic...'
+			});
+			if (note === null) return; // User cancelled
+			addPlayerToBlacklist(playerNameWithTag, note);
+			const searchInput = document.getElementById('search-blacklist-player');
+			if (searchInput) searchInput.value = '';
+			const dropdown = document.getElementById('blacklist-players-dropdown');
+			if (dropdown) dropdown.classList.add('d-none');
+		}
+
 		// Search Dropdown Functions
 		function showBlacklistDropdown() {
 			filterBlacklistDropdown();
@@ -2543,13 +2659,32 @@
 
 			let html = '';
 			filtered.slice(0, 10).forEach(player => {
+				const champId = player.championId;
+				let iconHtml = `<i class="fa-solid fa-user text-warning me-2" style="font-size: 0.8rem; width: 20px; text-align: center;"></i>`;
+				let champName = '';
+
+				if (champId) {
+					champName = championList[champId] || '';
+					const alias = championAliases[champId] || (champName ? getChampCleanFile(champName) : '');
+					if (alias) {
+						const imgUrl = `https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/champion/${alias}.png`;
+						iconHtml = `<img src="${imgUrl}" class="rounded-circle border border-warning me-2" style="width: 22px; height: 22px; object-fit: cover;" title="${champName}" onerror="this.replaceWith(Object.assign(document.createElement('i'), {className: 'fa-solid fa-user text-warning me-2'}));">`;
+					}
+				}
+
+				const champLabel = champName ? `<span class="badge bg-dark border text-warning ms-auto font-weight-bold" style="border-color: rgba(200, 155, 60, 0.4) !important; font-size: 0.68rem; padding: 2px 6px;">${champName}</span>` : '';
+
 				html += `
-					<div class="dropdown-item p-2 text-white border-bottom border-dark" 
+					<div class="dropdown-item p-2 text-white border-bottom border-dark d-flex align-items-center justify-content-between" 
 						 style="cursor: pointer; font-size: 0.8rem; background: rgba(10, 14, 20, 0.95);" 
-						 onclick="addPlayerToBlacklist('${player.nameWithTag.replace(/'/g, "\\'")}'); document.getElementById('search-blacklist-player').value='';"
-						 onmouseover="this.style.background='rgba(200, 155, 60, 0.1)';" 
+						 onclick="selectBlacklistPlayerFromDropdown('${player.nameWithTag.replace(/'/g, "\\'")}');"
+						 onmouseover="this.style.background='rgba(200, 155, 60, 0.15)';" 
 						 onmouseout="this.style.background='transparent';">
-						<i class="fa-solid fa-user text-warning me-1"></i> ${player.gameName}<span class="text-muted">#${player.tagLine}</span>
+						<div class="d-flex align-items-center text-truncate me-2">
+							${iconHtml}
+							<span class="text-white font-weight-bold">${player.gameName}</span><span class="text-muted">#${player.tagLine}</span>
+						</div>
+						${champLabel}
 					</div>
 				`;
 			});

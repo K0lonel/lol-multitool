@@ -24,15 +24,43 @@ GetRecentPlayersCallback(WebView) {
         for index, game in tempHistory["games"]["games"] {
             gameId := String(game["gameId"])
             identities := ""
+            participantsList := ""
+            
             if (game.Has("participantIdentities") && IsObject(game["participantIdentities"]) && game["participantIdentities"].Length > 1) {
                 identities := game["participantIdentities"]
-            } else if (gameIdentitiesCache.Has(gameId)) {
-                identities := gameIdentitiesCache[gameId]
-            } else {
-                detailed_history := LeagueAPI.GetGameDetails(gameId)
-                if (IsObject(detailed_history) && detailed_history.Has("participantIdentities")) {
-                    identities := detailed_history["participantIdentities"]
-                    gameIdentitiesCache[gameId] := identities
+            }
+            if (game.Has("participants") && IsObject(game["participants"]) && game["participants"].Length > 1) {
+                participantsList := game["participants"]
+            }
+            
+            if (!IsObject(identities) || !IsObject(participantsList)) {
+                if (gameIdentitiesCache.Has(gameId)) {
+                    cached := gameIdentitiesCache[gameId]
+                    if (IsObject(cached) && HasProp(cached, "Has") && cached.Has("identities")) {
+                        identities := cached["identities"]
+                        participantsList := cached.Has("participants") ? cached["participants"] : ""
+                    }
+                }
+                
+                if (!IsObject(identities) || !IsObject(participantsList)) {
+                    detailed_history := LeagueAPI.GetGameDetails(gameId)
+                    if (IsObject(detailed_history)) {
+                        if (detailed_history.Has("participantIdentities"))
+                            identities := detailed_history["participantIdentities"]
+                        if (detailed_history.Has("participants"))
+                            participantsList := detailed_history["participants"]
+                        
+                        gameIdentitiesCache[gameId] := Map("identities", identities, "participants", participantsList)
+                    }
+                }
+            }
+            
+            participantChampMap := Map()
+            if (IsObject(participantsList)) {
+                for p in participantsList {
+                    if (IsObject(p) && p.Has("participantId") && p.Has("championId")) {
+                        participantChampMap[String(p["participantId"])] := p["championId"]
+                    }
                 }
             }
             
@@ -44,10 +72,14 @@ GetRecentPlayersCallback(WebView) {
                             nameWithTag := player["gameName"] "#" player["tagLine"]
                             if (!seenPlayers.Has(nameWithTag)) {
                                 seenPlayers[nameWithTag] := true
+                                pId := participant.Has("participantId") ? String(participant["participantId"]) : ""
+                                champId := (pId != "" && participantChampMap.Has(pId)) ? participantChampMap[pId] : 0
+                                
                                 recentPlayers.Push(Map(
                                     "gameName", player["gameName"], 
                                     "tagLine", player["tagLine"], 
-                                    "nameWithTag", nameWithTag
+                                    "nameWithTag", nameWithTag,
+                                    "championId", champId
                                 ))
                             }
                         }
