@@ -23,6 +23,8 @@ JSON.EscapeUnicode := False
 if(!FileExist("history.json"))
     FileAppend("{}", "history.json")
 global match_history_dic := JSON.Load(FileRead("history.json"))
+global historyDirty := false
+global historyVersion := 0
 global friend_puuid := Map()
 global reportList := ""
 global reportQueue := Array()
@@ -319,11 +321,17 @@ loop {
             }
         }
         
+        ; Flush pending history writes to disk if dirty (debounced)
+        if (historyDirty) {
+            SaveHistory()
+        }
+
         ; Update session time on the frontend every tick
         MyWindow.ExecuteScriptAsync("updateSessionTime('" sessionTime "')")
         
-        ; Only update the dashboard UI when data actually changes
-        currentDashboardState := JSON.Dump(me) "|" gameflow "|" JSON.Dump(match_history_dic) "|" reportQueue.Length "|" reportStatus
+        ; Only update the dashboard UI when data actually changes using lightweight state comparison
+        meSummonerId := (me.Has("lol") && me["lol"].Has("gameName")) ? me["lol"]["gameName"] : ""
+        currentDashboardState := meSummonerId "|" gameflow "|" historyVersion "|" reportQueue.Length "|" reportStatus
         if (currentDashboardState != lastDashboardState) {
             lastDashboardState := currentDashboardState
             MyWindow.ExecuteScriptAsync("updateDashboard(" JSON.Dump(me) ", '" gameflow "', " JSON.Dump(match_history_dic) ", " reportQueue.Length ", '" reportStatus "')")
@@ -353,6 +361,7 @@ ExitSave(ExitReason := "", ExitCode := ""){
         }
     }
     SaveConfig()
+    SaveHistory(true)
 }
 
 CloseWindow(WebView) {
@@ -535,12 +544,15 @@ GetChampionName(id) {
     return "ID " id
 }
 
-SaveHistory() {
-    global match_history_dic
+SaveHistory(force := false) {
+    global match_history_dic, historyDirty
+    if (!historyDirty && !force)
+        return
     try {
         fileObj := FileOpen("history.json", "w", "UTF-8")
         fileObj.Write(JSON.Dump(match_history_dic, True))
         fileObj.Close()
+        historyDirty := false
     } catch Error as e {
         LogToWeb("Failed to save history.json to disk: " e.Message, "error")
     }
@@ -559,9 +571,10 @@ GetHistoryGame(gameId) {
 }
 
 SetHistoryGame(gameId, value) {
-    global match_history_dic
+    global match_history_dic, historyDirty, historyVersion
     match_history_dic[gameId] := value
-    SaveHistory()
+    historyDirty := true
+    historyVersion++
 }
 
 FormatSessionTime(seconds) {

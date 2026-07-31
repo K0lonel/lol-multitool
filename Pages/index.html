@@ -57,14 +57,61 @@
 			}
 			.running-task-col {
 				cursor: pointer;
-				transition: transform 0.15s ease, filter 0.15s ease;
+				transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+				will-change: transform, box-shadow, border-color;
 			}
 			.running-task-col:hover {
-				transform: scale(1.05);
-				filter: brightness(1.2);
+				transform: translateY(-3px);
+				filter: brightness(1.25);
+				border-color: rgba(200, 155, 60, 0.45) !important;
+				box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5), 0 0 12px rgba(200, 155, 60, 0.22);
 			}
 			.running-task-col:active {
-				transform: scale(0.95);
+				transform: translateY(0px) scale(0.96);
+				box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+			}
+			.running-task-enabled {
+				border-color: rgba(40, 167, 69, 0.45) !important;
+				background: rgba(40, 167, 69, 0.08) !important;
+				box-shadow: 0 0 10px rgba(40, 167, 69, 0.25);
+			}
+			@keyframes phaseGlowCyan {
+				0% { box-shadow: 0 0 4px rgba(10, 200, 185, 0.3); border-color: rgba(10, 200, 185, 0.4) !important; }
+				50% { box-shadow: 0 0 14px rgba(10, 200, 185, 0.85); border-color: rgba(10, 200, 185, 1.0) !important; }
+				100% { box-shadow: 0 0 4px rgba(10, 200, 185, 0.3); border-color: rgba(10, 200, 185, 0.4) !important; }
+			}
+			@keyframes phaseGlowGold {
+				0% { box-shadow: 0 0 4px rgba(200, 155, 60, 0.3); border-color: rgba(200, 155, 60, 0.4) !important; }
+				50% { box-shadow: 0 0 14px rgba(200, 155, 60, 0.85); border-color: rgba(200, 155, 60, 1.0) !important; }
+				100% { box-shadow: 0 0 4px rgba(200, 155, 60, 0.3); border-color: rgba(200, 155, 60, 0.4) !important; }
+			}
+			@keyframes phaseGlowGreen {
+				0% { box-shadow: 0 0 4px rgba(40, 167, 69, 0.3); border-color: rgba(40, 167, 69, 0.4) !important; }
+				50% { box-shadow: 0 0 14px rgba(40, 167, 69, 0.85); border-color: rgba(40, 167, 69, 1.0) !important; }
+				100% { box-shadow: 0 0 4px rgba(40, 167, 69, 0.3); border-color: rgba(40, 167, 69, 0.4) !important; }
+			}
+			.glow-cyan-pulse {
+				animation: phaseGlowCyan 2s infinite ease-in-out;
+			}
+			.glow-gold-pulse {
+				animation: phaseGlowGold 2s infinite ease-in-out;
+			}
+			.glow-green-pulse {
+				animation: phaseGlowGreen 2s infinite ease-in-out;
+			}
+			.preset-spell-btn {
+				background: rgba(10, 14, 20, 0.85);
+				border-color: rgba(200, 155, 60, 0.25) !important;
+				transition: all 0.18s ease;
+			}
+			.preset-spell-btn:hover {
+				background: rgba(200, 155, 60, 0.2) !important;
+				border-color: rgba(200, 155, 60, 0.7) !important;
+				transform: translateY(-1px);
+				box-shadow: 0 0 8px rgba(200, 155, 60, 0.3);
+			}
+			.preset-spell-btn:active {
+				transform: translateY(0) scale(0.96);
 			}
 			@keyframes modalFadeIn {
 				from { opacity: 0; transform: scale(0.92); }
@@ -143,6 +190,46 @@
 					
 					<!-- Dashboard Tab -->
 					<div class="tab-pane fade show active" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab">
+
+						<!-- Live Champ Select Draft Card -->
+						<div class="hextech-card" id="live-champ-select-card" style="display:none; border-color: var(--hextech-gold); position: relative;">
+							<!-- Static Dropdowns for Spells Selection -->
+							<div class="position-absolute d-none rounded border p-2 spell-selector-dropdown shadow-lg" id="my-spell1-dropdown" style="background: rgba(10, 14, 20, 0.98); border-color: var(--hextech-gold) !important; width: 250px; z-index: 1050; backdrop-filter: blur(8px); box-shadow: 0 10px 25px rgba(0,0,0,0.65);"></div>
+							<div class="position-absolute d-none rounded border p-2 spell-selector-dropdown shadow-lg" id="my-spell2-dropdown" style="background: rgba(10, 14, 20, 0.98); border-color: var(--hextech-gold) !important; width: 250px; z-index: 1050; backdrop-filter: blur(8px); box-shadow: 0 10px 25px rgba(0,0,0,0.65);"></div>
+
+							<div class="card-title-gold d-flex justify-content-between align-items-center mb-3">
+								<span><i class="fa-solid fa-users-viewfinder"></i> Live Champ Select Draft</span>
+								<div class="d-flex align-items-center gap-2">
+									<span class="badge" id="champ-select-team-badge" style="font-size: 0.7rem; display: none; padding: 4px 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.25);"></span>
+									<span class="badge bg-dark border text-warning" id="champ-select-queue-type" style="font-size: 0.75rem; border-color: rgba(200, 155, 60, 0.3) !important;">Active Lobby</span>
+								</div>
+							</div>
+							
+							<!-- Players List (Mimicking Champ Select Screen) -->
+							<div class="row row-cols-1 row-cols-md-5 g-3 mb-4" id="champ-select-players-grid">
+								<!-- Dynamically populated by JS: 5 columns, one for each teammate -->
+							</div>
+
+							<!-- Bench Section (moved to dashboard) -->
+							<div id="bench-helper-card" style="display:none; border-top: 1px solid rgba(200, 155, 60, 0.15); padding-top: 15px; margin-top: 15px;">
+								<div class="d-flex justify-content-between align-items-center mb-2">
+									<div id="bench-helper-label" class="small text-muted"><i class="fa-solid fa-gamepad text-info me-1"></i> Team Bench (Click a champion to swap manually, bypassing auto-picker):</div>
+									<div id="bench-timer-container" style="display: none;">
+										<span id="bench-timer-badge" class="badge" style="font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 4px; letter-spacing: 0.5px; transition: all 0.3s ease;">
+											<i class="fa-solid fa-clock me-1"></i><span id="bench-timer-value">0s</span>
+										</span>
+									</div>
+								</div>
+								<div id="bench-champions-list" class="d-flex flex-wrap gap-3 py-1">
+									<!-- Dynamically populated bench -->
+								</div>
+							</div>
+
+							<!-- Dodge Button Row -->
+							<div class="d-flex justify-content-end align-items-center mt-3 border-top pt-3" style="border-color: rgba(200, 155, 60, 0.1) !important;">
+								<button class="btn btn-outline-danger btn-sm" onclick="ahk.dodgeLobby()"><i class="fa-solid fa-right-from-bracket me-1"></i> Instadodge Lobby</button>
+							</div>
+						</div>
 
 						<div class="row g-3 align-items-stretch mb-4">
 							<!-- Quick Stats Card -->
@@ -265,45 +352,7 @@
 							</div>
 						</div>
 
-						<!-- Live Champ Select Draft Card -->
-						<div class="hextech-card" id="live-champ-select-card" style="display:none; border-color: var(--hextech-gold); position: relative;">
-							<!-- Static Dropdowns for Spells Selection -->
-							<div class="position-absolute d-none rounded border p-2 spell-selector-dropdown shadow-lg" id="my-spell1-dropdown" style="background: rgba(10, 14, 20, 0.98); border-color: var(--hextech-gold) !important; width: 230px; z-index: 1050; backdrop-filter: blur(8px); box-shadow: 0 -10px 25px rgba(0,0,0,0.65);"></div>
-							<div class="position-absolute d-none rounded border p-2 spell-selector-dropdown shadow-lg" id="my-spell2-dropdown" style="background: rgba(10, 14, 20, 0.98); border-color: var(--hextech-gold) !important; width: 230px; z-index: 1050; backdrop-filter: blur(8px); box-shadow: 0 -10px 25px rgba(0,0,0,0.65);"></div>
 
-							<div class="card-title-gold d-flex justify-content-between align-items-center mb-3">
-								<span><i class="fa-solid fa-users-viewfinder"></i> Live Champ Select Draft</span>
-								<div class="d-flex align-items-center gap-2">
-									<span class="badge" id="champ-select-team-badge" style="font-size: 0.7rem; display: none; padding: 4px 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.25);"></span>
-									<span class="badge bg-dark border text-warning" id="champ-select-queue-type" style="font-size: 0.75rem; border-color: rgba(200, 155, 60, 0.3) !important;">Active Lobby</span>
-								</div>
-							</div>
-							
-							<!-- Players List (Mimicking Champ Select Screen) -->
-							<div class="row row-cols-1 row-cols-md-5 g-3 mb-4" id="champ-select-players-grid">
-								<!-- Dynamically populated by JS: 5 columns, one for each teammate -->
-							</div>
-
-							<!-- Bench Section (moved to dashboard) -->
-							<div id="bench-helper-card" style="display:none; border-top: 1px solid rgba(200, 155, 60, 0.15); padding-top: 15px; margin-top: 15px;">
-								<div class="d-flex justify-content-between align-items-center mb-2">
-									<div id="bench-helper-label" class="small text-muted"><i class="fa-solid fa-gamepad text-info me-1"></i> Team Bench (Click a champion to swap manually, bypassing auto-picker):</div>
-									<div id="bench-timer-container" style="display: none;">
-										<span id="bench-timer-badge" class="badge" style="font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 4px; letter-spacing: 0.5px; transition: all 0.3s ease;">
-											<i class="fa-solid fa-clock me-1"></i><span id="bench-timer-value">0s</span>
-										</span>
-									</div>
-								</div>
-								<div id="bench-champions-list" class="d-flex flex-wrap gap-3 py-1">
-									<!-- Dynamically populated bench -->
-								</div>
-							</div>
-
-							<!-- Dodge Button Row -->
-							<div class="d-flex justify-content-end align-items-center mt-3 border-top pt-3" style="border-color: rgba(200, 155, 60, 0.1) !important;">
-								<button class="btn btn-outline-danger btn-sm" onclick="ahk.dodgeLobby()"><i class="fa-solid fa-right-from-bracket me-1"></i> Instadodge Lobby</button>
-							</div>
-						</div>
 
 
 						<!-- Queue Progress Card -->
@@ -1102,6 +1151,16 @@
 				stateEl.innerText = "CONNECTED";
 				gameflowEl.innerText = gameflow;
 				
+				if (gameflow === "ChampSelect") {
+					gameflowEl.className = "badge bg-dark border text-info glow-cyan-pulse";
+				} else if (gameflow === "InProgress") {
+					gameflowEl.className = "badge bg-dark border text-success glow-green-pulse";
+				} else if (gameflow === "Lobby" || gameflow === "Matchmaking" || gameflow === "ReadyCheck") {
+					gameflowEl.className = "badge bg-dark border text-warning glow-gold-pulse";
+				} else {
+					gameflowEl.className = "badge bg-dark border text-info";
+				}
+				
 				if (gameflow === "ReadyCheck") {
 					dotEl.className = "status-dot ready";
 				} else {
@@ -1111,6 +1170,7 @@
 				stateEl.innerText = "DISCONNECTED";
 				dotEl.className = "status-dot offline";
 				gameflowEl.innerText = "None";
+				gameflowEl.className = "badge bg-dark border text-info";
 			}
 
 			// Show/hide dodge lobby button card in ChampSelect phase
@@ -2011,8 +2071,7 @@
 				const rect = event.currentTarget.getBoundingClientRect();
 				const parentRect = document.getElementById('live-champ-select-card').getBoundingClientRect();
 				
-				const dropdownHeight = dropdown.offsetHeight || 145;
-				const top = rect.top - parentRect.top - dropdownHeight - 8;
+				const top = rect.bottom - parentRect.top + 8;
 				const left = rect.left - parentRect.left + (rect.width / 2) - 115;
 				
 				dropdown.style.top = `${top}px`;
@@ -2026,31 +2085,44 @@
 			const dropdown = document.getElementById(`my-spell${slot}-dropdown`);
 			if (!dropdown) return;
 			
-			// Default ARAM spells, replace Snowball (32) with Teleport (12) and remove Clarity (13) if not ARAM
-			let spells = [32, 4, 7, 6, 3, 13, 1, 21, 14];
-			if (!window.isAram) {
-				spells = spells.map(id => id === 32 ? 12 : id).filter(id => id !== 13);
-			}
+			// All summoner spells available without any queue/mode filters
+			const allSpells = [4, 12, 14, 7, 3, 6, 1, 21, 11, 32, 13];
 			
-			let html = '<div class="row g-1 row-cols-3">';
+			let html = `
+				<div class="small text-muted mb-2 text-uppercase d-flex justify-content-between align-items-center" style="font-size: 0.58rem; font-weight: 700; letter-spacing: 0.5px; border-bottom: 1px solid rgba(200, 155, 60, 0.15); padding-bottom: 3px;">
+					<span><i class="fa-solid fa-wand-magic-sparkles text-warning me-1"></i>Select Spell for Slot ${slot}</span>
+					<span class="badge ${slot === 1 ? 'bg-warning text-dark' : 'bg-info text-dark'}" style="font-size: 0.52rem; padding: 2px 5px;">SLOT ${slot}</span>
+				</div>
+				<div class="row g-1 row-cols-3">
+			`;
 			
-			spells.forEach(spellId => {
+			allSpells.forEach(spellId => {
 				const spell = summonerSpellsMap[spellId];
 				if (!spell) return;
 				
-				const isCurrent = (slot === 1 && currentSpell1Id === spellId) || (slot === 2 && currentSpell2Id === spellId);
-				const borderClass = isCurrent ? 'border-warning shadow-warning' : 'border-secondary';
-				const bgStyle = isCurrent ? 'background: rgba(200, 155, 60, 0.25);' : 'background: rgba(5,8,12,0.65);';
+				const isSlot1 = (currentSpell1Id === spellId);
+				const isSlot2 = (currentSpell2Id === spellId);
 				
-				const otherSlotId = slot === 1 ? currentSpell2Id : currentSpell1Id;
-				const isDisabled = (spellId === otherSlotId);
-				const opacityStyle = isDisabled ? 'opacity: 0.3; cursor: not-allowed;' : 'cursor: pointer;';
+				let borderClass = 'border-secondary';
+				let bgStyle = 'background: rgba(5,8,12,0.65);';
+				let slotBadge = '';
+				
+				if (isSlot1) {
+					borderClass = 'border-warning shadow-warning';
+					bgStyle = 'background: rgba(200, 155, 60, 0.25);';
+					slotBadge = '<span class="badge bg-warning text-dark position-absolute top-0 end-0 m-1" style="font-size: 0.5rem; padding: 1px 3px;">S1</span>';
+				} else if (isSlot2) {
+					borderClass = 'border-info';
+					bgStyle = 'background: rgba(10, 200, 185, 0.25);';
+					slotBadge = '<span class="badge bg-info text-dark position-absolute top-0 end-0 m-1" style="font-size: 0.5rem; padding: 1px 3px;">S2</span>';
+				}
 				
 				html += `
-					<div class="col text-center" style="${opacityStyle}" ${isDisabled ? '' : `onclick="selectSummonerSpell(${slot}, ${spellId})"`}>
-						<div class="border rounded p-1 d-flex flex-column align-items-center justify-content-center ${borderClass}" style="${bgStyle} height: 60px;" title="${spell.name}">
-							<img src="${getSpellImgUrl(spellId)}" width="24" height="24" style="border-radius: 3px;">
-							<span class="text-white mt-1" style="font-size: 0.6rem; font-weight: 600; white-space: nowrap;">${spell.name}</span>
+					<div class="col text-center" style="cursor: pointer;" onclick="selectSummonerSpell(${slot}, ${spellId})">
+						<div class="border rounded p-1 d-flex flex-column align-items-center justify-content-center position-relative ${borderClass}" style="${bgStyle} height: 58px;" title="${spell.name}">
+							${slotBadge}
+							<img src="${getSpellImgUrl(spellId)}" width="22" height="22" style="border-radius: 3px;">
+							<span class="text-white mt-1" style="font-size: 0.58rem; font-weight: 600; white-space: nowrap;">${spell.name}</span>
 						</div>
 					</div>
 				`;
@@ -2068,15 +2140,26 @@
 			let s2 = currentSpell2Id;
 			
 			if (slot === 1) {
+				if (s2 === spellId) {
+					// Dual Select: Swap if selected spell is already in slot 2
+					s2 = s1;
+				}
 				s1 = spellId;
-				currentSpell1Id = spellId;
 			} else {
+				if (s1 === spellId) {
+					// Dual Select: Swap if selected spell is already in slot 1
+					s1 = s2;
+				}
 				s2 = spellId;
-				currentSpell2Id = spellId;
 			}
 			
-			const img = document.getElementById(`my-player-spell${slot}-img`);
-			if (img) img.src = getSpellImgUrl(spellId);
+			currentSpell1Id = s1;
+			currentSpell2Id = s2;
+			
+			const img1 = document.getElementById('my-player-spell1-img');
+			const img2 = document.getElementById('my-player-spell2-img');
+			if (img1) img1.src = getSpellImgUrl(s1);
+			if (img2) img2.src = getSpellImgUrl(s2);
 			
 			try {
 				ahk.setSummonerSpells(s1, s2);
@@ -2107,11 +2190,10 @@
 			// Dynamically move the card to be the first element in the dashboard view
 			const homeTabPane = document.getElementById('v-pills-home');
 			if (homeTabPane) {
-				const header = homeTabPane.firstElementChild;
-				if (header && header.nextElementSibling !== card) {
-					header.insertAdjacentElement('afterend', card);
-					card.classList.add('mb-4');
+				if (homeTabPane.firstElementChild !== card) {
+					homeTabPane.insertBefore(card, homeTabPane.firstElementChild);
 				}
+				card.classList.add('mb-4');
 			}
 
 			const isFirstPop = (card.style.display === 'none' || card.style.display === '');
@@ -2313,10 +2395,10 @@
 				card.style.display = 'none';
 				card.classList.remove('mb-4');
 				
-				// Restore to original position (before queue progress card)
-				const queueCard = document.getElementById('queue-card');
-				if (queueCard) {
-					queueCard.parentNode.insertBefore(card, queueCard);
+				// Restore to original position (first element in home tab)
+				const homeTabPane = document.getElementById('v-pills-home');
+				if (homeTabPane && homeTabPane.firstElementChild !== card) {
+					homeTabPane.insertBefore(card, homeTabPane.firstElementChild);
 				}
 			}
 			if (grid) grid.innerHTML = '';
