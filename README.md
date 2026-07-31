@@ -54,6 +54,10 @@ league - WebView/
 │   ├── autoAccept.ahk       # Auto-accept ready check handler
 │   ├── autoReport.ahk       # End-of-game auto-report processor & queue
 │   └── champSelectHelper.ahk# Handles bench sniper, visual bench, and lobby scraping
+└── Pages/                   # Web frontend pages mapped to ahk.localhost
+    ├── index.html           # Main Dashboard HTML layout & controller
+    ├── logo.svg             # Sidebar app logo
+    └── Bootstrap/           # Custom Bootstrap styling, JS & fonts
 └── lib/                     # AHK Helper Libraries
     ├── API.ahk              # Handles raw HTTP requests to the LCU port
     ├── Base64.ahk           # Base64 encoder helper for LCU authentication token
@@ -69,10 +73,6 @@ league - WebView/
         ├── ComVar.ahk       # Helper for COM variables
         ├── 32bit/           # 32-bit WebView2Loader binaries
         └── 64bit/           # 64-bit WebView2Loader binaries
-└── Pages/                   # Web frontend pages mapped to ahk.localhost
-    ├── index.html           # Main Dashboard HTML layout & controller
-    ├── logo.svg             # Sidebar app logo
-    └── Bootstrap/           # Custom Bootstrap styling, JS & fonts
 ```
 
 ---
