@@ -657,11 +657,12 @@ ProcessChampMessages(session) {
             messagesList := messagesData[matchedKey]
             
             if (Type(messagesList) == "Array") {
-                combinedMsg := ""
                 for msg in messagesList {
-                    combinedMsg .= (combinedMsg == "" ? "" : " ") msg
+                    if (msg != "") {
+                        LeagueAPI.SendChatMessage(conversationId, msg)
+                        Sleep(150)
+                    }
                 }
-                LeagueAPI.SendChatMessage(conversationId, combinedMsg)
             } else if (Type(messagesList) == "String") {
                 LeagueAPI.SendChatMessage(conversationId, messagesList)
             }
