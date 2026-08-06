@@ -18,8 +18,16 @@ class LeagueAPI {
         return APICall("GET", "/lol-match-history/v1/products/lol/current-summoner/matches?begIndex=" begIndex "&endIndex=" endIndex)
     }
 
-    static GetChampionsMinimal(summonerId) {
-        return APICall("GET", "/lol-champions/v1/inventories/" summonerId "/champions-minimal")
+    static GetChampionsMinimal(summonerId := 0) {
+        if (summonerId > 0) {
+            res := APICall("GET", "/lol-champions/v1/inventories/" summonerId "/champions-minimal")
+            if (Type(res) == "Array" && res.Length > 0)
+                return res
+        }
+        resFallback := APICall("GET", "/lol-champions/v1/owned-champions-minimal")
+        if (Type(resFallback) == "Array" && resFallback.Length > 0)
+            return resFallback
+        return APICall("GET", "/lol-champions/v1/inventories/champions-minimal")
     }
 
     static QuitLobbySession() {
@@ -31,7 +39,8 @@ class LeagueAPI {
     }
 
     static SwapBenchChampion(champId) {
-        return APICall("POST", "/lol-champ-select/v1/session/bench/swap/" champId)
+        champIdInt := Integer(champId)
+        return APICall("POST", "/lol-champ-select/v1/session/bench/swap/" champIdInt, "{}")
     }
 
     static UpdateMySelection(body) {

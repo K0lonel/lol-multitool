@@ -13,7 +13,7 @@ APICall(method, endpoint, post_data := unset) {
 }
 
 request(method, endpoint, post_data?, headersIn := Map()) {
-    req := ComObject("WinHttp.WinHttpRequest.5.1")
+    static req := ComObject("WinHttp.WinHttpRequest.5.1")
     headers := Map("Content-Type", "application/json", "Accept", "application/json")
 
     req.Open(method, endpoint, False)

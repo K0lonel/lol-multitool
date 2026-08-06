@@ -99,9 +99,22 @@ global match_history := Map()
 global initConfigSent := false
 global historyTimer := 30
 global champTimer := 9
+global meTimer := 10
+global friendsTimer := 10
 global lastGameflow := "INIT"
 global wasLcuConnected := false
 global lastDashboardState := ""
+global cachedHistoryJson := ""
+global cachedHistoryVersion := -1
+
+GetHistoryJson() {
+    global match_history_dic, historyVersion, cachedHistoryJson, cachedHistoryVersion
+    if (cachedHistoryVersion != historyVersion || cachedHistoryJson == "") {
+        cachedHistoryJson := JSON.Dump(match_history_dic)
+        cachedHistoryVersion := historyVersion
+    }
+    return cachedHistoryJson
+}
 
 loop {
     historyTimer++
@@ -119,6 +132,8 @@ loop {
         championsLoaded := false
         initConfigSent := false
         champTimer := 9  ; Force quick champion load attempt
+        meTimer := 10
+        friendsTimer := 10
         LogToWeb("LCU connection established. Syncing active configuration and inventory...", "success")
     } else if (!lcuConnected && wasLcuConnected) {
         wasLcuConnected := false
@@ -127,57 +142,68 @@ loop {
     }
     
     if (lcuConnected) {
-        ; 1. Fast checks (every 1 second)
-        try {
-            tempMe := LeagueAPI.GetCurrentSummoner()
-            if (IsObject(tempMe) && (tempMe.Has("gameName") || tempMe.Has("displayName"))) {
-                gameName := tempMe.Has("gameName") ? tempMe["gameName"] : tempMe["displayName"]
-                tagLine := tempMe.Has("tagLine") ? tempMe["tagLine"] : ""
-                summonerLevel := tempMe.Has("summonerLevel") ? tempMe["summonerLevel"] : 0
-                iconId := tempMe.Has("profileIconId") ? tempMe["profileIconId"] : 29
-                puuid := tempMe.Has("puuid") ? tempMe["puuid"] : ""
-                summonerId := tempMe.Has("summonerId") ? tempMe["summonerId"] : 0
-                
-                global me := Map("lol", Map(
-                    "gameName", gameName,
-                    "tagLine", tagLine,
-                    "summonerLevel", summonerLevel,
-                    "iconId", iconId,
-                    "puuid", puuid,
-                    "summonerId", summonerId,
-                    "friendsCount", friendsCount,
-                    "friendsOnline", friendsOnline,
-                    "recentWinRate", recentWinRate
-                ))
-            } else {
+        meTimer++
+        friendsTimer++
+
+        ; 1. Profile check (every 10 seconds or if missing)
+        if (meTimer >= 10 || !me.Has("lol")) {
+            meTimer := 0
+            try {
+                tempMe := LeagueAPI.GetCurrentSummoner()
+                if (IsObject(tempMe) && (tempMe.Has("gameName") || tempMe.Has("displayName"))) {
+                    gameName := tempMe.Has("gameName") ? tempMe["gameName"] : tempMe["displayName"]
+                    tagLine := tempMe.Has("tagLine") ? tempMe["tagLine"] : ""
+                    summonerLevel := tempMe.Has("summonerLevel") ? tempMe["summonerLevel"] : 0
+                    iconId := tempMe.Has("profileIconId") ? tempMe["profileIconId"] : 29
+                    puuid := tempMe.Has("puuid") ? tempMe["puuid"] : ""
+                    summonerId := tempMe.Has("summonerId") ? tempMe["summonerId"] : 0
+                    
+                    global me := Map("lol", Map(
+                        "gameName", gameName,
+                        "tagLine", tagLine,
+                        "summonerLevel", summonerLevel,
+                        "iconId", iconId,
+                        "puuid", puuid,
+                        "summonerId", summonerId,
+                        "friendsCount", friendsCount,
+                        "friendsOnline", friendsOnline,
+                        "recentWinRate", recentWinRate
+                    ))
+                } else {
+                    global me := Map()
+                }
+            } catch {
                 global me := Map()
             }
-        } catch {
-            global me := Map()
         }
         
-        try {
-            tempFriends := LeagueAPI.GetFriends()
-            if (Type(tempFriends) == "Array") {
-                global friends := tempFriends
-                global friendsCount := friends.Length
-                tempOnline := 0
-                for index, friend in friends {
-                    if (friend.Has("availability") && friend["availability"] != "offline") {
-                        tempOnline++
+        ; 2. Friends check (every 10 seconds)
+        if (friendsTimer >= 10) {
+            friendsTimer := 0
+            try {
+                tempFriends := LeagueAPI.GetFriends()
+                if (Type(tempFriends) == "Array") {
+                    global friends := tempFriends
+                    global friendsCount := friends.Length
+                    tempOnline := 0
+                    for index, friend in friends {
+                        if (friend.Has("availability") && friend["availability"] != "offline") {
+                            tempOnline++
+                        }
+                    }
+                    global friendsOnline := tempOnline
+                    if (friends.Length != friend_puuid.Count) {
+                        friend_puuid := Map()
+                        for index, friend in friends
+                            friend_puuid[friend["puuid"]] := true
                     }
                 }
-                global friendsOnline := tempOnline
-                if (friends.Length != friend_puuid.Count) {
-                    friend_puuid := Map()
-                    for index, friend in friends
-                        friend_puuid[friend["puuid"]] := true
-                }
+            } catch {
+                global friends := Array()
             }
-        } catch {
-            global friends := Array()
         }
         
+        ; 3. Gameflow phase check (every 1 second)
         try {
             tempGameflow := LeagueAPI.GetGameflowPhase()
             if (Type(tempGameflow) == "String") {
@@ -301,17 +327,19 @@ loop {
             }
         }
         
-        if (lcuConnected && !championsLoaded && IsObject(me) && me.Has("lol") && me["lol"].Has("summonerId") && me["lol"]["summonerId"] > 0) {
+        if (lcuConnected && !championsLoaded) {
             champTimer++
-            if (champTimer >= 10) {
+            if (champTimer >= 2) {
                 champTimer := 0
-                summonerId := me["lol"]["summonerId"]
+                summonerId := (IsObject(me) && me.Has("lol") && me["lol"].Has("summonerId")) ? me["lol"]["summonerId"] : 0
                 champs := LeagueAPI.GetChampionsMinimal(summonerId)
                 if (Type(champs) == "Array" && champs.Length > 0) {
                     global championMap := Map()
                     for c in champs {
                         if (c.Has("id")) {
-                            championMap[c["id"]] := c
+                            cId := Integer(c["id"])
+                            championMap[cId] := c
+                            championMap[String(cId)] := c
                         }
                     }
                     LogToWeb("Successfully loaded " champs.Length " champions into AHK cache.", "success")
@@ -326,15 +354,12 @@ loop {
             SaveHistory()
         }
 
-        ; Update session time on the frontend every tick
-        MyWindow.ExecuteScriptAsync("updateSessionTime('" sessionTime "')")
-        
         ; Only update the dashboard UI when data actually changes using lightweight state comparison
         meSummonerId := (me.Has("lol") && me["lol"].Has("gameName")) ? me["lol"]["gameName"] : ""
         currentDashboardState := meSummonerId "|" gameflow "|" historyVersion "|" reportQueue.Length "|" reportStatus
         if (currentDashboardState != lastDashboardState) {
             lastDashboardState := currentDashboardState
-            MyWindow.ExecuteScriptAsync("updateDashboard(" JSON.Dump(me) ", '" gameflow "', " JSON.Dump(match_history_dic) ", " reportQueue.Length ", '" reportStatus "')")
+            MyWindow.ExecuteScriptAsync("updateDashboard(" JSON.Dump(me) ", '" gameflow "', " GetHistoryJson() ", " reportQueue.Length ", '" reportStatus "')")
         }
     } catch Error as e {
         LogToWeb("Error in main loop script execution: " e.Message, "error")
@@ -479,9 +504,10 @@ RestartUXCallback(WebView) {
 
 BenchSwapCallback(WebView, champId) {
     global bypassAutoPick
-    champName := GetChampionName(champId)
-    LogToWeb("Manual Swap: User requested swap to " champName " (ID:" champId ")", "warning")
-    res := LeagueAPI.SwapBenchChampion(champId)
+    champIdInt := Integer(champId)
+    champName := GetChampionName(champIdInt)
+    LogToWeb("Manual Swap: User requested swap to " champName " (ID:" champIdInt ")", "warning")
+    res := LeagueAPI.SwapBenchChampion(champIdInt)
     if (IsObject(res) && res.Has("error")) {
         errStatus := res.Has("status") ? res["status"] : "?"
         errMsg := res.Has("error") ? res["error"] : "Unknown"
@@ -535,13 +561,26 @@ LogToWeb(msg, logType := "info", silentSetting := "") {
 
 GetChampionName(id) {
     global championMap
-    if (IsSet(championMap) && championMap.Has(id)) {
-        val := championMap[id]
+    if (!IsSet(championMap) || !IsObject(championMap))
+        return "ID " id
+    
+    intId := Integer(id)
+    if (championMap.Has(intId)) {
+        val := championMap[intId]
         if (IsObject(val) && val.Has("name"))
             return val["name"]
         return val
     }
-    return "ID " id
+    
+    strId := String(intId)
+    if (championMap.Has(strId)) {
+        val := championMap[strId]
+        if (IsObject(val) && val.Has("name"))
+            return val["name"]
+        return val
+    }
+    
+    return "ID " intId
 }
 
 SaveHistory(force := false) {

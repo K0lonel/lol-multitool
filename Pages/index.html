@@ -176,7 +176,7 @@
 				
 				<!-- Summoner Profile Card -->
 				<div class="profile-card m-3 mt-2" id="summoner-card" onclick="openSummonerProfile()" style="cursor: pointer;">
-					<img id="summoner-icon" src="https://ddragon.leagueoflegends.com/cdn/16.12.1/img/profileicon/29.png" alt="Avatar" class="profile-avatar">
+					<img id="summoner-icon" src="https://ddragon.leagueoflegends.com/cdn/14.24.1/img/profileicon/29.png" alt="Avatar" class="profile-avatar">
 					<div class="profile-info overflow-hidden">
 						<div class="profile-name text-truncate" id="summoner-name">Summoner</div>
 						<div class="profile-level" id="summoner-level">Level --</div>
@@ -803,38 +803,59 @@
 		function startBenchTimerLoop() {
 			setInterval(() => {
 				const timerContainer = document.getElementById('bench-timer-container');
-				const timerBadge = document.getElementById('bench-timer-badge');
-				const timerValue = document.getElementById('bench-timer-value');
-				if (!timerContainer || !timerBadge || !timerValue) return;
-
+				if (!timerContainer) return;
+				
 				if (window.lastAdjustedTimeLeft !== undefined && window.lastAdjustedTimeLeft !== null && !window.timerIsInfinite) {
+					const timerBadge = document.getElementById('bench-timer-badge');
+					const timerValue = document.getElementById('bench-timer-value');
+					if (!timerBadge || !timerValue) return;
+
 					const elapsed = Date.now() - (window.lastTimerSync || Date.now());
 					const currentLeftMs = Math.max(0, window.lastAdjustedTimeLeft - elapsed);
 					const secondsLeft = Math.ceil(currentLeftMs / 1000);
 					
-					timerContainer.style.display = 'block';
-					timerValue.innerText = secondsLeft + 's';
+					if (timerContainer.style.display !== 'block') timerContainer.style.display = 'block';
+					if (timerValue.innerText !== secondsLeft + 's') timerValue.innerText = secondsLeft + 's';
 					
 					// Style based on time remaining
 					if (secondsLeft <= 10) {
-						timerBadge.style.backgroundColor = 'rgba(224, 67, 67, 0.15)';
-						timerBadge.style.border = '1px solid rgba(224, 67, 67, 0.5)';
-						timerBadge.style.color = 'var(--hextech-red)';
-						timerBadge.style.textShadow = '0 0 4px rgba(224, 67, 67, 0.4)';
-						timerBadge.classList.add('shadow-danger-pulse');
+						if (!timerBadge.classList.contains('shadow-danger-pulse')) {
+							timerBadge.style.backgroundColor = 'rgba(224, 67, 67, 0.15)';
+							timerBadge.style.border = '1px solid rgba(224, 67, 67, 0.5)';
+							timerBadge.style.color = 'var(--hextech-red)';
+							timerBadge.style.textShadow = '0 0 4px rgba(224, 67, 67, 0.4)';
+							timerBadge.classList.add('shadow-danger-pulse');
+						}
 					} else {
-						timerBadge.style.backgroundColor = 'rgba(200, 155, 60, 0.15)';
-						timerBadge.style.border = '1px solid rgba(200, 155, 60, 0.5)';
-						timerBadge.style.color = 'var(--hextech-gold)';
-						timerBadge.style.textShadow = '0 0 4px rgba(200, 155, 60, 0.4)';
-						timerBadge.classList.remove('shadow-danger-pulse');
+						if (timerBadge.classList.contains('shadow-danger-pulse') || !timerBadge.style.backgroundColor) {
+							timerBadge.style.backgroundColor = 'rgba(200, 155, 60, 0.15)';
+							timerBadge.style.border = '1px solid rgba(200, 155, 60, 0.5)';
+							timerBadge.style.color = 'var(--hextech-gold)';
+							timerBadge.style.textShadow = '0 0 4px rgba(200, 155, 60, 0.4)';
+							timerBadge.classList.remove('shadow-danger-pulse');
+						}
 					}
 				} else {
-					timerContainer.style.display = 'none';
+					if (timerContainer.style.display !== 'none') timerContainer.style.display = 'none';
 				}
 			}, 200);
 		}
 		startBenchTimerLoop();
+
+		// Local Session Timer Loop (1s) to replace AHK IPC calls
+		window.appSessionStart = Date.now();
+		setInterval(() => {
+			const sessionEl = document.getElementById('game-stats-session');
+			if (!sessionEl) return;
+			const secs = Math.floor((Date.now() - window.appSessionStart) / 1000);
+			const hh = Math.floor(secs / 3600);
+			const mm = Math.floor((secs % 3600) / 60);
+			const ss = secs % 60;
+			const formatted = (hh > 0 ? (hh < 10 ? '0' + hh : hh) + ':' : '') + (mm < 10 ? '0' + mm : mm) + ':' + (ss < 10 ? '0' + ss : ss);
+			if (sessionEl.innerText !== formatted) {
+				sessionEl.innerText = formatted;
+			}
+		}, 1000);
 
 		window.chrome.webview.addEventListener('message', ahkWebMessage);
 		function ahkWebMessage(Msg) {
@@ -1261,10 +1282,9 @@
 
 			// 4. Render Match Report history list
 			window.reportedMatchesHistory = history;
-			const historyString = JSON.stringify(history);
-			if (window.lastRenderedHistory !== historyString) {
-				const isFirstRender = (window.lastRenderedHistory === undefined);
-				window.lastRenderedHistory = historyString;
+			if (window.lastRenderedHistoryRef !== history) {
+				const isFirstRender = (window.lastRenderedHistoryRef === undefined);
+				window.lastRenderedHistoryRef = history;
 				const searchInput = document.getElementById('search-reported-matches');
 				const searchQuery = searchInput ? searchInput.value : '';
 				renderReportTimeline(history, searchQuery);
@@ -1509,7 +1529,7 @@
 			return roleColors.default;
 		}
 		let lobbyPlayers = [];
-		let ddragonVersion = '16.12.1'; // Default modern fallback version
+		let ddragonVersion = '14.24.1'; // Default modern fallback version
 
 		function cleanChampName(name) {
 			return name.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -1519,7 +1539,7 @@
 		fetch('https://ddragon.leagueoflegends.com/api/versions.json')
 			.then(res => res.json())
 			.then(versions => {
-				ddragonVersion = versions[0] || '16.12.1';
+				ddragonVersion = versions[0] || '14.24.1';
 				console.log("Latest DataDragon version determined: " + ddragonVersion);
 				return fetch(`https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/data/en_US/champion.json`);
 			})

@@ -16,6 +16,7 @@ champSelectHelper() {
     static sessionFailCount := 0
     
     if (gameflow == "ChampSelect") {
+        SetTimer(champSelectHelper, 200)
         if (!wasInChampSelect) {
             wasInChampSelect := true
             sessionFailCount := 0
@@ -23,7 +24,7 @@ champSelectHelper() {
             ; Log sniper status on entry
             if (config.Has("autoPickBenchEnabled") && config["autoPickBenchEnabled"]) {
                 targetNames := GetTargetChampNames()
-                LogToWeb("Bench Sniper: ARMED on lobby entry. Targets: " targetNames, "success", "champSelectHelperSilent")
+                LogToWeb("Bench Sniper: ARMED on lobby entry (200ms check frequency). Targets: " targetNames, "success", "champSelectHelperSilent")
             } else {
                 LogToWeb("Bench Sniper: DISABLED on lobby entry. Toggle the sniper ON to activate.", "warning", "champSelectHelperSilent")
             }
@@ -60,6 +61,7 @@ champSelectHelper() {
         }
     } else {
         if (wasInChampSelect) {
+            SetTimer(champSelectHelper, 1000)
             wasInChampSelect := false
             sessionFailCount := 0
             LogToWeb("Exited Champion Select lobby.", "info", "champSelectHelperSilent")

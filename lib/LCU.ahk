@@ -12,6 +12,12 @@ class LCU {
     static WMI := ""
 
     static Initialize() {
+        static lastInitAttempt := 0
+        if (A_TickCount - lastInitAttempt < 3000) {
+            return false
+        }
+        lastInitAttempt := A_TickCount
+
         if (!ProcessExist("LeagueClientUx.exe")) {
             LCU.Clear()
             return false
