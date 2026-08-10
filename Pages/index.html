@@ -121,6 +121,26 @@
 				border-color: var(--hextech-gold) !important;
 				box-shadow: 0 0 12px rgba(200, 155, 60, 0.4) !important;
 			}
+			/* Ensure all dropdown menus render on top of all other UI elements */
+			.dropdown-menu,
+			.dropdown-menu.show,
+			.spell-selector-dropdown,
+			#custom-champ-dropdown,
+			#blacklist-players-dropdown,
+			[class*="dropdown-menu"],
+			[id*="dropdown"] {
+				z-index: 10000000 !important;
+			}
+			.hextech-card:focus-within,
+			.hextech-card:has(.spell-selector-dropdown:not(.d-none)),
+			.hextech-card:has(#custom-champ-dropdown:not(.d-none)),
+			.hextech-card:has(#blacklist-players-dropdown:not(.d-none)),
+			.hextech-card:has(.dropdown-menu.show),
+			#live-champ-select-card,
+			#card-sniper:focus-within,
+			#card-blacklist:focus-within {
+				z-index: 1000000 !important;
+			}
 		</style>
 	</head>
 	<body>
@@ -194,8 +214,8 @@
 						<!-- Live Champ Select Draft Card -->
 						<div class="hextech-card" id="live-champ-select-card" style="display:none; border-color: var(--hextech-gold); position: relative;">
 							<!-- Static Dropdowns for Spells Selection -->
-							<div class="position-absolute d-none rounded border p-2 spell-selector-dropdown shadow-lg" id="my-spell1-dropdown" style="background: rgba(10, 14, 20, 0.98); border-color: var(--hextech-gold) !important; width: 250px; z-index: 1050; backdrop-filter: blur(8px); box-shadow: 0 10px 25px rgba(0,0,0,0.65);"></div>
-							<div class="position-absolute d-none rounded border p-2 spell-selector-dropdown shadow-lg" id="my-spell2-dropdown" style="background: rgba(10, 14, 20, 0.98); border-color: var(--hextech-gold) !important; width: 250px; z-index: 1050; backdrop-filter: blur(8px); box-shadow: 0 10px 25px rgba(0,0,0,0.65);"></div>
+							<div class="position-absolute d-none rounded border p-2 spell-selector-dropdown shadow-lg" id="my-spell1-dropdown" style="background: rgba(10, 14, 20, 0.98); border-color: var(--hextech-gold) !important; width: 250px; z-index: 10000000 !important; backdrop-filter: blur(8px); box-shadow: 0 10px 25px rgba(0,0,0,0.65);"></div>
+							<div class="position-absolute d-none rounded border p-2 spell-selector-dropdown shadow-lg" id="my-spell2-dropdown" style="background: rgba(10, 14, 20, 0.98); border-color: var(--hextech-gold) !important; width: 250px; z-index: 10000000 !important; backdrop-filter: blur(8px); box-shadow: 0 10px 25px rgba(0,0,0,0.65);"></div>
 
 							<div class="card-title-gold d-flex justify-content-between align-items-center mb-3">
 								<span><i class="fa-solid fa-users-viewfinder"></i> Live Champ Select Draft</span>
@@ -473,7 +493,7 @@
 													<!-- <button class="btn btn-outline-warning btn-sm" onclick="addCurrentSearchToFav()"><i class="fa-solid fa-plus"></i> Add</button> -->
 												</div>
 												<!-- Custom Dropdown Menu -->
-												<div id="custom-champ-dropdown" class="position-absolute w-100 mt-1 d-none rounded border" style="top: 100%; left: 0; background: rgba(10, 14, 20, 0.95); border-color: var(--hextech-gold) !important; max-height: 200px; overflow-y: auto; z-index: 99999; box-shadow: 0 10px 25px rgba(0,0,0,0.5); backdrop-filter: blur(8px);">
+												<div id="custom-champ-dropdown" class="position-absolute w-100 mt-1 d-none rounded border" style="top: 100%; left: 0; background: rgba(10, 14, 20, 0.95); border-color: var(--hextech-gold) !important; max-height: 200px; overflow-y: auto; z-index: 10000000 !important; box-shadow: 0 10px 25px rgba(0,0,0,0.5); backdrop-filter: blur(8px);">
 													<!-- JS populated options -->
 												</div>
 											</div>
@@ -520,7 +540,7 @@
 												<input class="form-control" id="search-blacklist-player" placeholder="Type player name to search latest 10 games..." style="font-size: 0.8rem;" autocomplete="off" onfocus="showBlacklistDropdown()" oninput="filterBlacklistDropdown()" onblur="hideBlacklistDropdownDelayed()">
 											</div>
 											<!-- Custom Dropdown Menu for Recent Players -->
-											<div id="blacklist-players-dropdown" class="position-absolute w-100 mt-1 d-none rounded border" style="top: 100%; left: 0; background: rgba(10, 14, 20, 0.98); border-color: var(--hextech-gold) !important; max-height: 200px; overflow-y: auto; z-index: 99999; box-shadow: 0 10px 25px rgba(0,0,0,0.6); backdrop-filter: blur(8px);">
+											<div id="blacklist-players-dropdown" class="position-absolute w-100 mt-1 d-none rounded border" style="top: 100%; left: 0; background: rgba(10, 14, 20, 0.98); border-color: var(--hextech-gold) !important; max-height: 200px; overflow-y: auto; z-index: 10000000 !important; box-shadow: 0 10px 25px rgba(0,0,0,0.6); backdrop-filter: blur(8px);">
 												<!-- JS populated options -->
 											</div>
 										</div>
@@ -1131,9 +1151,8 @@
 			consoleEl.appendChild(logLine);
 			
 			// Limit log to 100 entries, remove oldest when exceeded
-			const logLines = consoleEl.querySelectorAll('.log-line');
-			for (let i = logLines.length - 100; i > 0; i--) {
-				logLines[logLines.length - 100 - i].remove();
+			while (consoleEl.children.length > 100) {
+				consoleEl.firstElementChild.remove();
 			}
 			
 			// Auto scroll to bottom
@@ -1727,6 +1746,8 @@
 
 		function showChampDropdown() {
 			const dropdown = document.getElementById('custom-champ-dropdown');
+			const card = document.getElementById('card-sniper');
+			if (card) card.style.zIndex = '1000000';
 			if (dropdown) {
 				dropdown.classList.remove('d-none');
 				filterChampDropdown();
@@ -1771,6 +1792,8 @@
 			setTimeout(() => {
 				const dropdown = document.getElementById('custom-champ-dropdown');
 				if (dropdown) dropdown.classList.add('d-none');
+				const card = document.getElementById('card-sniper');
+				if (card) card.style.zIndex = '10';
 			}, 200);
 		}
 
@@ -2289,10 +2312,11 @@
 								${player.isMe ? '<span class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-primary border border-light" style="font-size: 0.6rem; letter-spacing: 0.5px; z-index: 5;">YOU</span>' : ''}
 								
 								<div class="mb-2 mt-1" style="position: relative;">
-									<div class="border border-2 ${player.isBlacklisted ? 'border-danger' : 'border-secondary'}" style="width: 52px; height: 52px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
+									<div class="border border-2 ${player.isBlacklisted ? 'border-danger' : (player.isTarget ? 'border-warning shadow-warning' : 'border-secondary')}" style="width: 52px; height: 52px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
 										<img src="${imgUrl}" style="width: 100%; height: 100%; object-fit: cover; transform: scale(1.15);" 
 											 onerror="this.src='https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/profileicon/29.png'">
 									</div>
+									${player.isTarget ? '<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning" style="padding: 3px 6px; font-size: 0.6rem; color: #000; border: 1px solid #000; z-index: 5;" title="Target Champion (Autopick)"><i class="fa-solid fa-crosshairs"></i></span>' : ''}
 									${player.hasQuote ? '<span class="position-absolute top-0 start-0 translate-middle badge rounded-pill" style="padding: 3px 6px; font-size: 0.6rem; color: #000; background-color: var(--hextech-blue); border: 1px solid #000; z-index: 5;" title="Has Champion Quote"><i class="fa-solid fa-quote-left"></i></span>' : ''}
 								</div>
 								
@@ -2737,6 +2761,8 @@
 
 		// Search Dropdown Functions
 		function showBlacklistDropdown() {
+			const card = document.getElementById('card-blacklist');
+			if (card) card.style.zIndex = '1000000';
 			filterBlacklistDropdown();
 		}
 
@@ -2800,7 +2826,9 @@
 			blacklistBlurTimeout = setTimeout(() => {
 				const dropdown = document.getElementById('blacklist-players-dropdown');
 				if (dropdown) dropdown.classList.add('d-none');
-			}, 250);
+				const card = document.getElementById('card-blacklist');
+				if (card) card.style.zIndex = '10';
+			}, 200);
 		}
 
 		function toggleRunningTask(taskName) {

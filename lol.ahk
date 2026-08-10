@@ -458,31 +458,18 @@ WebTooltipEvent(WebView, Msg) {
 }
 
 DodgeLobbyCallback(WebView) {
-    LogToWeb("Dodge Lobby: Initiating dodge process...", "warning")
+    LogToWeb("Dodge Lobby: Sending API dodge requests to LCU...", "warning")
     
-    ; 1. Try custom game quit first
-    res := LeagueAPI.QuitLobbySession()
+    ; 1. Gameflow session dodge endpoint
+    resDodge := LeagueAPI.DodgeGameflowSession()
     
-    ; 2. If it's a matchmaking queue (or the quit call fails/has error), trigger a full client quit via process-control
-    if (IsObject(res) && res.Has("error")) {
-        LogToWeb("Dodge Lobby: Custom quit returned error (likely a PvP lobby). Requesting client closure to dodge...", "warning")
-        resQuit := LeagueAPI.QuitProcess()
-        if (IsObject(resQuit) && resQuit.Has("error")) {
-            ; Fallback: OS process close in case LCU process control fails
-            LogToWeb("Dodge Lobby: LCU quit failed. Terminating LeagueClient.exe processes via OS...", "error")
-            try {
-                ProcessClose("LeagueClient.exe")
-                ProcessClose("LeagueClientUx.exe")
-                LogToWeb("Dodge Lobby: Terminated League client processes via OS.", "success")
-            } catch Error as e {
-                LogToWeb("Dodge Lobby: OS process close failed: " e.Message, "error")
-            }
-        } else {
-            LogToWeb("Dodge Lobby: Client closure initiated successfully to trigger dodge.", "success")
-        }
-    } else {
-        LogToWeb("Dodge Lobby: Sent custom game lobby quit successfully!", "success")
-    }
+    ; 2. Lobby session quit endpoint
+    resQuit := LeagueAPI.QuitLobbySession()
+    
+    ; 3. LCDS proxy dodge endpoint
+    resLcds := LeagueAPI.LcdsDodge()
+    
+    LogToWeb("Dodge Lobby: Sent dodge API calls to LCU without closing client.", "success")
 }
 
 TriggerMassDisenchantCallback(WebView) {
@@ -506,15 +493,17 @@ BenchSwapCallback(WebView, champId) {
     global bypassAutoPick
     champIdInt := Integer(champId)
     champName := GetChampionName(champIdInt)
-    LogToWeb("Manual Swap: User requested swap to " champName " (ID:" champIdInt ")", "warning")
+    if (!bypassAutoPick) {
+        bypassAutoPick := true
+        LogToWeb("User picked a champ (" champName ") so the auto sniper wont try to overwrite user decision", "success")
+    } else {
+        LogToWeb("Manual Swap: User requested swap to " champName " (ID:" champIdInt ")", "info")
+    }
     res := LeagueAPI.SwapBenchChampion(champIdInt)
     if (IsObject(res) && res.Has("error")) {
         errStatus := res.Has("status") ? res["status"] : "?"
         errMsg := res.Has("error") ? res["error"] : "Unknown"
         LogToWeb("Manual Swap: FAILED for " champName " — HTTP " errStatus " (" errMsg ")", "error")
-    } else {
-        LogToWeb("Manual Swap: Swapped to " champName " successfully! Auto-picker paused for this lobby.", "success")
-        bypassAutoPick := true
     }
 }
 

@@ -34,6 +34,14 @@ class LeagueAPI {
         return APICall("POST", "/lol-lobby-team-builder/champ-select/v1/session/quit", "{}")
     }
 
+    static DodgeGameflowSession() {
+        return APICall("POST", "/lol-gameflow/v1/session/dodge", "{}")
+    }
+
+    static LcdsDodge() {
+        return APICall("POST", '/lol-login/v1/session/invoke?destination=lcdsServiceProxy&method=call&args=["","loginDataPacket_json","dodgeQueue",""]', "{}")
+    }
+
     static QuitProcess() {
         return APICall("POST", "/process-control/v1/process/quit", "{}")
     }

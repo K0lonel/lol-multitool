@@ -397,6 +397,12 @@ UpdateChampSelectFrontend(session) {
     
     myTeamId := 0
     ; Build team list
+    preferredIdsArray := config.Has("autoPickBenchIds") ? config["autoPickBenchIds"] : Array()
+    preferredIds := Map()
+    for id in preferredIdsArray {
+        preferredIds[id] := true
+    }
+    
     teamArr := Array()
     for player in session["myTeam"] {
         puuid := player.Has("puuid") ? player["puuid"] : ""
@@ -457,6 +463,7 @@ UpdateChampSelectFrontend(session) {
         
         champId := player.Has("championId") ? player["championId"] : 0
         champName := champId > 0 ? GetChampionName(champId) : ""
+        isTarget := (champId > 0 && preferredIds.Has(champId))
         
         spell1Id := player.Has("spell1Id") ? player["spell1Id"] : 0
         spell2Id := player.Has("spell2Id") ? player["spell2Id"] : 0
@@ -489,6 +496,7 @@ UpdateChampSelectFrontend(session) {
             "championId", champId,
             "championName", champName,
             "hasQuote", HasChampQuote(champId, champName),
+            "isTarget", isTarget ? true : false,
             "isMe", isMe,
             "isBlacklisted", isBlacklisted,
             "blacklistNote", blacklistNote,
@@ -554,8 +562,13 @@ UpdateChampSelectFrontend(session) {
         "timer", timerMap
     )
     
-    try {
-        MyWindow.ExecuteScriptAsync("updateChampSelectDraft(" JSON.Dump(payload) ")")
+    static lastPayloadJson := ""
+    jsonStr := JSON.Dump(payload)
+    if (jsonStr != lastPayloadJson) {
+        lastPayloadJson := jsonStr
+        try {
+            MyWindow.ExecuteScriptAsync("updateChampSelectDraft(" jsonStr ")")
+        }
     }
 }
 
@@ -579,12 +592,13 @@ GetSummonerNameByPuuid(puuid) {
 }
 
 ResetChampSelectHelper() {
-    global lastSessionId, champLobbyNames, warnedNoIds, warnedEmpty, bypassAutoPick
+    global lastSessionId, champLobbyNames, warnedNoIds, warnedEmpty, bypassAutoPick, lastPayloadJson
     lastSessionId := ""
     champLobbyNames := Array()
     warnedNoIds := false
     warnedEmpty := false
     bypassAutoPick := false
+    lastPayloadJson := ""
     try MyWindow.ExecuteScriptAsync("onLobbyCleared()")
     try MyWindow.ExecuteScriptAsync("clearBenchDisplay()")
     try MyWindow.ExecuteScriptAsync("clearChampSelectDraft()")
@@ -682,23 +696,27 @@ ProcessChampMessages(session) {
 HasChampQuote(champId, champName) {
     static cachedData := ""
     static lastFileTime := 0
+    static lastCheckTime := 0
     messagesFilePath := "champMessages.json"
-    if (!FileExist(messagesFilePath)) {
-        return false
-    }
     
-    try {
-        fileTime := FileGetTime(messagesFilePath, "M")
-        if (cachedData == "" || fileTime != lastFileTime) {
-            fileContent := FileRead(messagesFilePath, "UTF-8")
-            if (fileContent != "") {
-                cachedData := JSON.Load(fileContent)
-                lastFileTime := fileTime
-            }
-        }
-    } catch {
-        if (cachedData == "")
+    if (cachedData == "" || A_TickCount - lastCheckTime > 2000) {
+        lastCheckTime := A_TickCount
+        if (!FileExist(messagesFilePath)) {
             return false
+        }
+        try {
+            fileTime := FileGetTime(messagesFilePath, "M")
+            if (cachedData == "" || fileTime != lastFileTime) {
+                fileContent := FileRead(messagesFilePath, "UTF-8")
+                if (fileContent != "") {
+                    cachedData := JSON.Load(fileContent)
+                    lastFileTime := fileTime
+                }
+            }
+        } catch {
+            if (cachedData == "")
+                return false
+        }
     }
     
     if (!IsObject(cachedData))
