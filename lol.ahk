@@ -37,6 +37,24 @@ global friendsCount := 0
 global friendsOnline := 0
 global recentWinRate := "--"
 global sessionStartTime := A_TickCount
+global cachedMatchesCount := 0
+global totalPlayersLoggedCount := 0
+global currentSearchQuery := ""
+global lastHistoryVersion := -1
+global lastQueueSize := -1
+
+RecalculateHistoryStats() {
+    global match_history_dic, cachedMatchesCount, totalPlayersLoggedCount
+    cachedMatchesCount := match_history_dic.Count
+    totalPlayers := 0
+    for gameId, gameData in match_history_dic {
+        if (IsObject(gameData) && gameData.Has("ReportedPlayers") && IsObject(gameData["ReportedPlayers"])) {
+            totalPlayers += gameData["ReportedPlayers"].Length
+        }
+    }
+    totalPlayersLoggedCount := totalPlayers
+}
+RecalculateHistoryStats()
 
 ; Load and initialize configuration
 InitializeConfig()
@@ -75,6 +93,8 @@ MyWindow.AddCallBackToScript("restartUX", RestartUXCallback)
 MyWindow.AddCallBackToScript("benchSwap", BenchSwapCallback)
 MyWindow.AddCallBackToScript("setSummonerSpells", SetSummonerSpellsCallback)
 MyWindow.AddCallBackToScript("getRecentPlayers", GetRecentPlayersCallback)
+MyWindow.AddCallBackToScript("requestHistoryTimeline", RequestHistoryTimelineCallback)
+MyWindow.AddCallBackToScript("toggleCycleBench", ToggleCycleBenchCallback)
 MyWindow.AddCallBackToScript("Close", CloseWindow)
 MyWindow.AddCallBackToScript("DragWindow", DragWindow)
 MyWindow.AddCallBackToScript("Minimize", MinimizeWindow)
@@ -104,16 +124,109 @@ global friendsTimer := 10
 global lastGameflow := "INIT"
 global wasLcuConnected := false
 global lastDashboardState := ""
-global cachedHistoryJson := ""
-global cachedHistoryVersion := -1
+RequestHistoryTimelineCallback(WebView, searchQuery) {
+    PushHistoryTimeline(searchQuery)
+}
 
-GetHistoryJson() {
-    global match_history_dic, historyVersion, cachedHistoryJson, cachedHistoryVersion
-    if (cachedHistoryVersion != historyVersion || cachedHistoryJson == "") {
-        cachedHistoryJson := JSON.Dump(match_history_dic)
-        cachedHistoryVersion := historyVersion
+PushHistoryTimeline(searchQuery := unset) {
+    global match_history_dic, MyWindow, currentSearchQuery
+    if (IsSet(searchQuery)) {
+        currentSearchQuery := searchQuery
     }
-    return cachedHistoryJson
+    
+    queryLower := Format("{:L}", currentSearchQuery)
+    filteredItems := Array()
+    
+    for gameId, gameData in match_history_dic {
+        if (!IsObject(gameData) || !gameData.Has("Timestamp"))
+            continue
+            
+        if (queryLower != "") {
+            matchFound := false
+            if (InStr(Format("{:L}", gameId), queryLower)) {
+                matchFound := true
+            } else {
+                if (gameData.Has("ReportedPlayers") && IsObject(gameData["ReportedPlayers"])) {
+                    for player in gameData["ReportedPlayers"] {
+                        if (InStr(Format("{:L}", player), queryLower)) {
+                            matchFound := true
+                            break
+                        }
+                    }
+                }
+            }
+            if (!matchFound)
+                continue
+        }
+        
+        itemCopy := Map(
+            "gameId", gameId,
+            "Timestamp", gameData["Timestamp"]
+        )
+        if (gameData.Has("ReportedPlayers"))
+            itemCopy["ReportedPlayers"] := gameData["ReportedPlayers"]
+        else
+            itemCopy["ReportedPlayers"] := Array()
+            
+        if (gameData.Has("DamageStats"))
+            itemCopy["DamageStats"] := gameData["DamageStats"]
+            
+        filteredItems.Push(itemCopy)
+    }
+    
+    ; Sort filteredItems by Timestamp descending
+    SortTimeline(filteredItems)
+    
+    ; Limit items: 15 for empty query, 50 for search
+    limit := (queryLower == "") ? 15 : 50
+    slicedItems := Array()
+    loopMin := (filteredItems.Length < limit) ? filteredItems.Length : limit
+    Loop loopMin {
+        slicedItems.Push(filteredItems[A_Index])
+    }
+    
+    try {
+        MyWindow.ExecuteScriptAsync("updateHistoryTimeline(" JSON.Dump(slicedItems) ")")
+    }
+}
+
+SortTimeline(arr) {
+    if (arr.Length <= 1)
+        return arr
+    QuickSortTimeline(arr, 1, arr.Length)
+    return arr
+}
+
+QuickSortTimeline(arr, left, right) {
+    if (left >= right)
+        return
+    pivotIdx := Random(left, right)
+    pivotVal := arr[pivotIdx]["Timestamp"]
+    
+    ; Swap pivot to right
+    temp := arr[pivotIdx]
+    arr[pivotIdx] := arr[right]
+    arr[right] := temp
+    
+    i := left
+    j := left
+    while (j < right) {
+        if (arr[j]["Timestamp"] > pivotVal) {
+            temp := arr[i]
+            arr[i] := arr[j]
+            arr[j] := temp
+            i++
+        }
+        j++
+    }
+    
+    ; Swap pivot back to i
+    temp := arr[i]
+    arr[i] := arr[right]
+    arr[right] := temp
+    
+    QuickSortTimeline(arr, left, i - 1)
+    QuickSortTimeline(arr, i + 1, right)
 }
 
 loop {
@@ -319,6 +432,7 @@ loop {
         if (!initConfigSent) {
             MyWindow.ExecuteScriptAsync("initConfig(" JSON.Dump(config) ")")
             initConfigSent := true
+            PushHistoryTimeline("")
             LogToWeb("App dashboard UI initialized.", "info")
             if (gameflow != "") {
                 LogToWeb("LCU connected. Current phase: " gameflow, "success")
@@ -359,8 +473,20 @@ loop {
         currentDashboardState := meSummonerId "|" gameflow "|" historyVersion "|" reportQueue.Length "|" reportStatus
         if (currentDashboardState != lastDashboardState) {
             lastDashboardState := currentDashboardState
-            MyWindow.ExecuteScriptAsync("updateDashboard(" JSON.Dump(me) ", '" gameflow "', " GetHistoryJson() ", " reportQueue.Length ", '" reportStatus "')")
+            MyWindow.ExecuteScriptAsync("updateDashboard(" JSON.Dump(me) ", '" gameflow "', " reportQueue.Length ", '" reportStatus "', " cachedMatchesCount ", " totalPlayersLoggedCount ")")
         }
+
+        ; Monitor history changes to push timeline updates
+        if (historyVersion != lastHistoryVersion) {
+            lastHistoryVersion := historyVersion
+            PushHistoryTimeline()
+        }
+
+        ; Monitor reportQueue state to refresh recent players when reports finish
+        if (reportQueue.Length == 0 && lastQueueSize > 0) {
+            try GetRecentPlayersCallback(MyWindow)
+        }
+        lastQueueSize := reportQueue.Length
     } catch Error as e {
         LogToWeb("Error in main loop script execution: " e.Message, "error")
     }
@@ -455,6 +581,13 @@ UpdateConfigCallback(WebView, key, value) {
 WebTooltipEvent(WebView, Msg) {
     ToolTip(Msg)
     SetTimer((*) => ToolTip(), -1500)
+}
+
+ToggleCycleBenchCallback(WebView, enabledVal) {
+    global cycleBenchEnabled, cycledChampIds
+    cycleBenchEnabled := (enabledVal == "true" || enabledVal = True)
+    cycledChampIds := Map()
+    LogToWeb("Bench Cycling " . (cycleBenchEnabled ? "ENABLED" : "DISABLED") . ".", "info")
 }
 
 DodgeLobbyCallback(WebView) {
@@ -603,6 +736,7 @@ SetHistoryGame(gameId, value) {
     match_history_dic[gameId] := value
     historyDirty := true
     historyVersion++
+    RecalculateHistoryStats()
 }
 
 FormatSessionTime(seconds) {

@@ -9,6 +9,9 @@ global warnedEmpty := false
 global bypassAutoPick := false
 global lastSentChampId := 0
 global sentQuotesMap := Map()
+global cycleBenchEnabled := false
+global lastCycleTime := 0
+global cycledChampIds := Map()
 
 champSelectHelper() {
     global config, gameflow
@@ -16,7 +19,7 @@ champSelectHelper() {
     static sessionFailCount := 0
     
     if (gameflow == "ChampSelect") {
-        SetTimer(champSelectHelper, 200)
+        SetTimer(champSelectHelper, 100)
         if (!wasInChampSelect) {
             wasInChampSelect := true
             sessionFailCount := 0
@@ -24,7 +27,7 @@ champSelectHelper() {
             ; Log sniper status on entry
             if (config.Has("autoPickBenchEnabled") && config["autoPickBenchEnabled"]) {
                 targetNames := GetTargetChampNames()
-                LogToWeb("Bench Sniper: ARMED on lobby entry (200ms check frequency). Targets: " targetNames, "success", "champSelectHelperSilent")
+                LogToWeb("Bench Sniper: ARMED on lobby entry (100ms check frequency). Targets: " targetNames, "success", "champSelectHelperSilent")
             } else {
                 LogToWeb("Bench Sniper: DISABLED on lobby entry. Toggle the sniper ON to activate.", "warning", "champSelectHelperSilent")
             }
@@ -37,6 +40,9 @@ champSelectHelper() {
                 UpdateChampSelectFrontend(session)
                 ProcessBenchSwaps(session)
                 ProcessChampMessages(session)
+                if (cycleBenchEnabled) {
+                    CycleBenchTick(session)
+                }
             } else if (IsObject(session) && session.Has("error")) {
                 sessionFailCount++
                 errCode := session.Has("status") ? session["status"] : "?"
@@ -253,8 +259,27 @@ ProcessBenchSwaps(session) {
         return
     }
     
+    ; --- Gate: Don't pick if in selecting phase ---
+    phase := ""
+    if (session.Has("timer") && IsObject(session["timer"]) && session["timer"].Has("phase")) {
+        phase := session["timer"]["phase"]
+    }
+    if (phase == "PLANNING" || phase == "BAN" || phase == "PICK") {
+        return
+    }
+    
+    ; --- Gate: Don't pick if bench cycler is currently active ---
+    global cycleBenchEnabled
+    if (cycleBenchEnabled) {
+        return
+    }
+    
     benchResult := GetBenchFromSession(session)
     myInfo := GetMyChampInfo(session)
+    myChampId := myInfo["championId"]
+    if (myChampId == 0) {
+        return
+    }
     
     ; --- Gate 0: Has the user manually bypassed the auto-picker? ---
     global bypassAutoPick
@@ -317,7 +342,6 @@ ProcessBenchSwaps(session) {
     }
     
     ; --- Gate 4: Don't swap if we already have a target champion ---
-    myChampId := myInfo["championId"]
     alreadyHaveTarget := preferredIds.Has(myChampId)
     if (alreadyHaveTarget) {
         static lastOwnedLog := ""
@@ -547,7 +571,8 @@ UpdateChampSelectFrontend(session) {
     timerMap := Map("adjustedTimeLeftInPhase", 0, "internalNowInEpochMs", 0, "isInfinite", false, "phase", "")
     if (session.Has("timer") && IsObject(session["timer"])) {
         t := session["timer"]
-        timerMap["adjustedTimeLeftInPhase"] := t.Has("adjustedTimeLeftInPhase") ? t["adjustedTimeLeftInPhase"] : 0
+        val := t.Has("adjustedTimeLeftInPhase") ? t["adjustedTimeLeftInPhase"] : 0
+        timerMap["adjustedTimeLeftInPhase"] := Max(0, val - 1000)
         timerMap["internalNowInEpochMs"] := t.Has("internalNowInEpochMs") ? t["internalNowInEpochMs"] : 0
         timerMap["isInfinite"] := t.Has("isInfinite") ? (t["isInfinite"] = true || t["isInfinite"] = "true") : false
         timerMap["phase"] := t.Has("phase") ? t["phase"] : ""
@@ -592,16 +617,19 @@ GetSummonerNameByPuuid(puuid) {
 }
 
 ResetChampSelectHelper() {
-    global lastSessionId, champLobbyNames, warnedNoIds, warnedEmpty, bypassAutoPick, lastPayloadJson
+    global lastSessionId, champLobbyNames, warnedNoIds, warnedEmpty, bypassAutoPick, lastPayloadJson, cycleBenchEnabled, cycledChampIds
     lastSessionId := ""
     champLobbyNames := Array()
     warnedNoIds := false
     warnedEmpty := false
     bypassAutoPick := false
     lastPayloadJson := ""
+    cycleBenchEnabled := false
+    cycledChampIds := Map()
     try MyWindow.ExecuteScriptAsync("onLobbyCleared()")
     try MyWindow.ExecuteScriptAsync("clearBenchDisplay()")
     try MyWindow.ExecuteScriptAsync("clearChampSelectDraft()")
+    try MyWindow.ExecuteScriptAsync("onCycleBenchStateChanged(false)")
 }
 
 ProcessChampMessages(session) {
@@ -732,6 +760,87 @@ HasChampQuote(champId, champName) {
         }
     }
     return false
+}
+
+CycleBenchTick(session) {
+    global lastCycleTime, cycledChampIds, cycleBenchEnabled
+    
+    ; Cycle every 100 ms to cycle extremely fast (<500ms)
+    if (A_TickCount - lastCycleTime <= 500) {
+        return
+    }
+    
+    ; --- Gate: Don't cycle if in selecting phase ---
+    phase := ""
+    if (session.Has("timer") && IsObject(session["timer"]) && session["timer"].Has("phase")) {
+        phase := session["timer"]["phase"]
+    }
+    if (phase == "PLANNING" || phase == "BAN" || phase == "PICK") {
+        return
+    }
+    
+    benchEnabled := session.Has("benchEnabled") && (session["benchEnabled"] = true || session["benchEnabled"] = "true")
+    if (!benchEnabled) {
+        return
+    }
+    
+    benchResult := GetBenchFromSession(session)
+    if (benchResult["data"] == "") {
+        return
+    }
+    
+    benchData := benchResult["data"]
+    myInfo := GetMyChampInfo(session)
+    myChampId := myInfo["championId"]
+    
+    if (myChampId == 0) {
+        return
+    }
+    
+    ; Add current champion to cycled list so we don't swap back to it in the current run
+    if (!cycledChampIds.Has(myChampId)) {
+        cycledChampIds[myChampId] := true
+    }
+    
+    targetChampId := 0
+    for entry in benchData {
+        champId := GetBenchChampId(entry)
+        if (champId > 0 && !cycledChampIds.Has(champId)) {
+            targetChampId := champId
+            break
+        }
+    }
+    
+    ; If all bench champions have been cycled, reset the tracking map
+    if (targetChampId == 0) {
+        cycledChampIds := Map()
+        cycledChampIds[myChampId] := true
+        
+        ; Try to find one again
+        for entry in benchData {
+            champId := GetBenchChampId(entry)
+            if (champId > 0 && !cycledChampIds.Has(champId)) {
+                targetChampId := champId
+                break
+            }
+        }
+    }
+    
+    if (targetChampId > 0) {
+        lastCycleTime := A_TickCount
+        champName := GetChampionName(targetChampId)
+        LogToWeb("Bench Cycling: Swapping to " champName " (ID:" targetChampId ")...", "info", "champSelectHelperSilent")
+        
+        ; Swap to bench champion
+        res := LeagueAPI.SwapBenchChampion(targetChampId)
+        if (IsObject(res) && res.Has("error")) {
+            errStatus := res.Has("status") ? res["status"] : "?"
+            errMsg := res.Has("error") ? res["error"] : "Unknown"
+            LogToWeb("Bench Cycling: Swap failed for " champName " — HTTP " errStatus " (" errMsg ")", "warning", "champSelectHelperSilent")
+        } else {
+            cycledChampIds[targetChampId] := true
+        }
+    }
 }
 
 

@@ -245,8 +245,9 @@
 								</div>
 							</div>
 
-							<!-- Dodge Button Row -->
-							<div class="d-flex justify-content-end align-items-center mt-3 border-top pt-3" style="border-color: rgba(200, 155, 60, 0.1) !important;">
+							<!-- Dodge & Cycle Button Row -->
+							<div class="d-flex justify-content-end align-items-center mt-3 border-top pt-3 gap-2" style="border-color: rgba(200, 155, 60, 0.1) !important;">
+								<button id="btn-cycle-bench" class="btn btn-outline-info btn-sm" onclick="toggleCycleBenchBtn()"><i class="fa-solid fa-rotate me-1"></i> Cycle Bench</button>
 								<button class="btn btn-outline-danger btn-sm" onclick="ahk.dodgeLobby()"><i class="fa-solid fa-right-from-bracket me-1"></i> Instadodge Lobby</button>
 							</div>
 						</div>
@@ -1049,6 +1050,15 @@
 			
 			// Initialize blacklist state
 			initBlacklist(config);
+			
+			// Initialize history timeline
+			if (window.chrome && window.chrome.webview && window.chrome.webview.hostObjects && window.chrome.webview.hostObjects.ahk) {
+				try {
+					ahk.requestHistoryTimeline('');
+				} catch(err) {
+					console.error("Error calling requestHistoryTimeline during init", err);
+				}
+			}
 		}
 
 		function updateBadge(badgeId, isEnabled) {
@@ -1180,7 +1190,7 @@
 		}
 
 		// Main update dashboard loop callback
-		function updateDashboard(me, gameflow, history, queueSize, currentStatus) {
+		function updateDashboard(me, gameflow, queueSize, currentStatus, cachedMatches, totalPlayersLogged) {
 			window.currentMe = me;
 			// 1. Connection states
 			const stateEl = document.getElementById('connection-state');
@@ -1226,20 +1236,11 @@
 			// Update Cached Matches Count & Total Players Logged
 			const reportsEl = document.getElementById('game-stats-reports');
 			const playersEl = document.getElementById('game-stats-players');
-			if (reportsEl) {
-				reportsEl.innerText = (history && typeof history === 'object') ? Object.keys(history).length : 0;
+			if (reportsEl && cachedMatches !== undefined) {
+				reportsEl.innerText = cachedMatches;
 			}
-			if (playersEl) {
-				let totalPlayers = 0;
-				if (history && typeof history === 'object') {
-					Object.keys(history).forEach(gameId => {
-						let item = history[gameId];
-						if (item && item.ReportedPlayers && Array.isArray(item.ReportedPlayers)) {
-							totalPlayers += item.ReportedPlayers.length;
-						}
-					});
-				}
-				playersEl.innerText = totalPlayers;
+			if (playersEl && totalPlayersLogged !== undefined) {
+				playersEl.innerText = totalPlayersLogged;
 			}
 
 			// Blacklist stats update
@@ -1267,8 +1268,6 @@
 				if (winrateEl) {
 					winrateEl.innerText = me.lol.recentWinRate !== undefined ? me.lol.recentWinRate : "--";
 				}
-
-
 			}
 
 			const champsCountEl = document.getElementById('game-stats-champs');
@@ -1298,25 +1297,6 @@
 			} else {
 				queueCard.style.display = 'none';
 			}
-
-			// 4. Render Match Report history list
-			window.reportedMatchesHistory = history;
-			if (window.lastRenderedHistoryRef !== history) {
-				const isFirstRender = (window.lastRenderedHistoryRef === undefined);
-				window.lastRenderedHistoryRef = history;
-				const searchInput = document.getElementById('search-reported-matches');
-				const searchQuery = searchInput ? searchInput.value : '';
-				renderReportTimeline(history, searchQuery);
-
-				// Reload recent players from match history if this is a live update (not initial load) and report queue is empty
-				if (!isFirstRender && queueSize === 0 && window.chrome && window.chrome.webview && window.chrome.webview.hostObjects && window.chrome.webview.hostObjects.ahk) {
-					try {
-						ahk.getRecentPlayers();
-					} catch(err) {
-						console.error("Error invoking getRecentPlayers on history update", err);
-					}
-				}
-			}
 		}
 
 		function updateSessionTime(sessionTime) {
@@ -1326,156 +1306,125 @@
 			}
 		}
 
-		function renderReportTimeline(history, searchQuery = '') {
+		window.currentTimelineData = [];
+		function updateHistoryTimeline(entries) {
+			window.currentTimelineData = entries || [];
 			const timelineEl = document.getElementById('report-timeline');
 			if (!timelineEl) return;
 			
-			if (history && Object.keys(history).length > 0) {
-				// Convert to array and filter out entries without a Timestamp
-				let entries = [];
-				Object.keys(history).forEach(gameId => {
-					let item = history[gameId];
-					if (item && item.Timestamp) {
-						entries.push({
-							gameId: gameId,
-							ReportedPlayers: item.ReportedPlayers,
-							Timestamp: item.Timestamp,
-							DamageStats: item.DamageStats
+			if (window.currentTimelineData.length > 0) {
+				let html = '';
+				window.currentTimelineData.forEach(item => {
+					let players = [];
+					let pillsHtml = '';
+					
+					if (item.ReportedPlayers && Array.isArray(item.ReportedPlayers)) {
+						item.ReportedPlayers.forEach(p => {
+							let isSkipped = p.endsWith(' (Skipped)');
+							let cleanName = p.replace(/\s*\(Skipped\)\s*$/, '').trim();
+							if (cleanName && cleanName !== "Unknown Player") {
+								players.push(cleanName.replace('#', '-'));
+								if (isSkipped) {
+									pillsHtml += `<span class="player-pill skipped-pill" title="${cleanName} (Skipped)">${cleanName}</span>`;
+								} else {
+									pillsHtml += `<span class="player-pill reported-pill" title="${cleanName} (Reported)">${cleanName}</span>`;
+								}
+							}
 						});
 					}
-				});
-				
-				// Apply search filter if query exists
-				if (searchQuery.trim() !== '') {
-					const query = searchQuery.toLowerCase().trim();
-					entries = entries.filter(item => {
-						// Match Game ID
-						if (item.gameId.toString().toLowerCase().includes(query)) {
-							return true;
-						}
-						// Match any Player Name
-						if (item.ReportedPlayers && Array.isArray(item.ReportedPlayers)) {
-							return item.ReportedPlayers.some(p => p.toLowerCase().includes(query));
-						}
-						return false;
-					});
-				}
-				
-				// Sort by Timestamp descending (newest first)
-				entries.sort((a, b) => b.Timestamp - a.Timestamp);
-				
-				if (entries.length > 0) {
-					let html = '';
-					// Limit default view to 15 entries, show more if filtering
-					let displayEntries = searchQuery.trim() !== '' ? entries.slice(0, 50) : entries.slice(0, 15);
-					displayEntries.forEach(item => {
-						let players = [];
-						let pillsHtml = '';
-						
-						if (item.ReportedPlayers && Array.isArray(item.ReportedPlayers)) {
-							item.ReportedPlayers.forEach(p => {
-								let isSkipped = p.endsWith(' (Skipped)');
-								let cleanName = p.replace(/\s*\(Skipped\)\s*$/, '').trim();
-								if (cleanName && cleanName !== "Unknown Player") {
-									players.push(cleanName.replace('#', '-'));
-									if (isSkipped) {
-										pillsHtml += `<span class="player-pill skipped-pill" title="${cleanName} (Skipped)">${cleanName}</span>`;
-									} else {
-										pillsHtml += `<span class="player-pill reported-pill" title="${cleanName} (Reported)">${cleanName}</span>`;
-									}
-								}
-							});
-						}
-						
-						if (!pillsHtml) {
-							pillsHtml = `<span class="player-pill reported-pill">All Lobby</span>`;
-						}
+					
+					if (!pillsHtml) {
+						pillsHtml = `<span class="player-pill reported-pill">All Lobby</span>`;
+					}
 
-						let link = `https://u.gg/lol/multisearch?summoners=${players.map(encodeURIComponent).join(',')}&region=eun1`;
-						let dateStr = new Date(item.Timestamp).toLocaleString();
+					let link = `https://u.gg/lol/multisearch?summoners=${players.map(encodeURIComponent).join(',')}&region=eun1`;
+					let dateStr = new Date(item.Timestamp).toLocaleString();
+					
+					let hasDamageStats = Array.isArray(item.DamageStats) && item.DamageStats.length > 0;
+					let isExpanded = window.expandedDamageCharts && window.expandedDamageCharts.includes(item.gameId);
+					let chartDisplayClass = isExpanded ? 'd-block' : 'd-none';
+					
+					let damageChartRowsHtml = '';
+					if (hasDamageStats) {
+						// Sort players by damageDealt descending
+						const sortedPlayers = [...item.DamageStats].sort((a, b) => b.damageDealt - a.damageDealt);
+						const maxDamage = Math.max(...sortedPlayers.map(p => p.damageDealt), 1);
 						
-						let hasDamageStats = Array.isArray(item.DamageStats) && item.DamageStats.length > 0;
-						let isExpanded = window.expandedDamageCharts && window.expandedDamageCharts.includes(item.gameId);
-						let chartDisplayClass = isExpanded ? 'd-block' : 'd-none';
-						
-						let damageChartRowsHtml = '';
-						if (hasDamageStats) {
-							// Sort players by damageDealt descending
-							const sortedPlayers = [...item.DamageStats].sort((a, b) => b.damageDealt - a.damageDealt);
-							const maxDamage = Math.max(...sortedPlayers.map(p => p.damageDealt), 1);
+						sortedPlayers.forEach(player => {
+							const percentage = (player.damageDealt / maxDamage) * 100;
 							
-							sortedPlayers.forEach(player => {
-								const percentage = (player.damageDealt / maxDamage) * 100;
+							// Determine bar color based on status
+							let barColor = 'linear-gradient(90deg, rgba(200, 155, 60, 0.45), rgba(200, 155, 60, 0.65))'; // default gold
+							
+							if (item.ReportedPlayers && Array.isArray(item.ReportedPlayers)) {
+								const isReported = item.ReportedPlayers.includes(player.playerName);
+								const isSkipped = item.ReportedPlayers.includes(player.playerName + ' (Skipped)');
 								
-								// Determine bar color based on status
-								let barColor = 'linear-gradient(90deg, rgba(200, 155, 60, 0.45), rgba(200, 155, 60, 0.65))'; // default gold
-								
-								if (item.ReportedPlayers && Array.isArray(item.ReportedPlayers)) {
-									const isReported = item.ReportedPlayers.includes(player.playerName);
-									const isSkipped = item.ReportedPlayers.includes(player.playerName + ' (Skipped)');
-									
-									if (isReported) {
-										barColor = 'linear-gradient(90deg, rgba(220, 53, 69, 0.75), rgba(220, 53, 69, 0.95))'; // crimson
-									} else if (isSkipped) {
-										barColor = 'linear-gradient(90deg, rgba(230, 126, 34, 0.65), rgba(230, 126, 34, 0.85))'; // orange
-									}
+								if (isReported) {
+									barColor = 'linear-gradient(90deg, rgba(220, 53, 69, 0.75), rgba(220, 53, 69, 0.95))'; // crimson
+								} else if (isSkipped) {
+									barColor = 'linear-gradient(90deg, rgba(230, 126, 34, 0.65), rgba(230, 126, 34, 0.85))'; // orange
 								}
-								
-								const champId = player.championId;
-								const alias = championAliases[champId] || (championList[champId] ? getChampCleanFile(championList[champId]) : '');
-								const imgUrl = alias ? `https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/champion/${alias}.png` : `https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/profileicon/29.png`;
-								
-								damageChartRowsHtml += `
-									<div class="d-flex align-items-center mb-1 w-100" style="font-size: 0.72rem; height: 26px;">
-										<img src="${imgUrl}" class="rounded-circle border border-secondary" style="width: 22px; height: 22px; object-fit: cover; margin-right: 8px;" onerror="this.src='https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/profileicon/29.png'">
-										<span class="text-white text-truncate" style="width: 120px; margin-right: 8px;" title="${player.playerName}">${player.playerName}</span>
-										<div class="flex-grow-1 bg-dark rounded" style="height: 10px; background: rgba(0, 0, 0, 0.4) !important; overflow: hidden; margin-right: 8px; border: 1px solid rgba(255, 255, 255, 0.05);">
-											<div class="h-100 rounded" style="width: ${percentage}%; background: ${barColor}; transition: width 0.3s ease;"></div>
-										</div>
-										<span class="text-warning text-end font-monospace" style="width: 55px; font-size: 0.7rem;">${player.damageDealt.toLocaleString()}</span>
+							}
+							
+							const champId = player.championId;
+							const alias = championAliases[champId] || (championList[champId] ? getChampCleanFile(championList[champId]) : '');
+							const imgUrl = alias ? `https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/champion/${alias}.png` : `https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/profileicon/29.png`;
+							
+							damageChartRowsHtml += `
+								<div class="d-flex align-items-center mb-1 w-100" style="font-size: 0.72rem; height: 26px;">
+									<img src="${imgUrl}" class="rounded-circle border border-secondary" style="width: 22px; height: 22px; object-fit: cover; margin-right: 8px;" onerror="this.src='https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/profileicon/29.png'">
+									<span class="text-white text-truncate" style="width: 120px; margin-right: 8px;" title="${player.playerName}">${player.playerName}</span>
+									<div class="flex-grow-1 bg-dark rounded" style="height: 10px; background: rgba(0, 0, 0, 0.4) !important; overflow: hidden; margin-right: 8px; border: 1px solid rgba(255, 255, 255, 0.05);">
+										<div class="h-100 rounded" style="width: ${percentage}%; background: ${barColor}; transition: width 0.3s ease;"></div>
 									</div>
-								`;
-							});
-						}
+									<span class="text-warning text-end font-monospace" style="width: 55px; font-size: 0.7rem;">${player.damageDealt.toLocaleString()}</span>
+								</div>
+							`;
+						});
+					}
 
-						html += `
-							<div class="report-item d-flex flex-column align-items-stretch">
-								<div class="d-flex justify-content-between align-items-center w-100 mb-2">
-									<span class="report-match-id" style="margin-right: 10px;"><i class="fa-solid fa-gamepad me-1" style="font-size: 0.8em; opacity: 0.6;"></i>MATCH #${item.gameId} <span class="mx-1 opacity-50">&bull;</span> ${dateStr}</span>
-									<div class="d-flex gap-1">
-										<a href="${link}" target="_blank" class="btn btn-hextech" style="height: 20px; padding: 0 8px; font-size: 0.65rem; font-weight: 600; line-height: 1; display: inline-flex; align-items: center; justify-content: center; text-transform: uppercase;">Link</a>
-										${hasDamageStats ? `
-										<button class="btn ${isExpanded ? 'btn-warning' : 'btn-outline-warning'}" style="height: 20px; padding: 0 8px; font-size: 0.65rem; font-weight: 600; line-height: 1; display: inline-flex; align-items: center; justify-content: center; text-transform: uppercase;" onclick="toggleDamageChart('${item.gameId}')">
-											<i class="fa-solid fa-chart-bar me-1" style="font-size: 0.6rem;"></i>${isExpanded ? 'Hide' : 'Damage'}
-										</button>
-										` : ''}
-									</div>
+					html += `
+						<div class="report-item d-flex flex-column align-items-stretch">
+							<div class="d-flex justify-content-between align-items-center w-100 mb-2">
+								<span class="report-match-id" style="margin-right: 10px;"><i class="fa-solid fa-gamepad me-1" style="font-size: 0.8em; opacity: 0.6;"></i>MATCH #${item.gameId} <span class="mx-1 opacity-50">&bull;</span> ${dateStr}</span>
+								<div class="d-flex gap-1">
+									<a href="${link}" target="_blank" class="btn btn-hextech" style="height: 20px; padding: 0 8px; font-size: 0.65rem; font-weight: 600; line-height: 1; display: inline-flex; align-items: center; justify-content: center; text-transform: uppercase;">Link</a>
+									${hasDamageStats ? `
+									<button class="btn ${isExpanded ? 'btn-warning' : 'btn-outline-warning'}" style="height: 20px; padding: 0 8px; font-size: 0.65rem; font-weight: 600; line-height: 1; display: inline-flex; align-items: center; justify-content: center; text-transform: uppercase;" onclick="toggleDamageChart('${item.gameId}')">
+										<i class="fa-solid fa-chart-bar me-1" style="font-size: 0.6rem;"></i>${isExpanded ? 'Hide' : 'Damage'}
+									</button>
+									` : ''}
 								</div>
-								<div class="report-players-container d-flex flex-wrap gap-1">
-									${pillsHtml}
-								</div>
-								${hasDamageStats ? `
-								<div id="damage-chart-${item.gameId}" class="damage-chart-container mt-3 pt-3 border-top border-secondary ${chartDisplayClass}">
-									<div class="text-warning small font-weight-bold mb-2 uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Damage Dealt to Champions</div>
-									${damageChartRowsHtml}
-								</div>
-								` : ''}
 							</div>
-						`;
-					});
-					timelineEl.innerHTML = html;
-				} else {
-					timelineEl.innerHTML = '<div class="text-center py-4 text-muted">No matching reported matches found.</div>';
-				}
+							<div class="report-players-container d-flex flex-wrap gap-1">
+								${pillsHtml}
+							</div>
+							${hasDamageStats ? `
+							<div id="damage-chart-${item.gameId}" class="damage-chart-container mt-3 pt-3 border-top border-secondary ${chartDisplayClass}">
+								<div class="text-warning small font-weight-bold mb-2 uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Damage Dealt to Champions</div>
+								${damageChartRowsHtml}
+							</div>
+							` : ''}
+						</div>
+					`;
+				});
+				timelineEl.innerHTML = html;
 			} else {
-				timelineEl.innerHTML = '<div class="text-center py-4 text-muted">No reports sent in this session yet.</div>';
+				timelineEl.innerHTML = '<div class="text-center py-4 text-muted">No matching reported matches found.</div>';
 			}
 		}
 
 		function filterReportedMatches() {
 			const searchInput = document.getElementById('search-reported-matches');
 			const searchQuery = searchInput ? searchInput.value : '';
-			renderReportTimeline(window.reportedMatchesHistory, searchQuery);
+			if (window.chrome && window.chrome.webview && window.chrome.webview.hostObjects && window.chrome.webview.hostObjects.ahk) {
+				try {
+					ahk.requestHistoryTimeline(searchQuery);
+				} catch(err) {
+					console.error("Error calling requestHistoryTimeline", err);
+				}
+			}
 		}
 
 		window.expandedDamageCharts = [];
@@ -1486,9 +1435,7 @@
 			} else {
 				window.expandedDamageCharts.push(gameId);
 			}
-			const searchInput = document.getElementById('search-reported-matches');
-			const searchQuery = searchInput ? searchInput.value : '';
-			renderReportTimeline(window.reportedMatchesHistory, searchQuery);
+			updateHistoryTimeline(window.currentTimelineData);
 		}
 
 		// Draft/Champion database and scraper methods
@@ -2463,6 +2410,7 @@
 			window.lastPlayersHtml = '';
 			window.lastBenchHtml = '';
 			alertedBlacklistForLobby = false;
+			onCycleBenchStateChanged(false);
 		}
 
 		// Blacklist functionality
@@ -2874,6 +2822,36 @@
 				const el = document.getElementById('toggle-killLeagueEnabled');
 				if (el) el.checked = val;
 				updateConfig('killLeagueEnabled', val);
+			}
+		}
+
+		let isCycleBenchOn = false;
+		function toggleCycleBenchBtn() {
+			isCycleBenchOn = !isCycleBenchOn;
+			updateCycleBenchUI(isCycleBenchOn);
+			try {
+				ahk.toggleCycleBench(isCycleBenchOn);
+			} catch(err) {
+				console.error("Error calling toggleCycleBench", err);
+			}
+		}
+
+		function onCycleBenchStateChanged(isOn) {
+			isCycleBenchOn = isOn;
+			updateCycleBenchUI(isCycleBenchOn);
+		}
+
+		function updateCycleBenchUI(isOn) {
+			const btn = document.getElementById('btn-cycle-bench');
+			if (!btn) return;
+			if (isOn) {
+				btn.classList.remove('btn-outline-info');
+				btn.classList.add('btn-info', 'active');
+				btn.style.boxShadow = 'inset 0 3px 5px rgba(0, 0, 0, 0.4), 0 0 8px rgba(10, 200, 185, 0.5)';
+			} else {
+				btn.classList.remove('btn-info', 'active');
+				btn.classList.add('btn-outline-info');
+				btn.style.boxShadow = '';
 			}
 		}
 	</script>
