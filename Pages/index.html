@@ -1526,6 +1526,23 @@
 			})
 			.catch(err => console.error("Failed to load DataDragon fallback", err));
 
+		function sanitizeChampIds(ids) {
+			if (!Array.isArray(ids)) return [];
+			let sanitized = [];
+			ids.forEach(id => {
+				let num = parseInt(id);
+				if (isNaN(num)) return;
+				// Remap Classic clone IDs back to base ID (e.g. 60096 -> 96)
+				if (num >= 60000 && num < 70000) {
+					num = num - 60000;
+				}
+				if (num > 0 && num < 10000 && !sanitized.includes(num)) {
+					sanitized.push(num);
+				}
+			});
+			return sanitized;
+		}
+
 		function loadChampsFromLCU(champs) {
 			console.log("Loading " + champs.length + " champions from LCU.");
 			championList = {};
@@ -1533,26 +1550,44 @@
 			championRoles = {};
 			championAliases = {};
 			
-			window.ownedChampsCount = champs.length;
-			const champsCountEl = document.getElementById('game-stats-champs');
-			if (champsCountEl) {
-				champsCountEl.innerText = champs.length;
-			}
-			
+			let validCount = 0;
 			champs.forEach(c => {
-				if (c.id > 0) {
-					championList[c.id] = c.name;
-					championNameMap[cleanChampName(c.name)] = c.id;
-					championRoles[c.id] = c.roles ? c.roles.map(r => r.toLowerCase()) : [];
-					championAliases[c.id] = c.alias || c.name.replace(/[^a-zA-Z0-9]/g, '');
+				const cid = parseInt(c.id);
+				// Filter out Classic gamemode clones or non-standard IDs (base champions are < 10000)
+				if (cid > 0 && cid < 10000) {
+					validCount++;
+					championList[cid] = c.name;
+					championNameMap[cleanChampName(c.name)] = cid;
+					championRoles[cid] = c.roles ? c.roles.map(r => r.toLowerCase()) : [];
+					championAliases[cid] = c.alias || c.name.replace(/[^a-zA-Z0-9]/g, '');
 				}
 			});
+			
+			window.ownedChampsCount = validCount;
+			const champsCountEl = document.getElementById('game-stats-champs');
+			if (champsCountEl) {
+				champsCountEl.innerText = validCount;
+			}
 			
 			populateChampDropdowns();
 		}
 
 		function populateChampDropdowns() {
 			if (window.loadedConfig) {
+				if (window.loadedConfig.autoPickBenchIds) {
+					const cleanedBench = sanitizeChampIds(window.loadedConfig.autoPickBenchIds);
+					if (JSON.stringify(cleanedBench) !== JSON.stringify(window.loadedConfig.autoPickBenchIds)) {
+						window.loadedConfig.autoPickBenchIds = cleanedBench;
+						updateConfig('autoPickBenchIds', JSON.stringify(cleanedBench));
+					}
+				}
+				if (window.loadedConfig.favoriteChampIds) {
+					const cleanedFavs = sanitizeChampIds(window.loadedConfig.favoriteChampIds);
+					if (JSON.stringify(cleanedFavs) !== JSON.stringify(window.loadedConfig.favoriteChampIds)) {
+						window.loadedConfig.favoriteChampIds = cleanedFavs;
+						updateConfig('favoriteChampIds', JSON.stringify(cleanedFavs));
+					}
+				}
 				reflectBenchChampNames('input-pickBench', window.loadedConfig.autoPickBenchIds);
 				renderFavoriteChampions(window.loadedConfig.favoriteChampIds);
 			}
@@ -1664,14 +1699,14 @@
 			}
 		}
 
-		function addCurrentSearchToFav() {
+		function addCurrentSearchToFav(explicitId) {
 			const input = document.getElementById('search-fav-champ');
 			if (!input) return;
 			let name = input.value.trim();
-			if (!name) return;
+			if (!name && explicitId === undefined) return;
 			
-			let id = championNameMap[cleanChampName(name)];
-			if (id !== undefined) {
+			let id = explicitId !== undefined ? explicitId : championNameMap[cleanChampName(name)];
+			if (id !== undefined && id > 0 && id < 10000) {
 				if (!window.loadedConfig) window.loadedConfig = {};
 				let favIds = window.loadedConfig.favoriteChampIds || [];
 				
@@ -1685,7 +1720,7 @@
 				const dropdown = document.getElementById('custom-champ-dropdown');
 				if (dropdown) dropdown.classList.add('d-none');
 			} else {
-				console.warn("Champion not found: " + name);
+				console.warn("Champion not found or invalid: " + name);
 				input.classList.add('border-danger');
 				setTimeout(() => input.classList.remove('border-danger'), 1000);
 			}
@@ -1714,18 +1749,29 @@
 				return;
 			}
 			
-			let sortedChamps = Object.values(championList).sort();
-			let filtered = sortedChamps.filter(name => cleanChampName(name).includes(cleanQuery));
+			// Build deduplicated champion list, keeping only base champions (< 10000)
+			let seen = new Set();
+			let entries = [];
+			for (let idStr in championList) {
+				let id = parseInt(idStr);
+				let name = championList[id];
+				if (id > 0 && id < 10000 && name && !seen.has(name.toLowerCase())) {
+					seen.add(name.toLowerCase());
+					entries.push({ id, name });
+				}
+			}
+			let filtered = entries.filter(e => cleanChampName(e.name).includes(cleanQuery))
+								  .sort((a, b) => a.name.localeCompare(b.name));
 			
 			let html = '';
 			if (filtered.length > 0) {
-				filtered.slice(0, 8).forEach(name => {
+				filtered.slice(0, 8).forEach(champ => {
 					html += `
-						<div class="dropdown-item-champ" onclick="selectChampFromDropdown('${name.replace(/'/g, "\\'")}')">
+						<div class="dropdown-item-champ" onclick="selectChampFromDropdown('${champ.name.replace(/'/g, "\\'")}', ${champ.id})">
 							<span style="width: 20px; height: 20px; border-radius: 50%; overflow: hidden; border: 1px solid var(--hextech-gold); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
-								<img src="https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/champion/${getChampCleanFile(name)}.png" style="width: 100%; height: 100%; object-fit: cover; transform: scale(1.15);" onerror="this.style.display='none'">
+								<img src="https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/champion/${getChampCleanFile(champ.name)}.png" style="width: 100%; height: 100%; object-fit: cover; transform: scale(1.15);" onerror="this.style.display='none'">
 							</span>
-							<span style="font-size: 0.8rem; font-weight: 500;">${name}</span>
+							<span style="font-size: 0.8rem; font-weight: 500;">${champ.name}</span>
 						</div>
 					`;
 				});
@@ -1745,11 +1791,11 @@
 		}
 
 		// Sets value, adds to favorites instantly, and resets input
-		function selectChampFromDropdown(name) {
+		function selectChampFromDropdown(name, explicitId) {
 			const input = document.getElementById('search-fav-champ');
 			if (input) {
 				input.value = name;
-				addCurrentSearchToFav();
+				addCurrentSearchToFav(explicitId);
 			}
 		}
 

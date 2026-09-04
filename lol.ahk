@@ -449,15 +449,20 @@ loop {
                 champs := LeagueAPI.GetChampionsMinimal(summonerId)
                 if (Type(champs) == "Array" && champs.Length > 0) {
                     global championMap := Map()
+                    filteredChamps := Array()
                     for c in champs {
                         if (c.Has("id")) {
                             cId := Integer(c["id"])
+                            ; Filter out Classic gamemode clones or non-standard IDs (all official champions are < 10000)
+                            if (cId <= 0 || cId >= 10000)
+                                continue
                             championMap[cId] := c
                             championMap[String(cId)] := c
+                            filteredChamps.Push(c)
                         }
                     }
-                    LogToWeb("Successfully loaded " champs.Length " champions into AHK cache.", "success")
-                    MyWindow.ExecuteScriptAsync("loadChampsFromLCU(" JSON.Dump(champs) ")")
+                    LogToWeb("Successfully loaded " filteredChamps.Length " champions into AHK cache.", "success")
+                    MyWindow.ExecuteScriptAsync("loadChampsFromLCU(" JSON.Dump(filteredChamps) ")")
                     championsLoaded := true
                 }
             }

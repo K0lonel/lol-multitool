@@ -766,7 +766,7 @@ CycleBenchTick(session) {
     global lastCycleTime, cycledChampIds, cycleBenchEnabled
     
     ; Cycle every 100 ms to cycle extremely fast (<500ms)
-    if (A_TickCount - lastCycleTime <= 500) {
+    if (A_TickCount - lastCycleTime <= 250) {
         return
     }
     
