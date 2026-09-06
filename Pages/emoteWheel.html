@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>League Emote Wheel Overlay</title>
+	<style>
+		* {
+			box-sizing: border-box;
+			user-select: none;
+			-webkit-user-select: none;
+		}
+
+		html, body {
+			margin: 0;
+			padding: 0;
+			width: 340px;
+			height: 340px;
+			overflow: hidden;
+			background: transparent !important;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+		}
+
+		#wheel-container {
+			position: relative;
+			width: 340px;
+			height: 340px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		#emote-wheel-svg {
+			width: 340px;
+			height: 340px;
+		}
+
+		/* Slices normal appearance */
+		.wheel-slice-path {
+			fill: rgba(8, 12, 18, 0.94);
+			stroke: rgba(200, 155, 60, 0.55);
+			stroke-width: 2.2;
+			transition: fill 0.12s ease, stroke 0.12s ease, filter 0.12s ease;
+		}
+
+		/* Slice Titles */
+		.wheel-text-name {
+			font-size: 12.5px;
+			font-weight: 700;
+			letter-spacing: 0.6px;
+			fill: #f0e6d2;
+			text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95);
+			dominant-baseline: middle;
+			text-anchor: middle;
+			pointer-events: none;
+			transition: fill 0.12s ease;
+		}
+
+		/* Slice Keys */
+		.wheel-text-keys {
+			font-size: 11px;
+			font-family: 'Courier New', Consolas, monospace;
+			font-weight: 700;
+			letter-spacing: 0.5px;
+			fill: #00ffcc;
+			text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95);
+			dominant-baseline: middle;
+			text-anchor: middle;
+			pointer-events: none;
+			transition: fill 0.12s ease;
+		}
+
+		/* Hovered Slice */
+		.wheel-slice-group.hovered .wheel-slice-path {
+			fill: #c89b3c;
+			stroke: #fff5da;
+			stroke-width: 3;
+			filter: drop-shadow(0 0 14px rgba(200, 155, 60, 0.95));
+		}
+
+		.wheel-slice-group.hovered .wheel-text-name {
+			fill: #080c12;
+			text-shadow: none;
+			font-weight: 800;
+		}
+
+		.wheel-slice-group.hovered .wheel-text-keys {
+			fill: #080c12;
+			text-shadow: none;
+			font-weight: 800;
+		}
+
+		/* Armed Slice (the currently selected slot in config) */
+		.wheel-slice-group.armed .wheel-slice-path {
+			stroke: #00ffcc !important;
+			stroke-width: 3.2 !important;
+			filter: drop-shadow(0 0 12px rgba(0, 255, 204, 0.75));
+		}
+
+		.wheel-slice-group.armed:not(.hovered) .wheel-text-keys {
+			fill: #33ff99;
+			filter: drop-shadow(0 0 4px rgba(51, 255, 153, 0.6));
+		}
+
+		/* Center Circle specific styling */
+		#wheel-slot-5 .wheel-slice-path {
+			fill: rgba(6, 9, 14, 0.96);
+		}
+
+		#wheel-slot-5.hovered .wheel-slice-path {
+			fill: #c89b3c;
+		}
+
+		/* Decorative compass ring */
+		.compass-ring {
+			fill: none;
+			stroke: rgba(200, 155, 60, 0.28);
+			stroke-width: 1.5;
+			stroke-dasharray: 4 4;
+		}
+
+		.compass-outer-ring {
+			fill: none;
+			stroke: rgba(200, 155, 60, 0.18);
+			stroke-width: 1;
+		}
+	</style>
+</head>
+<body>
+	<div id="wheel-container">
+		<svg id="emote-wheel-svg" viewBox="0 0 340 340">
+			<defs>
+				<!-- Subtle radial glow inside center -->
+				<radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+					<stop offset="0%" stop-color="rgba(200, 155, 60, 0.25)" />
+					<stop offset="100%" stop-color="rgba(8, 12, 18, 0)" />
+				</radialGradient>
+			</defs>
+
+			<!-- Outer Compass Rings -->
+			<circle class="compass-outer-ring" cx="170" cy="170" r="165" />
+			<circle class="compass-ring" cx="170" cy="170" r="158" />
+
+			<!-- Cardinal Accent Marks -->
+			<line x1="170" y1="4" x2="170" y2="12" stroke="rgba(200, 155, 60, 0.65)" stroke-width="2" />
+			<line x1="170" y1="328" x2="170" y2="336" stroke="rgba(200, 155, 60, 0.65)" stroke-width="2" />
+			<line x1="4" y1="170" x2="12" y2="170" stroke="rgba(200, 155, 60, 0.65)" stroke-width="2" />
+			<line x1="328" y1="170" x2="336" y2="170" stroke="rgba(200, 155, 60, 0.65)" stroke-width="2" />
+
+			<!-- Slice 1: Top (Emote 1) -->
+			<!-- Center: (170, 71) -->
+			<g class="wheel-slice-group" id="wheel-slot-1">
+				<path class="wheel-slice-path" d="M 136.06 136.06 L 63.93 63.93 A 150 150 0 0 1 276.07 63.93 L 203.94 136.06 A 48 48 0 0 0 136.06 136.06 Z" />
+				<text x="170" y="62" class="wheel-text-name">Emote 1</text>
+				<text x="170" y="80" class="wheel-text-keys"><tspan id="wheel-key-1">Num 1</tspan></text>
+			</g>
+
+			<!-- Slice 2: Right (Emote 2) -->
+			<!-- Center: (269, 170) -->
+			<g class="wheel-slice-group" id="wheel-slot-2">
+				<path class="wheel-slice-path" d="M 203.94 136.06 L 276.07 63.93 A 150 150 0 0 1 276.07 276.07 L 203.94 203.94 A 48 48 0 0 0 203.94 136.06 Z" />
+				<text x="269" y="161" class="wheel-text-name">Emote 2</text>
+				<text x="269" y="179" class="wheel-text-keys"><tspan id="wheel-key-2">Num 2</tspan></text>
+			</g>
+
+			<!-- Slice 3: Bottom (Emote 3) -->
+			<!-- Center: (170, 269) -->
+			<g class="wheel-slice-group" id="wheel-slot-3">
+				<path class="wheel-slice-path" d="M 203.94 203.94 L 276.07 276.07 A 150 150 0 0 1 63.93 276.07 L 136.06 203.94 A 48 48 0 0 0 203.94 203.94 Z" />
+				<text x="170" y="261" class="wheel-text-name">Emote 3</text>
+				<text x="170" y="279" class="wheel-text-keys"><tspan id="wheel-key-3">Num 3</tspan></text>
+			</g>
+
+			<!-- Slice 4: Left (Emote 4) -->
+			<!-- Center: (71, 170) -->
+			<g class="wheel-slice-group" id="wheel-slot-4">
+				<path class="wheel-slice-path" d="M 136.06 203.94 L 63.93 276.07 A 150 150 0 0 1 63.93 63.93 L 136.06 136.06 A 48 48 0 0 0 136.06 203.94 Z" />
+				<text x="71" y="161" class="wheel-text-name">Emote 4</text>
+				<text x="71" y="179" class="wheel-text-keys"><tspan id="wheel-key-4">Num 4</tspan></text>
+			</g>
+
+			<!-- Slice 5: Center Circle (Emote 5) -->
+			<!-- Center: (170, 170) -->
+			<g class="wheel-slice-group" id="wheel-slot-5">
+				<circle class="wheel-slice-path" cx="170" cy="170" r="46" />
+				<circle cx="170" cy="170" r="46" fill="url(#centerGlow)" pointer-events="none" />
+				<text x="170" y="161" class="wheel-text-name" style="font-size: 11.5px;">Emote 5</text>
+				<text x="170" y="179" class="wheel-text-keys" style="font-size: 10px;"><tspan id="wheel-key-5">Num 5</tspan></text>
+			</g>
+		</svg>
+	</div>
+
+	<script>
+		let currentHoverSlot = 0;
+		let currentActiveSlot = 1;
+
+		function setHoverSlot(slot) {
+			slot = Number(slot);
+			if (currentHoverSlot === slot) return;
+			currentHoverSlot = slot;
+
+			for (let i = 1; i <= 5; i++) {
+				const el = document.getElementById('wheel-slot-' + i);
+				if (el) {
+					if (i === slot) {
+						el.classList.add('hovered');
+					} else {
+						el.classList.remove('hovered');
+					}
+				}
+			}
+		}
+
+		function setActiveSlot(slot) {
+			slot = Number(slot);
+			currentActiveSlot = slot;
+
+			for (let i = 1; i <= 5; i++) {
+				const el = document.getElementById('wheel-slot-' + i);
+				if (el) {
+					if (i === slot) {
+						el.classList.add('armed');
+					} else {
+						el.classList.remove('armed');
+					}
+				}
+			}
+		}
+
+		function setKeyLabels(labels) {
+			if (!Array.isArray(labels)) return;
+			for (let i = 0; i < labels.length && i < 5; i++) {
+				const span = document.getElementById('wheel-key-' + (i + 1));
+				if (span) {
+					span.textContent = labels[i];
+				}
+			}
+		}
+
+		function updateWheelState(hoverSlot, activeSlot, labels) {
+			if (labels) setKeyLabels(labels);
+			if (activeSlot !== undefined) setActiveSlot(activeSlot);
+			if (hoverSlot !== undefined) setHoverSlot(hoverSlot);
+		}
+
+		// Initial default armed slot
+		setActiveSlot(1);
+	</script>
+</body>
+</html>

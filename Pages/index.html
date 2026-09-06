@@ -99,6 +99,67 @@
 			.glow-green-pulse {
 				animation: phaseGlowGreen 2s infinite ease-in-out;
 			}
+			.wheel-slice-path {
+				fill: rgba(12, 18, 28, 0.9);
+				stroke: rgba(200, 155, 60, 0.45);
+				stroke-width: 2.5;
+				cursor: pointer;
+				transition: all 0.2s ease;
+			}
+			.wheel-slice-group:hover .wheel-slice-path {
+				fill: rgba(200, 155, 60, 0.22);
+				stroke: var(--hextech-gold);
+				stroke-width: 3.5;
+				filter: drop-shadow(0 0 10px rgba(200, 155, 60, 0.6));
+			}
+			.wheel-slice-group.selected .wheel-slice-path {
+				fill: rgba(200, 155, 60, 0.32);
+				stroke: #ffd700;
+				stroke-width: 3.5;
+				filter: drop-shadow(0 0 12px rgba(200, 155, 60, 0.85));
+			}
+			.wheel-slice-group.active-looping .wheel-slice-path {
+				fill: rgba(40, 167, 69, 0.35) !important;
+				stroke: #28a745 !important;
+				stroke-width: 3.5 !important;
+				animation: borderPulse 1.2s infinite;
+			}
+			.wheel-slice-group.armed-slot .wheel-slice-path {
+				stroke: #00d2ff !important;
+				stroke-width: 3.5 !important;
+				filter: drop-shadow(0 0 10px rgba(0, 210, 255, 0.7));
+			}
+			.wheel-text-name {
+				font-size: 0.72rem;
+				font-weight: 700;
+				fill: var(--hextech-gold);
+				text-shadow: 0 1px 4px rgba(0,0,0,0.95);
+				user-select: none;
+				pointer-events: none;
+				dominant-baseline: middle;
+			}
+			.wheel-text-keys {
+				font-size: 0.65rem;
+				font-family: 'Courier New', Courier, monospace;
+				font-weight: 600;
+				fill: #e0e6ed;
+				text-shadow: 0 1px 4px rgba(0,0,0,0.95);
+				user-select: none;
+				pointer-events: none;
+				dominant-baseline: middle;
+			}
+			.preset-key {
+				transition: all 0.15s ease;
+				padding: 3px 6px;
+				font-size: 0.72rem;
+				font-family: 'Courier New', Courier, monospace;
+				border-color: rgba(255, 255, 255, 0.1) !important;
+			}
+			.preset-key:hover {
+				background: rgba(200, 155, 60, 0.25) !important;
+				border-color: var(--hextech-gold) !important;
+				color: #fff !important;
+			}
 			.preset-spell-btn {
 				background: rgba(10, 14, 20, 0.85);
 				border-color: rgba(200, 155, 60, 0.25) !important;
@@ -354,6 +415,10 @@
 												<div class="running-task-col p-2 rounded border d-flex flex-column justify-content-center align-items-center" onclick="toggleRunningTask('killLeagueEnabled')" title="Toggle Auto-Close League on Detect" style="flex: 1 0 calc(25% - 6px); min-width: 80px; max-width: calc(25% - 6px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(200, 155, 60, 0.12) !important;">
 													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">CLOSE LOL</div>
 													<span class="badge" id="badge-killLeague" style="font-size: 0.65rem;">Disabled</span>
+												</div>
+												<div class="running-task-col p-2 rounded border d-flex flex-column justify-content-center align-items-center" onclick="toggleRunningTask('emoteCancelEnabled')" title="Toggle In-Game Emote Cancel" style="flex: 1 0 calc(25% - 6px); min-width: 80px; max-width: calc(25% - 6px); height: 56px; background: rgba(200, 155, 60, 0.03); border-color: rgba(200, 155, 60, 0.12) !important;">
+													<div class="small text-muted mb-1" style="font-size: 0.56rem; letter-spacing: 0.5px; line-height: 1.1; font-weight: 600;">EMOTE-CANCEL</div>
+													<span class="badge" id="badge-emoteCancel" style="font-size: 0.65rem;">Disabled</span>
 												</div>
 											</div>
 										</div>
@@ -764,6 +829,162 @@
 								<p class="text-muted small">Automatically sends a custom copypasta or message to the lobby chat when you lock in a champion. Messages are configured in <code>champMessages.json</code>.</p>
 							</div>
 						</div>
+
+						<!-- Emote Cancel Configuration -->
+						<div class="hextech-card" id="card-emoteCancel">
+							<div class="d-flex justify-content-between align-items-center mb-3">
+								<div class="card-title-gold m-0"><i class="fa-solid fa-person-running text-warning"></i> Emote Cancel</div>
+								<div class="d-flex align-items-center gap-3">
+									<div class="form-check form-switch m-0">
+										<input class="form-check-input" type="checkbox" id="toggle-emoteCancelEnabled" onchange="updateConfig('emoteCancelEnabled', this.checked)">
+									</div>
+									<button class="btn btn-link text-warning p-0 border-0" onclick="toggleCardCollapse(this)" data-fold-key="foldEmoteCancel" style="font-size: 1.1rem; line-height: 1; cursor: pointer; text-decoration: none;">
+										<i class="fa-solid fa-chevron-up collapse-icon"></i>
+									</button>
+								</div>
+							</div>
+							<div class="card-collapse-body">
+								<p class="text-muted small">Only active in-game (when gameflow is <code>InProgress</code> and League is focused). Executes the specified emote key in a rapid loop with configurable sleep delay and optional right-click movement to cancel animation while moving.</p>
+								
+								<div class="row g-3 align-items-center mb-3">
+									<div class="col-md-4">
+										<label for="input-emoteCancelHoldKey" class="form-label small text-warning font-weight-bold">Wheel Key (Hold to Show)</label>
+										<div class="input-group input-group-sm">
+											<span class="input-group-text bg-dark border-secondary text-muted"><i class="fa-solid fa-compass"></i></span>
+											<input type="text" class="form-control font-monospace" id="input-emoteCancelHoldKey" placeholder="e.g. XButton1, MButton..." value="XButton1" onchange="updateConfig('emoteCancelHoldKey', this.value)">
+										</div>
+										<small class="text-muted" style="font-size: 0.72rem;">Hold in-game to show wheel (default: <code>XButton1</code> = Mouse 4).</small>
+									</div>
+									<div class="col-md-4">
+										<label for="input-emoteCancelTriggerKey" class="form-label small text-warning font-weight-bold">Trigger Key (Toggle Loop)</label>
+										<div class="input-group input-group-sm">
+											<span class="input-group-text bg-dark border-secondary text-muted"><i class="fa-solid fa-play"></i></span>
+											<input type="text" class="form-control font-monospace" id="input-emoteCancelTriggerKey" placeholder="e.g. MButton, XButton2..." value="MButton" onchange="updateConfig('emoteCancelTriggerKey', this.value)">
+										</div>
+										<small class="text-muted" style="font-size: 0.72rem;">Press in-game to toggle loop (default: <code>MButton</code> = Mouse 3).</small>
+									</div>
+									<div class="col-md-4">
+										<label for="input-emoteCancelDelay" class="form-label small text-warning font-weight-bold">Loop Sleep Delay (ms)</label>
+										<div class="input-group input-group-sm">
+											<span class="input-group-text bg-dark border-secondary text-muted"><i class="fa-solid fa-stopwatch"></i></span>
+											<input type="number" class="form-control" id="input-emoteCancelDelay" min="10" max="1000" step="5" value="50" onchange="updateConfig('emoteCancelDelay', this.value)">
+											<span class="input-group-text bg-dark border-secondary text-muted">ms</span>
+										</div>
+										<small class="text-muted" style="font-size: 0.72rem;">Sleep delay after emote key press (default 50ms).</small>
+									</div>
+								</div>
+								
+								<div class="row g-2 mb-3">
+									<div class="col-md-6">
+										<div class="form-check form-switch d-flex justify-content-between align-items-center p-2 rounded border" style="background: rgba(10, 14, 20, 0.4); border-color: rgba(200, 155, 60, 0.12) !important;">
+											<div>
+												<label class="form-check-label text-warning small font-weight-bold d-block" for="toggle-emoteCancelRightClick">Send Right-Click</label>
+												<small class="text-muted" style="font-size: 0.7rem;">Sends right-click movement before emote key</small>
+											</div>
+											<input class="form-check-input ms-3" type="checkbox" id="toggle-emoteCancelRightClick" onchange="updateConfig('emoteCancelRightClick', this.checked)">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-check form-switch d-flex justify-content-between align-items-center p-2 rounded border" style="background: rgba(10, 14, 20, 0.4); border-color: rgba(200, 155, 60, 0.12) !important;">
+											<div>
+												<label class="form-check-label text-muted small font-weight-bold d-block" for="toggle-emoteCancelSilent">Silent Mode</label>
+												<small class="text-muted" style="font-size: 0.7rem;">Mute notification logs in web dashboard</small>
+											</div>
+											<input class="form-check-input ms-3" type="checkbox" id="toggle-emoteCancelSilent" onchange="updateConfig('emoteCancelSilent', this.checked)">
+										</div>
+									</div>
+								</div>
+								
+								<div class="border p-3 rounded" style="background: rgba(5, 8, 12, 0.4); border-color: rgba(200, 155, 60, 0.15) !important;">
+									<div class="d-flex justify-content-between align-items-center mb-3">
+										<div class="small text-muted font-weight-bold" style="font-size: 0.78rem; letter-spacing: 0.6px;">
+											<i class="fa-solid fa-compact-disc text-warning me-1"></i> EMOTE CANCEL WHEEL (CLICK SLICE TO CONFIGURE)
+										</div>
+										<button class="btn btn-outline-warning btn-sm" onclick="resetAllEmoteWheelSlots()" style="font-size: 0.72rem; padding: 2px 8px;">
+											<i class="fa-solid fa-rotate-left me-1"></i> Reset All to Defaults
+										</button>
+									</div>
+
+									<div class="row g-4 align-items-center">
+										<!-- Left: Pie Wheel SVG -->
+										<div class="col-lg-6 d-flex flex-column align-items-center justify-content-center">
+											<div class="position-relative d-inline-block p-1" style="user-select: none;">
+												<svg id="emote-wheel-svg" width="280" height="280" viewBox="0 0 300 300" style="filter: drop-shadow(0 4px 14px rgba(0,0,0,0.7));">
+													<!-- Outer compass dashed decorative ring -->
+													<circle cx="150" cy="150" r="145" fill="none" stroke="rgba(200, 155, 60, 0.15)" stroke-width="1.5" stroke-dasharray="4 4" />
+
+													<!-- Top Slice: Emote 1 -->
+													<g class="wheel-slice-group selected armed-slot" id="wheel-slot-1" onclick="selectEmoteWheelSlot(1)" cursor="pointer">
+														<path class="wheel-slice-path" d="M 114.64 114.64 L 51 51 A 140 140 0 0 1 249 51 L 185.36 114.64 A 50 50 0 0 0 114.64 114.64 Z" />
+														<text x="150" y="52" text-anchor="middle" class="wheel-text-name">Emote 1</text>
+														<text x="150" y="70" text-anchor="middle" class="wheel-text-keys"><tspan id="svg-tgt-1">Num 1</tspan></text>
+													</g>
+
+													<!-- Right Slice: Emote 2 -->
+													<g class="wheel-slice-group" id="wheel-slot-2" onclick="selectEmoteWheelSlot(2)" cursor="pointer">
+														<path class="wheel-slice-path" d="M 185.36 114.64 L 249 51 A 140 140 0 0 1 249 249 L 185.36 185.36 A 50 50 0 0 0 185.36 114.64 Z" />
+														<text x="242" y="142" text-anchor="middle" class="wheel-text-name">Emote 2</text>
+														<text x="242" y="160" text-anchor="middle" class="wheel-text-keys"><tspan id="svg-tgt-2">Num 2</tspan></text>
+													</g>
+
+													<!-- Bottom Slice: Emote 3 -->
+													<g class="wheel-slice-group" id="wheel-slot-3" onclick="selectEmoteWheelSlot(3)" cursor="pointer">
+														<path class="wheel-slice-path" d="M 185.36 185.36 L 249 249 A 140 140 0 0 1 51 249 L 114.64 185.36 A 50 50 0 0 0 185.36 185.36 Z" />
+														<text x="150" y="237" text-anchor="middle" class="wheel-text-name">Emote 3</text>
+														<text x="150" y="255" text-anchor="middle" class="wheel-text-keys"><tspan id="svg-tgt-3">Num 3</tspan></text>
+													</g>
+
+													<!-- Left Slice: Emote 4 -->
+													<g class="wheel-slice-group" id="wheel-slot-4" onclick="selectEmoteWheelSlot(4)" cursor="pointer">
+														<path class="wheel-slice-path" d="M 114.64 185.36 L 51 249 A 140 140 0 0 1 51 51 L 114.64 114.64 A 50 50 0 0 0 114.64 185.36 Z" />
+														<text x="58" y="142" text-anchor="middle" class="wheel-text-name">Emote 4</text>
+														<text x="58" y="160" text-anchor="middle" class="wheel-text-keys"><tspan id="svg-tgt-4">Num 4</tspan></text>
+													</g>
+
+													<!-- Middle Circle: Emote 5 -->
+													<g class="wheel-slice-group" id="wheel-slot-5" onclick="selectEmoteWheelSlot(5)" cursor="pointer">
+														<circle class="wheel-slice-path" cx="150" cy="150" r="44" />
+														<text x="150" y="142" text-anchor="middle" class="wheel-text-name" style="font-size: 0.64rem;">Emote 5</text>
+														<text x="150" y="160" text-anchor="middle" class="wheel-text-keys" style="font-size: 0.58rem;"><tspan id="svg-tgt-5">Num 5</tspan></text>
+													</g>
+												</svg>
+											</div>
+											<small class="text-muted text-center mt-2" style="font-size: 0.72rem;">Click any slice or the center circle to configure or arm it</small>
+										</div>
+
+										<!-- Right: Slot Configuration Editor -->
+										<div class="col-lg-6">
+											<div class="p-3 rounded border" style="background: rgba(10, 14, 20, 0.65); border-color: rgba(200, 155, 60, 0.22) !important;">
+												<div class="d-flex justify-content-between align-items-center mb-3">
+													<h6 class="m-0 text-warning font-weight-bold" id="wheel-slot-title">
+														<i class="fa-solid fa-sliders text-warning me-1"></i> Slot 1 &mdash; Top (Emote 1)
+													</h6>
+													<span class="badge bg-dark border text-info" id="wheel-slot-badge">TOP SLICE</span>
+												</div>
+
+												<div class="mb-3">
+													<label class="form-label small text-warning font-weight-bold mb-1">Emote Key To Press (In-Game Emote Action):</label>
+													<div class="input-group input-group-sm">
+														<span class="input-group-text bg-dark border-secondary text-muted"><i class="fa-solid fa-bullseye"></i></span>
+														<input type="text" class="form-control font-monospace" id="input-slot-target" placeholder="e.g. Numpad1, Numpad2, 1, 2..." onchange="onWheelTargetChanged(this.value)">
+													</div>
+													<small class="text-muted d-block mt-1" style="font-size: 0.72rem;">The emote key sent to League during the cancel loop (e.g. Numpad1, 1, T).</small>
+												</div>
+
+												<div class="d-flex gap-2 pt-2 border-top" style="border-color: rgba(200, 155, 60, 0.15) !important;">
+													<button class="btn btn-sm btn-outline-info flex-grow-1" id="btn-arm-slot" onclick="armCurrentWheelSlot()">
+														<i class="fa-solid fa-crosshairs me-1"></i> Arm as Active Slot
+													</button>
+													<button class="btn btn-sm btn-outline-warning" onclick="resetCurrentWheelSlot()">
+														<i class="fa-solid fa-rotate-left me-1"></i> Reset Slot
+													</button>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
 					</div>
 
 
@@ -989,6 +1210,35 @@
 				document.getElementById('toggle-champMessagesEnabled').checked = config.champMessagesEnabled;
 				updateBadge('badge-champMessages', config.champMessagesEnabled);
 			}
+			if (config.emoteCancelEnabled !== undefined) {
+				const el = document.getElementById('toggle-emoteCancelEnabled');
+				if (el) el.checked = config.emoteCancelEnabled;
+				updateBadge('badge-emoteCancel', config.emoteCancelEnabled);
+			}
+			if (config.emoteCancelDelay !== undefined) {
+				const el = document.getElementById('input-emoteCancelDelay');
+				if (el) el.value = config.emoteCancelDelay;
+			}
+			if (config.emoteCancelSilent !== undefined) {
+				const el = document.getElementById('toggle-emoteCancelSilent');
+				if (el) el.checked = config.emoteCancelSilent;
+			}
+			if (config.emoteCancelRightClick !== undefined) {
+				const el = document.getElementById('toggle-emoteCancelRightClick');
+				if (el) el.checked = config.emoteCancelRightClick;
+			}
+			if (config.emoteCancelHoldKey !== undefined) {
+				const el = document.getElementById('input-emoteCancelHoldKey');
+				if (el) el.value = config.emoteCancelHoldKey;
+			}
+			if (config.emoteCancelTriggerKey !== undefined) {
+				const el = document.getElementById('input-emoteCancelTriggerKey');
+				if (el) el.value = config.emoteCancelTriggerKey;
+			}
+			if (typeof updateEmoteWheelVisuals === 'function') {
+				updateEmoteWheelVisuals();
+				selectEmoteWheelSlot(1);
+			}
 			updateBadge('badge-killLeague', false);
 			if (config.acceptDelay !== undefined) {
 				document.getElementById('range-acceptDelay').value = config.acceptDelay;
@@ -1047,6 +1297,9 @@
 			if (config.foldChampMessages !== undefined) {
 				setCardCollapseState('#card-champMessages', config.foldChampMessages);
 			}
+			if (config.foldEmoteCancel !== undefined) {
+				setCardCollapseState('#card-emoteCancel', config.foldEmoteCancel);
+			}
 			
 			// Initialize blacklist state
 			initBlacklist(config);
@@ -1100,6 +1353,10 @@
 			if (key === 'autoSkipPreEndEnabled') updateBadge('badge-skipPreEnd', value);
 			if (key === 'champMessagesEnabled') updateBadge('badge-champMessages', value);
 			if (key === 'killLeagueEnabled') updateBadge('badge-killLeague', value);
+			if (key === 'emoteCancelEnabled') updateBadge('badge-emoteCancel', value);
+			if (key.startsWith('emoteCancel') && typeof updateEmoteWheelVisuals === 'function') {
+				updateEmoteWheelVisuals();
+			}
 		}
 
 		function onCategoryToggle() {
@@ -2868,6 +3125,11 @@
 				const el = document.getElementById('toggle-killLeagueEnabled');
 				if (el) el.checked = val;
 				updateConfig('killLeagueEnabled', val);
+			} else if (taskName === 'emoteCancelEnabled') {
+				const val = !window.loadedConfig.emoteCancelEnabled;
+				const el = document.getElementById('toggle-emoteCancelEnabled');
+				if (el) el.checked = val;
+				updateConfig('emoteCancelEnabled', val);
 			}
 		}
 
@@ -2898,6 +3160,172 @@
 				btn.classList.remove('btn-info', 'active');
 				btn.classList.add('btn-outline-info');
 				btn.style.boxShadow = '';
+			}
+		}
+
+		let currentSelectedWheelSlot = 1;
+		const wheelSlotMeta = {
+			1: { name: 'Emote 1', label: 'Top (Emote 1)', badge: 'TOP SLICE', defTgt: 'Numpad1' },
+			2: { name: 'Emote 2', label: 'Right (Emote 2)', badge: 'RIGHT SLICE', defTgt: 'Numpad2' },
+			3: { name: 'Emote 3', label: 'Bottom (Emote 3)', badge: 'BOTTOM SLICE', defTgt: 'Numpad3' },
+			4: { name: 'Emote 4', label: 'Left (Emote 4)', badge: 'LEFT SLICE', defTgt: 'Numpad4' },
+			5: { name: 'Emote 5', label: 'Center (Emote 5)', badge: 'MIDDLE CIRCLE', defTgt: 'Numpad5' }
+		};
+
+		function selectEmoteWheelSlot(slot) {
+			currentSelectedWheelSlot = slot;
+			document.querySelectorAll('.wheel-slice-group').forEach(el => el.classList.remove('selected'));
+			const slotEl = document.getElementById('wheel-slot-' + slot);
+			if (slotEl) slotEl.classList.add('selected');
+			
+			const meta = wheelSlotMeta[slot];
+			if (meta) {
+				const titleEl = document.getElementById('wheel-slot-title');
+				if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-sliders text-warning me-1"></i> Slot ${slot} &mdash; ${meta.label}`;
+				const badgeEl = document.getElementById('wheel-slot-badge');
+				if (badgeEl) badgeEl.innerText = meta.badge;
+				
+				const tgtKey = (window.loadedConfig && window.loadedConfig['emoteCancelTarget' + slot]) || meta.defTgt;
+				const tgtInput = document.getElementById('input-slot-target');
+				if (tgtInput) tgtInput.value = tgtKey;
+
+				updateArmStatusButton();
+			}
+		}
+
+		function updateArmStatusButton() {
+			const activeSlot = (window.loadedConfig && window.loadedConfig.emoteCancelActiveSlot) ? Number(window.loadedConfig.emoteCancelActiveSlot) : 1;
+			const isArmed = (currentSelectedWheelSlot === activeSlot);
+			const armBtn = document.getElementById('btn-arm-slot');
+			if (armBtn) {
+				if (isArmed) {
+					armBtn.className = 'btn btn-sm btn-success';
+					armBtn.innerHTML = '<i class="fa-solid fa-check me-1"></i> Currently Armed';
+				} else {
+					armBtn.className = 'btn btn-sm btn-outline-info';
+					armBtn.innerHTML = '<i class="fa-solid fa-crosshairs me-1"></i> Arm as Active Slot';
+				}
+			}
+		}
+
+		function armCurrentWheelSlot() {
+			if (window.chrome && window.chrome.webview && window.chrome.webview.hostObjects && window.chrome.webview.hostObjects.ahk) {
+				try {
+					ahk.selectEmoteSlot(currentSelectedWheelSlot);
+				} catch(e) {
+					console.error("Failed to arm emote slot", e);
+				}
+			}
+			onActiveEmoteSlotChanged(currentSelectedWheelSlot);
+		}
+
+		function onActiveEmoteSlotChanged(slot) {
+			slot = Number(slot);
+			if (!window.loadedConfig) window.loadedConfig = {};
+			window.loadedConfig.emoteCancelActiveSlot = slot;
+			updateEmoteWheelVisuals();
+			updateArmStatusButton();
+		}
+
+		function onWheelTargetChanged(val) {
+			if (!val) return;
+			const key = 'emoteCancelTarget' + currentSelectedWheelSlot;
+			updateConfig(key, val);
+			updateEmoteWheelVisuals();
+		}
+
+		function testCurrentWheelSlot() {
+			if (window.chrome && window.chrome.webview && window.chrome.webview.hostObjects && window.chrome.webview.hostObjects.ahk) {
+				try {
+					ahk.triggerEmoteSlot(currentSelectedWheelSlot);
+				} catch(e) {
+					console.error("Failed to trigger emote slot", e);
+				}
+			}
+		}
+
+		function resetCurrentWheelSlot() {
+			const meta = wheelSlotMeta[currentSelectedWheelSlot];
+			if (!meta) return;
+			const tgtInput = document.getElementById('input-slot-target');
+			if (tgtInput) tgtInput.value = meta.defTgt;
+			onWheelTargetChanged(meta.defTgt);
+		}
+
+		function resetAllEmoteWheelSlots() {
+			updateConfig('emoteCancelHoldKey', 'XButton1');
+			updateConfig('emoteCancelTriggerKey', 'MButton');
+			updateConfig('emoteCancelRightClick', true);
+			const holdInput = document.getElementById('input-emoteCancelHoldKey');
+			if (holdInput) holdInput.value = 'XButton1';
+			const trigInput = document.getElementById('input-emoteCancelTriggerKey');
+			if (trigInput) trigInput.value = 'MButton';
+			const rcToggle = document.getElementById('toggle-emoteCancelRightClick');
+			if (rcToggle) rcToggle.checked = true;
+
+			for (let i = 1; i <= 5; i++) {
+				const meta = wheelSlotMeta[i];
+				updateConfig('emoteCancelTarget' + i, meta.defTgt);
+			}
+			updateConfig('emoteCancelActiveSlot', 1);
+			onActiveEmoteSlotChanged(1);
+			selectEmoteWheelSlot(currentSelectedWheelSlot);
+			updateEmoteWheelVisuals();
+		}
+
+		function formatKeyShort(k) {
+			if (!k) return '';
+			if (k.toLowerCase().startsWith('numpad')) return 'Num ' + k.substring(6);
+			return k;
+		}
+
+		function updateEmoteWheelVisuals() {
+			if (!window.loadedConfig) return;
+			const activeSlot = window.loadedConfig.emoteCancelActiveSlot ? Number(window.loadedConfig.emoteCancelActiveSlot) : 1;
+			
+			for (let i = 1; i <= 5; i++) {
+				const meta = wheelSlotMeta[i];
+				const tgt = (window.loadedConfig && window.loadedConfig['emoteCancelTarget' + i]) || meta.defTgt;
+				
+				const tgtSpan = document.getElementById('svg-tgt-' + i);
+				if (tgtSpan) tgtSpan.textContent = formatKeyShort(tgt);
+
+				const slotEl = document.getElementById('wheel-slot-' + i);
+				if (slotEl) {
+					if (i === activeSlot) {
+						slotEl.classList.add('armed-slot');
+					} else {
+						slotEl.classList.remove('armed-slot');
+					}
+				}
+			}
+			updateArmStatusButton();
+		}
+
+		function updateEmoteCancelStatus(status, slotNum = 0) {
+			const badge = document.getElementById('emote-cancel-live-status');
+			const desc = document.getElementById('emote-cancel-status-desc');
+			
+			document.querySelectorAll('.wheel-slice-group').forEach(el => el.classList.remove('active-looping'));
+			
+			if (status && status !== 'Idle' && status !== '') {
+				if (badge) {
+					badge.innerText = 'ACTIVE: ' + status;
+					badge.className = 'badge bg-success glow-green-pulse';
+				}
+				const hasRc = (!window.loadedConfig || window.loadedConfig.emoteCancelRightClick !== false);
+				if (desc) desc.innerText = 'Looping ' + (hasRc ? 'rightclick + ' : '') + status + ' (Press trigger key again to stop)';
+				
+				if (slotNum && slotNum >= 1 && slotNum <= 5) {
+					const activeSlice = document.getElementById('wheel-slot-' + slotNum);
+					if (activeSlice) activeSlice.classList.add('active-looping');
+				}
+			} else {
+				if (badge) {
+					badge.innerText = 'IDLE';
+					badge.className = 'badge bg-secondary';
+				}
+				if (desc) desc.innerText = 'Press trigger key in-game to toggle';
 			}
 		}
 	</script>

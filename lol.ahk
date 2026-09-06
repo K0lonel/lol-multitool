@@ -16,6 +16,7 @@ global plugins := Array()
 #Include plugins/lootAssistant.ahk
 #Include plugins/smartAutoHonorer.ahk
 #Include plugins/killLeague.ahk
+#Include plugins/emoteCancel.ahk
 
 FileEncoding "UTF-8"
 JSON.EscapeUnicode := False
@@ -58,6 +59,7 @@ RecalculateHistoryStats()
 
 ; Load and initialize configuration
 InitializeConfig()
+RebindEmoteCancelHotkeys()
 
 ScriptPID := DllCall("GetCurrentProcessId")
 GroupAdd("ScriptGroup", "ahk_pid" ScriptPID)
@@ -74,7 +76,7 @@ global MyWindow := WebViewGui("-Caption +Resize", "LoL-App")
 extDir := A_ScriptDir "\Extensions\AdGuard-AdBlocker"
 if (DirExist(extDir) && FileExist(extDir "\manifest.json")) {
     try {
-        MyWindow.Profile.AddBrowserExtensionAsync(extDir)
+        MyWindow.Profile.AddBrowserExtensionAsync(extDir).catch(err => OutputDebug("Failed to load AdGuard extension: " err.Message "`n"))
     } catch Error as e {
         OutputDebug("Failed to load AdGuard extension: " e.Message "`n")
     }
@@ -95,6 +97,8 @@ MyWindow.AddCallBackToScript("setSummonerSpells", SetSummonerSpellsCallback)
 MyWindow.AddCallBackToScript("getRecentPlayers", GetRecentPlayersCallback)
 MyWindow.AddCallBackToScript("requestHistoryTimeline", RequestHistoryTimelineCallback)
 MyWindow.AddCallBackToScript("toggleCycleBench", ToggleCycleBenchCallback)
+MyWindow.AddCallBackToScript("triggerEmoteSlot", TriggerEmoteSlotCallback)
+MyWindow.AddCallBackToScript("selectEmoteSlot", SelectEmoteSlotCallback)
 MyWindow.AddCallBackToScript("Close", CloseWindow)
 MyWindow.AddCallBackToScript("DragWindow", DragWindow)
 MyWindow.AddCallBackToScript("Minimize", MinimizeWindow)
@@ -111,6 +115,9 @@ MyWindow.Show("w" windowWidth " h" windowHeight " Center")
 
 for plugin in plugins
     SetTimer(plugin, 1000)
+
+; Preload emote wheel overlay safely once main window is ready
+SetTimer(() => EmoteWheelOverlay.Init(), -800)
 
 global me := Map()
 global friends := Array()
@@ -550,7 +557,7 @@ UpdateConfigCallback(WebView, key, value) {
     }
     if (key == "reportCategories" || key == "autoPickBenchIds" || key == "favoriteChampIds" || key == "blacklist") {
         config[key] := JSON.Load(value)
-    } else if (key == "acceptDelay") {
+    } else if (key == "acceptDelay" || key == "emoteCancelDelay") {
         config[key] := Number(value)
     } else if (value == "true" || value = True) {
         config[key] := True
@@ -560,6 +567,10 @@ UpdateConfigCallback(WebView, key, value) {
         config[key] := value
     }
     SaveConfig()
+    
+    if (SubStr(key, 1, 11) == "emoteCancel" && IsSet(RebindEmoteCancelHotkeys)) {
+        RebindEmoteCancelHotkeys()
+    }
     
     ; Log config updates to system logs console
     logVal := value

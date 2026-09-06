@@ -25,17 +25,30 @@ InitializeConfig() {
         "autoHonorerEnabled", False,
         "autoSkipPreEndEnabled", False,
         "champMessagesEnabled", True,
+        "emoteCancelEnabled", True,
+        "emoteCancelDelay", 50,
+        "emoteCancelRightClick", True,
+        "emoteCancelHoldKey", "XButton1",
+        "emoteCancelTriggerKey", "MButton",
+        "emoteCancelActiveSlot", 1,
+        "emoteCancelTarget1", "Numpad1",
+        "emoteCancelTarget2", "Numpad2",
+        "emoteCancelTarget3", "Numpad3",
+        "emoteCancelTarget4", "Numpad4",
+        "emoteCancelTarget5", "Numpad5",
         "foldDisenchant", False,
         "foldHonorer", False,
         "foldSkipPreEnd", False,
         "foldChampMessages", False,
+        "foldEmoteCancel", False,
         "autoAcceptSilent", False,
         "autoReportSilent", False,
         "autoSkipPreEndSilent", False,
         "blacklistSilent", False,
         "champSelectHelperSilent", False,
         "autoHonorerSilent", False,
-        "disenchantSilent", False
+        "disenchantSilent", False,
+        "emoteCancelSilent", False
     )
 
     if (!FileExist("config.json")) {

@@ -53,7 +53,8 @@ league - WebView/
 ├── plugins/                 # Modular automation tasks
 │   ├── autoAccept.ahk       # Auto-accept ready check handler
 │   ├── autoReport.ahk       # End-of-game auto-report processor & queue
-│   └── champSelectHelper.ahk# Handles bench sniper, visual bench, and lobby scraping
+│   ├── champSelectHelper.ahk# Handles bench sniper, visual bench, and lobby scraping
+│   └── emoteCancel.ahk      # In-game rightclick + emote loop keybinds (F1-F5)
 └── Pages/                   # Web frontend pages mapped to ahk.localhost
     ├── index.html           # Main Dashboard HTML layout & controller
     ├── logo.svg             # Sidebar app logo
@@ -100,8 +101,26 @@ Hotkeys are active when the application window is focused:
 
 | Keybind | Action |
 |---|---|
-| `Ctrl + T` | Exit the application |
+| `Ctrl + Q` | Exit the application |
 | `Ctrl + R` | Reload the application |
+| `Ctrl + D` | Open DevTools window |
+
+### In-Game Emote Cancel Wheel (`InProgress` Phase)
+
+Configurable interactive 5-sector wheel overlay (Top, Right, Bottom, Left, Center). Active only while inside a match with League focused:
+
+- **Wheel Hold Key** (Default: `XButton1` / Mouse Button 4): Hold down in-game to display the AlwaysOnTop wheel overlay around the cursor. Moving the mouse highlights slices. Releasing selects/arms the active slot.
+- **Loop Trigger Key** (Default: `MButton` / Mouse Button 3): Press in-game to toggle the rapid loop (`Right Click` &rarr; `Sleep` &rarr; `Emote Key` &rarr; `Sleep`) for the armed slot. Press again to stop.
+
+| Sector | Slot Name | Default Emote Action | Description |
+|---|---|---|---|
+| **Top Slice** | `emotecancel1` | `Numpad1` | Loop rightclick &rarr; sleep &rarr; key &rarr; sleep |
+| **Right Slice** | `emotecancel2` | `Numpad2` | Loop rightclick &rarr; sleep &rarr; key &rarr; sleep |
+| **Bottom Slice** | `emotecancel3` | `Numpad3` | Loop rightclick &rarr; sleep &rarr; key &rarr; sleep |
+| **Left Slice** | `emotecancel4` | `Numpad4` | Loop rightclick &rarr; sleep &rarr; key &rarr; sleep |
+| **Middle Circle** | `emotecancel5` | `Numpad5` | Loop rightclick &rarr; sleep &rarr; key &rarr; sleep |
+
+*Note: All keys (Wheel Hold Key, Loop Trigger Key, Loop Sleep Delay, and per-slice emote keys) can be customized directly in the Multitool UI.*
 
 ---
 
