@@ -281,6 +281,7 @@ loop {
                     global me := Map("lol", Map(
                         "gameName", gameName,
                         "tagLine", tagLine,
+                        "gameTag", tagLine,
                         "summonerLevel", summonerLevel,
                         "iconId", iconId,
                         "puuid", puuid,

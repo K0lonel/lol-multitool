@@ -256,7 +256,7 @@
 				</div>
 				
 				<!-- Summoner Profile Card -->
-				<div class="profile-card m-3 mt-2" id="summoner-card" onclick="openSummonerProfile()" style="cursor: pointer;">
+				<div class="profile-card m-3 mt-2" id="summoner-card" onclick="openSummonerProfile()" title="View profile on PlayARAM.gg" style="cursor: pointer;">
 					<img id="summoner-icon" src="https://ddragon.leagueoflegends.com/cdn/14.24.1/img/profileicon/29.png" alt="Avatar" class="profile-avatar">
 					<div class="profile-info overflow-hidden">
 						<div class="profile-name text-truncate" id="summoner-name">Summoner</div>
@@ -1436,19 +1436,35 @@
 		function openSummonerProfile() {
 			if (window.currentMe && window.currentMe.lol) {
 				const gameName = window.currentMe.lol.gameName;
-				const tagLine = window.currentMe.lol.tagLine;
+				const gameTag = window.currentMe.lol.gameTag || window.currentMe.lol.tagLine;
 				if (gameName) {
-					const cleanName = gameName.replace(/\s+/g, '');
-					const cleanTag = tagLine ? tagLine.replace(/\s+/g, '') : '';
-					const formatted = cleanName + (cleanTag ? `-${cleanTag}` : '');
-					window.open("https://xdx.gg/" + formatted, '_blank');
+					const cleanTag = gameTag ? gameTag.toString().replace(/^#/, '').trim() : '';
+					const formatted = cleanTag ? `${gameName}%23${cleanTag}` : gameName;
+					window.open("https://playaram.gg/en/profile/eune/" + formatted, '_blank');
+				}
+			}
+		}
+
+		function openMatchProfile(event, gameId) {
+			if (window.currentMe && window.currentMe.lol) {
+				const gameName = window.currentMe.lol.gameName;
+				const gameTag = window.currentMe.lol.gameTag || window.currentMe.lol.tagLine;
+				if (gameName) {
+					if (event) event.preventDefault();
+					const cleanTag = gameTag ? gameTag.toString().replace(/^#/, '').trim() : '';
+					const formatted = cleanTag ? `${gameName}%23${cleanTag}` : gameName;
+					window.open(`https://playaram.gg/en/profile/eune/${formatted}/match/${gameId}`, '_blank');
 				}
 			}
 		}
 
 		// Main update dashboard loop callback
 		function updateDashboard(me, gameflow, queueSize, currentStatus, cachedMatches, totalPlayersLogged) {
+			const prevHadMe = !!(window.currentMe && window.currentMe.lol);
 			window.currentMe = me;
+			if (!prevHadMe && me && me.lol && window.currentTimelineData && window.currentTimelineData.length > 0) {
+				updateHistoryTimeline(window.currentTimelineData);
+			}
 			// 1. Connection states
 			const stateEl = document.getElementById('connection-state');
 			const dotEl = document.getElementById('connection-dot');
@@ -1572,7 +1588,6 @@
 			if (window.currentTimelineData.length > 0) {
 				let html = '';
 				window.currentTimelineData.forEach(item => {
-					let players = [];
 					let pillsHtml = '';
 					
 					if (item.ReportedPlayers && Array.isArray(item.ReportedPlayers)) {
@@ -1580,7 +1595,6 @@
 							let isSkipped = p.endsWith(' (Skipped)');
 							let cleanName = p.replace(/\s*\(Skipped\)\s*$/, '').trim();
 							if (cleanName && cleanName !== "Unknown Player") {
-								players.push(cleanName.replace('#', '-'));
 								if (isSkipped) {
 									pillsHtml += `<span class="player-pill skipped-pill" title="${cleanName} (Skipped)">${cleanName}</span>`;
 								} else {
@@ -1594,7 +1608,16 @@
 						pillsHtml = `<span class="player-pill reported-pill">All Lobby</span>`;
 					}
 
-					let link = `https://u.gg/lol/multisearch?summoners=${players.map(encodeURIComponent).join(',')}&region=eun1`;
+					let matchLink = '#';
+					if (window.currentMe && window.currentMe.lol) {
+						const gameName = window.currentMe.lol.gameName;
+						const gameTag = window.currentMe.lol.gameTag || window.currentMe.lol.tagLine;
+						if (gameName) {
+							const cleanTag = gameTag ? gameTag.toString().replace(/^#/, '').trim() : '';
+							const formatted = cleanTag ? `${gameName}%23${cleanTag}` : gameName;
+							matchLink = `https://playaram.gg/en/profile/eune/${formatted}/match/${item.gameId}`;
+						}
+					}
 					let dateStr = new Date(item.Timestamp).toLocaleString();
 					
 					let hasDamageStats = Array.isArray(item.DamageStats) && item.DamageStats.length > 0;
@@ -1646,7 +1669,7 @@
 							<div class="d-flex justify-content-between align-items-center w-100 mb-2">
 								<span class="report-match-id" style="margin-right: 10px;"><i class="fa-solid fa-gamepad me-1" style="font-size: 0.8em; opacity: 0.6;"></i>MATCH #${item.gameId} <span class="mx-1 opacity-50">&bull;</span> ${dateStr}</span>
 								<div class="d-flex gap-1">
-									<a href="${link}" target="_blank" class="btn btn-hextech" style="height: 20px; padding: 0 8px; font-size: 0.65rem; font-weight: 600; line-height: 1; display: inline-flex; align-items: center; justify-content: center; text-transform: uppercase;">Link</a>
+									<a href="${matchLink}" target="_blank" onclick="openMatchProfile(event, '${item.gameId}')" class="btn btn-hextech" title="View match on PlayARAM.gg" style="height: 20px; padding: 0 8px; font-size: 0.65rem; font-weight: 600; line-height: 1; display: inline-flex; align-items: center; justify-content: center; text-transform: uppercase;">Link</a>
 									${hasDamageStats ? `
 									<button class="btn ${isExpanded ? 'btn-warning' : 'btn-outline-warning'}" style="height: 20px; padding: 0 8px; font-size: 0.65rem; font-weight: 600; line-height: 1; display: inline-flex; align-items: center; justify-content: center; text-transform: uppercase;" onclick="toggleDamageChart('${item.gameId}')">
 										<i class="fa-solid fa-chart-bar me-1" style="font-size: 0.6rem;"></i>${isExpanded ? 'Hide' : 'Damage'}
