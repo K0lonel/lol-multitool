@@ -597,9 +597,10 @@
 									<input class="form-check-input ms-auto" type="checkbox" id="toggle-blacklistSilent" onchange="updateConfig('blacklistSilent', this.checked)">
 								</div>
 								
-								<div class="row g-3">
-									<div class="col-md-7">
-										<label class="form-label small text-warning font-weight-bold">Search & Add Players (Recent Match History)</label>
+								<!-- Add Players Section -->
+								<div class="row g-3 mb-3">
+									<div class="col-md-6">
+										<label class="form-label small text-warning font-weight-bold mb-1">Search & Add Players (Recent Match History)</label>
 										<div class="position-relative">
 											<div class="input-group input-group-sm">
 												<span class="input-group-text bg-dark border-secondary text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
@@ -610,22 +611,31 @@
 												<!-- JS populated options -->
 											</div>
 										</div>
-										
-										<div class="mt-3">
-											<label class="form-label small text-muted font-weight-bold">Or Add Manually (Name#Tag)</label>
-											<div class="d-flex gap-2">
-												<input type="text" class="form-control form-control-sm" id="manual-blacklist-name" placeholder="SummonerName#TAG" style="font-size: 0.8rem;">
-												<input type="text" class="form-control form-control-sm" id="manual-blacklist-note" placeholder="Add note (optional)..." style="font-size: 0.8rem;">
-												<button class="btn btn-sm btn-outline-warning" onclick="addManualBlacklist()" style="min-width: 60px;"><i class="fa-solid fa-plus"></i> Add</button>
-											</div>
+									</div>
+									<div class="col-md-6">
+										<label class="form-label small text-muted font-weight-bold mb-1">Or Add Manually (Name#Tag)</label>
+										<div class="d-flex gap-2">
+											<input type="text" class="form-control form-control-sm" id="manual-blacklist-name" placeholder="SummonerName#TAG" style="font-size: 0.8rem;" onkeydown="if(event.key==='Enter') addManualBlacklist()">
+											<input type="text" class="form-control form-control-sm" id="manual-blacklist-note" placeholder="Add note (optional)..." style="font-size: 0.8rem;" onkeydown="if(event.key==='Enter') addManualBlacklist()">
+											<button class="btn btn-sm btn-outline-warning text-nowrap" onclick="addManualBlacklist()" style="min-width: 60px;"><i class="fa-solid fa-plus"></i> Add</button>
 										</div>
 									</div>
-									
-									<div class="col-md-5">
-										<label class="form-label small text-warning font-weight-bold">Blacklisted Players</label>
-										<div id="blacklist-container" class="d-flex flex-column gap-2 overflow-y-auto px-2 py-2 rounded" style="background: rgba(5, 8, 12, 0.4); border: 1px solid rgba(255,255,255,0.05); max-height: 160px; min-height: 120px;">
-											<span class="text-muted small my-auto text-center" id="blacklist-empty-msg">No players blacklisted yet.</span>
+								</div>
+
+								<!-- Blacklisted Players Section (Placed Underneath) -->
+								<div class="mt-3 pt-3 border-top" style="border-color: rgba(200, 155, 60, 0.15) !important;">
+									<div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+										<label class="form-label small text-warning font-weight-bold m-0 d-flex align-items-center gap-2">
+											<span><i class="fa-solid fa-user-slash me-1"></i> Blacklisted Players</span>
+											<span class="badge bg-dark border border-secondary text-muted" id="blacklist-count-badge" style="font-size: 0.72rem;">0</span>
+										</label>
+										<div class="position-relative" style="width: 260px; max-width: 100%;">
+											<input type="text" class="form-control form-control-sm text-white border-secondary w-100" id="search-saved-blacklist" style="background: rgba(5, 8, 12, 0.6); padding-right: 25px; font-size: 0.75rem; border-color: rgba(200, 155, 60, 0.2) !important;" placeholder="Search blacklisted players..." autocomplete="off" oninput="renderBlacklist()" onkeydown="if(event.key==='Escape'){ this.value=''; renderBlacklist(); }">
+											<i class="fa-solid fa-magnifying-glass position-absolute text-muted" style="right: 8px; top: 50%; transform: translateY(-50%); font-size: 0.75rem; opacity: 0.6; pointer-events: none;"></i>
 										</div>
+									</div>
+									<div id="blacklist-container" class="d-flex flex-column gap-2 overflow-y-auto px-2 py-2 rounded" style="background: rgba(5, 8, 12, 0.4); border: 1px solid rgba(255,255,255,0.05); max-height: 340px; min-height: 200px;">
+										<span class="text-muted small my-auto text-center" id="blacklist-empty-msg">No players blacklisted yet.</span>
 									</div>
 								</div>
 							</div>
@@ -2780,23 +2790,34 @@
 			const container = document.getElementById('blacklist-container');
 			if (!container) return;
 
-			// Update blacklist count stat badge
+			const totalCount = window.blacklist ? window.blacklist.length : 0;
+
+			// Update blacklist count stat badge in stats panel
 			const blacklistCountEl = document.getElementById('game-stats-blacklist-count');
 			if (blacklistCountEl) {
-				blacklistCountEl.innerText = window.blacklist ? window.blacklist.length : 0;
+				blacklistCountEl.innerText = totalCount;
 			}
+
+			// Blacklist badge count in section header if exists
+			const blacklistCountBadge = document.getElementById('blacklist-count-badge');
+
+			const searchInput = document.getElementById('search-saved-blacklist');
+			const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
 
 			// Clear container
 			container.innerHTML = '';
 
-			if (window.blacklist.length === 0) {
+			if (!window.blacklist || totalCount === 0) {
+				if (blacklistCountBadge) blacklistCountBadge.innerText = '0';
 				const msg = document.createElement('span');
-				msg.className = 'text-muted small my-auto text-center w-100';
+				msg.className = 'text-muted small my-auto text-center w-100 py-3';
 				msg.id = 'blacklist-empty-msg';
 				msg.innerText = 'No players blacklisted yet.';
 				container.appendChild(msg);
 				return;
 			}
+
+			let matchCount = 0;
 
 			window.blacklist.forEach((player, index) => {
 				let name = "";
@@ -2808,11 +2829,24 @@
 					name = player || "";
 				}
 
+				if (query) {
+					const nameMatch = name.toLowerCase().includes(query);
+					const noteMatch = note.toLowerCase().includes(query);
+					if (!nameMatch && !noteMatch) {
+						return;
+					}
+				}
+
+				matchCount++;
+
 				const item = document.createElement('div');
 				item.className = 'd-flex flex-column p-2 rounded mb-1 w-100';
 				item.style.background = 'rgba(255, 255, 255, 0.025)';
 				item.style.border = '1px solid rgba(255, 255, 255, 0.04)';
 				item.style.fontSize = '0.78rem';
+				item.style.transition = 'background 0.15s ease, border-color 0.15s ease';
+				item.onmouseenter = () => { item.style.background = 'rgba(200, 155, 60, 0.06)'; item.style.borderColor = 'rgba(200, 155, 60, 0.2)'; };
+				item.onmouseleave = () => { item.style.background = 'rgba(255, 255, 255, 0.025)'; item.style.borderColor = 'rgba(255, 255, 255, 0.04)'; };
 
 				// Row 1: Name and Delete button
 				const row1 = document.createElement('div');
@@ -2820,12 +2854,13 @@
 
 				const nameSpan = document.createElement('span');
 				nameSpan.className = 'text-white text-truncate font-weight-bold';
-				nameSpan.style.maxWidth = '80%';
+				nameSpan.style.maxWidth = '90%';
 				nameSpan.innerText = name;
 
 				const removeBtn = document.createElement('button');
 				removeBtn.className = 'btn btn-link text-danger p-0 border-0';
 				removeBtn.style.lineHeight = '1';
+				removeBtn.title = 'Remove player from blacklist';
 				removeBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
 				removeBtn.onclick = () => removePlayerFromBlacklist(player);
 
@@ -2840,13 +2875,14 @@
 				noteSpan.className = note ? 'text-warning text-truncate small font-weight-bold' : 'text-muted text-truncate small';
 				noteSpan.style.fontSize = '0.7rem';
 				noteSpan.style.fontStyle = 'italic';
-				noteSpan.style.maxWidth = '85%';
+				noteSpan.style.maxWidth = '90%';
 				noteSpan.innerText = note ? `Note: ${note}` : 'No note added...';
 
 				const editBtn = document.createElement('button');
 				editBtn.className = 'btn btn-link text-warning p-0 border-0';
 				editBtn.style.fontSize = '0.75rem';
 				editBtn.style.lineHeight = '1';
+				editBtn.title = 'Edit note';
 				editBtn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i>';
 				editBtn.onclick = () => editBlacklistNote(index);
 
@@ -2857,6 +2893,17 @@
 				item.appendChild(row2);
 				container.appendChild(item);
 			});
+
+			if (blacklistCountBadge) {
+				blacklistCountBadge.innerText = query ? `${matchCount} / ${totalCount}` : totalCount;
+			}
+
+			if (matchCount === 0 && query) {
+				const noMatchMsg = document.createElement('span');
+				noMatchMsg.className = 'text-muted small my-auto text-center w-100 py-3';
+				noMatchMsg.innerText = `No blacklisted players found matching "${query}".`;
+				container.appendChild(noMatchMsg);
+			}
 		}
 
 		let hextechModalCallback = null;
@@ -2974,6 +3021,12 @@
 				note: note.trim()
 			});
 			updateConfig('blacklist', JSON.stringify(window.blacklist));
+
+			const savedSearch = document.getElementById('search-saved-blacklist');
+			if (savedSearch && savedSearch.value) {
+				savedSearch.value = '';
+			}
+
 			renderBlacklist();
 		}
 
