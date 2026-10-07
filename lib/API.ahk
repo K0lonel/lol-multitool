@@ -18,8 +18,8 @@ request(method, endpoint, post_data?, headersIn := Map()) {
 
     req.Open(method, endpoint, False)
     ; Set resolve/connect/send/receive timeouts in milliseconds
-    ; (Resolve: 5s, Connect: 5s, Send: 5s, Receive: 5s) to prevent script freeze
-    req.SetTimeouts(5000, 5000, 5000, 5000)
+    ; (Resolve: 15s, Connect: 15s, Send: 15s, Receive: 15s) to prevent script freeze
+    req.SetTimeouts(15000, 15000, 15000, 15000)
 
     for k, v in headersIn
         headers[k] := v

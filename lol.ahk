@@ -363,7 +363,7 @@ loop {
         historyTimer := 0
         if (lcuConnected) {
             try {
-                tempHistory := LeagueAPI.GetCurrentSummonerMatches(0, 49)
+                tempHistory := LeagueAPI.GetCurrentSummonerMatches(0, 20)
                 if (IsObject(tempHistory) && tempHistory.Has("games")) {
                     global match_history := tempHistory
                     
