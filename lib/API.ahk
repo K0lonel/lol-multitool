@@ -13,13 +13,13 @@ APICall(method, endpoint, post_data := unset) {
 }
 
 request(method, endpoint, post_data?, headersIn := Map()) {
-    static req := ComObject("WinHttp.WinHttpRequest.5.1")
+    req := ComObject("WinHttp.WinHttpRequest.5.1")
     headers := Map("Content-Type", "application/json", "Accept", "application/json")
 
     req.Open(method, endpoint, False)
     ; Set resolve/connect/send/receive timeouts in milliseconds
-    ; (Resolve: 15s, Connect: 15s, Send: 15s, Receive: 15s) to prevent script freeze
-    req.SetTimeouts(15000, 15000, 15000, 15000)
+    ; (Resolve: 5s, Connect: 5s, Send: 10s, Receive: 10s) to prevent script freeze
+    req.SetTimeouts(5000, 5000, 10000, 10000)
 
     for k, v in headersIn
         headers[k] := v
@@ -36,6 +36,10 @@ request(method, endpoint, post_data?, headersIn := Map()) {
         if (status == 429) {
             LogToWeb("LCU API Rate Limit (429) on " method " " endpoint, "warning")
             return Map("error", "RateLimit", "status", 429)
+        }
+        if (status == 401) {
+            LCU.Clear()
+            return Map("error", "Unauthorized", "status", 401)
         }
         if (status >= 400) {
             if (status != 404) {
@@ -79,7 +83,9 @@ request(method, endpoint, post_data?, headersIn := Map()) {
             LogToWeb("LCU API offline or refused connection: " e.Message, "warning")
             lastErrTime := A_TickCount
         }
-        LCU.Token := ""
+        if (!ProcessExist("LeagueClientUx.exe")) {
+            LCU.Clear()
+        }
         return Map("error", "Offline", "status", 0)
     }
 

@@ -1,6 +1,5 @@
 #Requires AutoHotkey v2.0
-#Include ../lol.ahk
-plugins.Push(autoSkipPreEnd)
+PluginManager.Register("autoSkipPreEnd", autoSkipPreEnd, 1000)
 
 autoSkipPreEnd() {
     global config, gameflow, autoHonorCompleted

@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2.0
-#Include ../lol.ahk
+PluginManager.Register("lootAssistant", "", 0)
 
 global disenchantSilentOverride := ""
 

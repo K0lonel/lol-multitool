@@ -1,8 +1,7 @@
 #Requires AutoHotkey v2.0
-#Include ../lol.ahk
+PluginManager.Register("killLeague", killLeague, 1000)
 global killLeagueEnabled := False
 global reconnectTimeRemaining := 0
-plugins.Push(killLeague)
 
 killLeague() {
     global MyWindow, killLeagueEnabled, reconnectTimeRemaining

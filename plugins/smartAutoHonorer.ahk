@@ -1,6 +1,5 @@
 #Requires AutoHotkey v2.0
-#Include ../lol.ahk
-plugins.Push(smartAutoHonorer)
+PluginManager.Register("smartAutoHonorer", smartAutoHonorer, 1000)
 
 smartAutoHonorer() {
     global config, gameflow, autoHonorCompleted

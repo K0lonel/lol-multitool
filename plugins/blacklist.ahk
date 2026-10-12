@@ -1,19 +1,16 @@
 #Requires AutoHotkey v2.0
-#Include ../lol.ahk
-
-global gameIdentitiesCache := Map()
-
-plugins.Push(blacklistPlugin)
-
-blacklistPlugin() {
-    ; Event-driven plugin, does not need periodic logic
-}
+PluginManager.Register("blacklist", "", 0)
 
 GetRecentPlayersCallback(WebView) {
-    global gameIdentitiesCache
+    global match_history
     try {
-        tempHistory := LeagueAPI.GetCurrentSummonerMatches(0, 9)
-        if (!IsObject(tempHistory) || !tempHistory.Has("games") || !tempHistory["games"].Has("games")) {
+        ; Reuse globally cached match_history if available, otherwise fetch
+        matchesObj := match_history
+        if (!IsObject(matchesObj) || !matchesObj.Has("games") || !matchesObj["games"].Has("games")) {
+            matchesObj := LeagueAPI.GetCurrentSummonerMatches(0, 9)
+        }
+        
+        if (!IsObject(matchesObj) || !matchesObj.Has("games") || !matchesObj["games"].Has("games")) {
             MyWindow.ExecuteScriptAsync("onRecentPlayersLoaded([])")
             return
         }
@@ -21,7 +18,10 @@ GetRecentPlayersCallback(WebView) {
         recentPlayers := Array()
         seenPlayers := Map()
         
-        for index, game in tempHistory["games"]["games"] {
+        for index, game in matchesObj["games"]["games"] {
+            if (A_Index > 9)
+                break
+                
             gameId := String(game["gameId"])
             identities := ""
             participantsList := ""
@@ -34,24 +34,12 @@ GetRecentPlayersCallback(WebView) {
             }
             
             if (!IsObject(identities) || !IsObject(participantsList)) {
-                if (gameIdentitiesCache.Has(gameId)) {
-                    cached := gameIdentitiesCache[gameId]
-                    if (IsObject(cached) && HasProp(cached, "Has") && cached.Has("identities")) {
-                        identities := cached["identities"]
-                        participantsList := cached.Has("participants") ? cached["participants"] : ""
-                    }
-                }
-                
-                if (!IsObject(identities) || !IsObject(participantsList)) {
-                    detailed_history := LeagueAPI.GetGameDetails(gameId)
-                    if (IsObject(detailed_history)) {
-                        if (detailed_history.Has("participantIdentities"))
-                            identities := detailed_history["participantIdentities"]
-                        if (detailed_history.Has("participants"))
-                            participantsList := detailed_history["participants"]
-                        
-                        gameIdentitiesCache[gameId] := Map("identities", identities, "participants", participantsList)
-                    }
+                detailed_history := GetCachedGameDetails(gameId)
+                if (IsObject(detailed_history)) {
+                    if (detailed_history.Has("participantIdentities"))
+                        identities := detailed_history["participantIdentities"]
+                    if (detailed_history.Has("participants"))
+                        participantsList := detailed_history["participants"]
                 }
             }
             

@@ -1,6 +1,5 @@
 #Requires AutoHotkey v2.0
-#Include ../lol.ahk
-plugins.Push(autoAccept)
+PluginManager.Register("autoAccept", autoAccept, 1000)
 
 autoAccept(){
     global config, gameflow

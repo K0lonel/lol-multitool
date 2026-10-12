@@ -1,6 +1,5 @@
 #Requires AutoHotkey v2.0
-#Include ../lol.ahk
-plugins.Push(autoReport)
+PluginManager.Register("autoReport", autoReport, 1000)
 
 autoReport(){
     global config
@@ -64,7 +63,7 @@ ScanNewMatches() {
         if (game.Has("participantIdentities") && IsObject(game["participantIdentities"]) && game["participantIdentities"].Length > 1) {
             identities := game["participantIdentities"]
         } else {
-            detailed_history := LeagueAPI.GetGameDetails(gameId)
+            detailed_history := GetCachedGameDetails(gameId)
             if (IsObject(detailed_history) && detailed_history.Has("participantIdentities")) {
                 identities := detailed_history["participantIdentities"]
             }
@@ -97,9 +96,9 @@ ScanNewMatches() {
         if (game.Has("participants") && IsObject(game["participants"]) && game["participants"].Length > 1) {
             participantsList := game["participants"]
         } else {
-            ; Try to use detailed_history if fetched or fetch it
+            ; Try to use detailed_history if fetched or fetch it from cache
             if (!IsSet(detailed_history) || !IsObject(detailed_history)) {
-                detailed_history := LeagueAPI.GetGameDetails(gameId)
+                detailed_history := GetCachedGameDetails(gameId)
             }
             if (IsObject(detailed_history) && detailed_history.Has("participants")) {
                 participantsList := detailed_history["participants"]

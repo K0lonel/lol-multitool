@@ -1,6 +1,5 @@
 #Requires AutoHotkey v2.0
-#Include ../lol.ahk
-plugins.Push(champSelectHelper)
+PluginManager.Register("champSelectHelper", champSelectHelper, 1000)
 
 global champLobbyNames := Array()
 global lastSessionId := ""
@@ -12,6 +11,7 @@ global sentQuotesMap := Map()
 global cycleBenchEnabled := false
 global lastCycleTime := 0
 global cycledChampIds := Map()
+global summonerCache := Map()
 
 champSelectHelper() {
     global config, gameflow
@@ -599,9 +599,6 @@ UpdateChampSelectFrontend(session) {
 
 GetSummonerNameByPuuid(puuid) {
     global summonerCache
-    if (!IsSet(summonerCache)) {
-        global summonerCache := Map()
-    }
     if (summonerCache.Has(puuid)) {
         return summonerCache[puuid]
     }

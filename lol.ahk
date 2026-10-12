@@ -1,33 +1,58 @@
 #Requires AutoHotkey v2.0+
 #SingleInstance Force
 SetWorkingDir(A_ScriptDir)
-global plugins := Array()
+class PluginManager {
+    static registered := Map()
+
+    static Register(name, tickFn := "", interval := 1000, initFn := "") {
+        this.registered[name] := {
+            name: name,
+            tick: tickFn,
+            interval: interval,
+            init: initFn
+        }
+    }
+
+    static StartAll() {
+        for name, plugin in this.registered {
+            if (plugin.init is Func) {
+                try (plugin.init)()
+            }
+            if (plugin.tick is Func && plugin.interval > 0) {
+                SetTimer(plugin.tick, plugin.interval)
+            }
+        }
+    }
+}
 
 #Include lib/JSON.ahk
 #Include lib/Config.ahk
 #Include lib/API.ahk
 #Include lib/LeagueAPI.ahk
 #Include lib/WebView2/WebViewToo.ahk
-#Include plugins/autoAccept.ahk
-#Include plugins/autoReport.ahk
-#Include plugins/champSelectHelper.ahk
-#Include plugins/blacklist.ahk
-#Include plugins/autoSkipPreEnd.ahk
-#Include plugins/lootAssistant.ahk
-#Include plugins/smartAutoHonorer.ahk
-#Include plugins/killLeague.ahk
-#Include plugins/emoteCancel.ahk
-
+global me := Map()
+global friends := Array()
+global gameflow := "None"
+global match_history := Map()
+global initConfigSent := false
+global historyTimer := 30
+global champTimer := 9
+global meTimer := 10
+global friendsTimer := 10
+global lastGameflow := "INIT"
+global failedGameflowCount := 0
+global wasLcuConnected := false
+global lastDashboardState := ""
 FileEncoding "UTF-8"
 JSON.EscapeUnicode := False
 
-if(!FileExist("history.json"))
+if (!FileExist("history.json"))
     FileAppend("{}", "history.json")
 global match_history_dic := JSON.Load(FileRead("history.json"))
 global historyDirty := false
 global historyVersion := 0
 global friend_puuid := Map()
-global reportList := ""
+global gameDetailsCache := Map()
 global reportQueue := Array()
 global reportStatus := "Idle"
 global championsLoaded := false
@@ -43,6 +68,16 @@ global totalPlayersLoggedCount := 0
 global currentSearchQuery := ""
 global lastHistoryVersion := -1
 global lastQueueSize := -1
+
+#Include plugins/autoAccept.ahk
+#Include plugins/autoReport.ahk
+#Include plugins/champSelectHelper.ahk
+#Include plugins/blacklist.ahk
+#Include plugins/autoSkipPreEnd.ahk
+#Include plugins/lootAssistant.ahk
+#Include plugins/smartAutoHonorer.ahk
+#Include plugins/killLeague.ahk
+#Include plugins/emoteCancel.ahk
 
 RecalculateHistoryStats() {
     global match_history_dic, cachedMatchesCount, totalPlayersLoggedCount
@@ -113,24 +148,24 @@ windowWidth := config.Has("windowWidth") ? config["windowWidth"] : 1200
 windowHeight := config.Has("windowHeight") ? config["windowHeight"] : 800
 MyWindow.Show("w" windowWidth " h" windowHeight " Center")
 
-for plugin in plugins
-    SetTimer(plugin, 1000)
+; Start registered plugins
+PluginManager.StartAll()
 
-; Preload emote wheel overlay safely once main window is ready
-SetTimer(() => EmoteWheelOverlay.Init(), -800)
-
-global me := Map()
-global friends := Array()
-global gameflow := "None"
-global match_history := Map()
-global initConfigSent := false
-global historyTimer := 30
-global champTimer := 9
-global meTimer := 10
-global friendsTimer := 10
-global lastGameflow := "INIT"
-global wasLcuConnected := false
-global lastDashboardState := ""
+GetCachedGameDetails(gameId) {
+    global gameDetailsCache
+    gameIdStr := String(gameId)
+    if (gameDetailsCache.Has(gameIdStr)) {
+        return gameDetailsCache[gameIdStr]
+    }
+    try {
+        details := LeagueAPI.GetGameDetails(gameIdStr)
+        if (IsObject(details) && !details.Has("error")) {
+            gameDetailsCache[gameIdStr] := details
+            return details
+        }
+    }
+    return Map()
+}
 RequestHistoryTimelineCallback(WebView, searchQuery) {
     PushHistoryTimeline(searchQuery)
 }
@@ -327,18 +362,27 @@ loop {
         ; 3. Gameflow phase check (every 1 second)
         try {
             tempGameflow := LeagueAPI.GetGameflowPhase()
-            if (Type(tempGameflow) == "String") {
+            if (Type(tempGameflow) == "String" && tempGameflow != "") {
                 global gameflow := tempGameflow
+                global failedGameflowCount := 0
             } else {
-                global gameflow := ""
+                failedGameflowCount++
+                ; Only clear gameflow after 3 consecutive failures to avoid dropping state on transient glitches
+                if (failedGameflowCount >= 3) {
+                    global gameflow := ""
+                }
             }
         } catch {
-            global gameflow := ""
+            failedGameflowCount++
+            if (failedGameflowCount >= 3) {
+                global gameflow := ""
+            }
         }
     } else {
         global me := Map()
         global friends := Array()
         global gameflow := ""
+        global failedGameflowCount := 0
     }
     
     ; Track Gameflow phase transitions and connection status

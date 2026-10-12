@@ -1,11 +1,10 @@
 #Requires AutoHotkey v2.0
-#Include ../lol.ahk
+PluginManager.Register("emoteCancel", emoteCancelMonitor, 1000, () => EmoteWheelOverlay.Init())
 
 global activeEmoteCancelKey := ""
 global activeEmoteCancelSlot := 0
 global registeredHoldKey := ""
 global registeredTriggerKey := ""
-plugins.Push(emoteCancelMonitor)
 
 ; ==============================================================================
 ; WebView2 Always-On-Top Layered Wheel Overlay
@@ -52,6 +51,16 @@ class EmoteWheelOverlay {
         WinSetStyle("-0x00C40000", this.guiWnd.Hwnd) ; -WS_BORDER -WS_THICKFRAME -WS_CAPTION
         WinSetExStyle("-0x00000300", this.guiWnd.Hwnd) ; -WS_EX_WINDOWEDGE -WS_EX_CLIENTEDGE
         
+        ; Force WS_EX_TRANSPARENT (0x20) and WS_EX_NOACTIVATE (0x08000000) on top-level
+        try WinSetExStyle("+0x08000020", this.guiWnd.Hwnd)
+        if (this.guiWnd.HasProp("Control") && this.guiWnd.Control && this.guiWnd.Control.HasProp("Hwnd") && DllCall("IsWindow", "Ptr", this.guiWnd.Control.Hwnd)) {
+            try {
+                ctrlHwnd := this.guiWnd.Control.Hwnd
+                oldExStyle := DllCall("GetWindowLongW", "Ptr", ctrlHwnd, "Int", -20, "UInt")
+                DllCall("SetWindowLongW", "Ptr", ctrlHwnd, "Int", -20, "UInt", oldExStyle | 0x08000020)
+            }
+        }
+        
         ; Set WebView2 controller background to 0 (fully transparent)
         try {
             this.guiWnd.Control.wvc.DefaultBackgroundColor := 0
@@ -84,9 +93,22 @@ class EmoteWheelOverlay {
         
         this.guiWnd.Move(posX, posY)
         this.ApplyCircularRegion()
+        try {
+            this.guiWnd.Control.wvc.IsVisible := 1
+        }
         this.guiWnd.Show("NA")
         this.isShowing := true
         this.currentHoverSlot := hoverSlot
+        
+        ; Re-ensure transparent click-through style on child windows after show
+        try WinSetExStyle("+0x08000020", this.guiWnd.Hwnd)
+        if (this.guiWnd.HasProp("Control") && this.guiWnd.Control && this.guiWnd.Control.HasProp("Hwnd") && DllCall("IsWindow", "Ptr", this.guiWnd.Control.Hwnd)) {
+            try {
+                ctrlHwnd := this.guiWnd.Control.Hwnd
+                oldExStyle := DllCall("GetWindowLongW", "Ptr", ctrlHwnd, "Int", -20, "UInt")
+                DllCall("SetWindowLongW", "Ptr", ctrlHwnd, "Int", -20, "UInt", oldExStyle | 0x08000020)
+            }
+        }
         
         this.UpdateState(hoverSlot, activeSlot, keyNames)
     }
@@ -115,9 +137,16 @@ class EmoteWheelOverlay {
     }
     
     static Hide() {
-        if (this.isShowing && this.guiWnd) {
-            this.guiWnd.Hide()
+        if (this.guiWnd) {
             this.isShowing := false
+            try {
+                this.guiWnd.Control.wvc.IsVisible := 0
+            }
+            try {
+                this.guiWnd.Hide()
+                ; Move offscreen to ensure it can never block mouse clicks if DWM retains surface
+                this.guiWnd.Move(-3000, -3000)
+            }
         }
     }
     
@@ -225,41 +254,47 @@ OnEmoteWheelKeyDown(ThisHotkey := "") {
     keyLabels := GetEmoteKeyLabels()
     currentHoverSlot := activeSlot
     
-    EmoteWheelOverlay.ShowAt(cx, cy, currentHoverSlot, activeSlot, keyLabels)
-    
-    while GetKeyState(holdKey, "P") {
-        if (WinExist("ahk_exe League of Legends.exe") && !WinActive("ahk_exe League of Legends.exe"))
-            break
-        if (config.Has("emoteCancelEnabled") && !config["emoteCancelEnabled"])
-            break
+    try {
+        EmoteWheelOverlay.ShowAt(cx, cy, currentHoverSlot, activeSlot, keyLabels)
+        startTime := A_TickCount
+        
+        while GetKeyState(holdKey, "P") {
+            ; Max safety timeout of 10s to prevent infinite loop if key release was dropped
+            if (A_TickCount - startTime > 10000)
+                break
+            if (WinExist("ahk_exe League of Legends.exe") && !WinActive("ahk_exe League of Legends.exe"))
+                break
+            if (config.Has("emoteCancelEnabled") && !config["emoteCancelEnabled"])
+                break
+                
+            MouseGetPos(&mx, &my)
+            dx := mx - cx
+            dy := my - cy
+            dist := Sqrt(dx*dx + dy*dy)
             
-        MouseGetPos(&mx, &my)
-        dx := mx - cx
-        dy := my - cy
-        dist := Sqrt(dx*dx + dy*dy)
-        
-        if (dist < 46) {
-            hoverSlot := 5
-        } else {
-            angle := DllCall("msvcrt\atan2", "Double", dy, "Double", dx, "Cdecl Double") * (180.0 / 3.141592653589793)
-            if (angle >= -135.0 && angle < -45.0)
-                hoverSlot := 1
-            else if (angle >= -45.0 && angle < 45.0)
-                hoverSlot := 2
-            else if (angle >= 45.0 && angle < 135.0)
-                hoverSlot := 3
-            else
-                hoverSlot := 4
+            if (dist < 46) {
+                hoverSlot := 5
+            } else {
+                angle := DllCall("msvcrt\atan2", "Double", dy, "Double", dx, "Cdecl Double") * (180.0 / 3.141592653589793)
+                if (angle >= -135.0 && angle < -45.0)
+                    hoverSlot := 1
+                else if (angle >= -45.0 && angle < 45.0)
+                    hoverSlot := 2
+                else if (angle >= 45.0 && angle < 135.0)
+                    hoverSlot := 3
+                else
+                    hoverSlot := 4
+            }
+            
+            if (hoverSlot != currentHoverSlot) {
+                currentHoverSlot := hoverSlot
+                EmoteWheelOverlay.SetHoverSlot(currentHoverSlot)
+            }
+            Sleep(16)
         }
-        
-        if (hoverSlot != currentHoverSlot) {
-            currentHoverSlot := hoverSlot
-            EmoteWheelOverlay.SetHoverSlot(currentHoverSlot)
-        }
-        Sleep(16)
+    } finally {
+        EmoteWheelOverlay.Hide()
     }
-    
-    EmoteWheelOverlay.Hide()
     
     if (currentHoverSlot >= 1 && currentHoverSlot <= 5) {
         SelectEmoteCancelSlot(currentHoverSlot)
